@@ -1452,18 +1452,18 @@ extension MenubarController {
         guard let baseURL = AppConfig.httpURL(
             host: AppConfig.connectableHost(for: host),
             port: port
-        ),
-              var comps = URLComponents(url: baseURL, resolvingAgainstBaseURL: false)
-        else {
+        ) else {
             return nil
         }
-        comps.path = "/admin/auto-login"
-        var items = [URLQueryItem(name: "redirect", value: "/admin/dashboard")]
+        var urlString = baseURL.absoluteString + "/admin/auto-login?redirect=/admin/dashboard"
         if let token = token, !token.isEmpty {
-            items.append(URLQueryItem(name: "token", value: token))
+            // Percent-encode so '+' and '&' in the token survive query parsing
+            // intact; '/' is kept literal (URLComponents leaves it as-is too).
+            let allowed = CharacterSet.alphanumerics.union(CharacterSet(charactersIn: "-_.~/"))
+            let encoded = token.addingPercentEncoding(withAllowedCharacters: allowed) ?? ""
+            urlString += "&token=" + encoded
         }
-        comps.queryItems = items
-        return comps.url
+        return URL(string: urlString)
     }
 
     static func shouldShowGenericFailureAlert(message: String) -> Bool {
