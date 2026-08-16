@@ -113,7 +113,9 @@
            contrast boost). Visible on :focus-visible only, so mouse users see
            no extra chrome while keyboard users always see where focus is. */
         :focus-visible {
-            outline: 1px solid var(--text-primary) !important;
+            /* Fallback (#171717) covers pages that do not define --text-primary
+               (e.g. the login page) so keyboard focus stays visible everywhere. */
+            outline: 1px solid var(--text-primary, #171717) !important;
             outline-offset: 2px;
         }
 
