@@ -30,8 +30,8 @@ import socket
 import urllib.parse
 from typing import Any
 
-import httpx
 import httpcore  # transitive dependency of httpx, guaranteed present
+import httpx
 
 from .api.markitdown import convert_html_to_markdown
 
