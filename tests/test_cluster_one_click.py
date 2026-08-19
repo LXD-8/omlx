@@ -1970,6 +1970,7 @@ Object.assign(component, {
   normalizeClusterTensorParallelSize: () => {},
   previewClusterWeightBalance: async () => calls.push('preview'),
   loadClusterRuntime: async () => calls.push('runtime'),
+  loadClusterIncidents: async () => calls.push('incidents'),
   discoverClusterPeers: async () => calls.push('discover'),
   loadClusterJoinStatus: async () => calls.push('join'),
 });
@@ -1984,7 +1985,9 @@ Object.assign(component, {
 """,
     )
 
-    assert result == {"calls": ["preview", "runtime", "discover", "join"]}
+    assert result == {
+        "calls": ["preview", "runtime", "incidents", "discover", "join"]
+    }
 
 
 def test_initialization_resyncs_live_capabilities_before_measuring_budgets():
