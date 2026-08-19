@@ -143,6 +143,39 @@ def _settings_for_candidate(base: Any, request: ANETuningRequest, candidate: _Ca
     return settings
 
 
+def _prefill_step_size(engine: Any) -> int | None:
+    """The configured prefill step size, if determinable.
+
+    On an ANE-enabled engine configure_qwen35_ane_prefill_scheduler aligns
+    the scheduler's own config copy to the compiled sequence length and
+    zeroes the qwen35 prefill floor, so the shared config read here is a
+    hint at best. The delivered chunk can also be cut by the cache block
+    boundary or the memory guard, which is why callers point at
+    chunk_tokens in the serve log as the authority.
+    """
+    config = getattr(engine, "_scheduler_config", None)
+    try:
+        size = int(getattr(config, "prefill_step_size", 0) or 0)
+    except (TypeError, ValueError):
+        size = 0
+    return size or None
+
+
+def _ane_execution_observed(trace: dict[str, Any] | None) -> bool | None:
+    """Whether the ANE ran ops, or None when that cannot be determined.
+
+    The operation counters come from the ANE profiler. When the profiler is
+    unavailable they are all zero no matter what the hardware did, so that
+    case must be reported as unknown rather than as an idle ANE.
+    """
+    if not trace or not trace.get("profiling_available"):
+        return None
+    return any(
+        int(values.get("operations", 0) or 0) > 0
+        for values in (trace.get("categories") or {}).values()
+    )
+
+
 def _ane_is_active(engine: Any) -> bool:
     model = getattr(engine, "_model", None)
     if model is None:
@@ -172,7 +205,11 @@ async def _measure_candidate(
 
     tokenizer = engine.tokenizer
     warmup_length = run.request.sequence_length + 1
-    measure_length = run.request.sequence_length * 2 + 1
+    # stream_generate prefills tokens[:-1], so sequence_length * 2 leaves a
+    # non-ANE-shaped tail chunk in the measurement like real traffic does.
+    # The previous * 2 + 1 measured two full ANE blocks with no GPU tail and
+    # overstated the ANE gain.
+    measure_length = run.request.sequence_length * 2
     warmup = _generate_prompt(
         tokenizer, warmup_length, BenchmarkContextProfile.CODE_PYTHON
     )
@@ -190,6 +227,7 @@ async def _measure_candidate(
         pass
 
     samples: list[float] = []
+    traces: list[dict[str, Any] | None] = []
     for _ in range(run.request.repeats):
         metrics = await _run_single_test(
             engine=engine,
@@ -211,6 +249,36 @@ async def _measure_candidate(
             ),
         )
         samples.append(float(metrics["processing_tps"]))
+        if candidate.enabled:
+            traces.append(metrics.get("ane_trace"))
+
+    observations = [_ane_execution_observed(trace) for trace in traces]
+    # Only fail on a positive observation of an idle ANE. If the profiler was
+    # unavailable every observation is None and the guard must stay out of the
+    # way rather than rejecting a candidate that may well have run.
+    if candidate.enabled and any(o is False for o in observations) and not any(observations):
+        # The programs compiled (checked above) but no ANE operation ran, so
+        # this candidate really measured GPU-only plus the cost of compiling
+        # and pinning unused programs. Reporting its throughput would rank a
+        # never-executed configuration against real ones.
+        step = _prefill_step_size(engine)
+        hint = (
+            f"the scheduler is configured for {step}-token prefill chunks, "
+            f"so try sequence_length={step}"
+            if step
+            else "sequence_length must match the scheduler's prefill chunk size"
+        )
+        raise RuntimeError(
+            "The ANE compiled but never executed for "
+            f"sequence_length={run.request.sequence_length}: no ANE operation "
+            "was observed during measurement, so this candidate would report "
+            "GPU-only throughput as an ANE result. The most common cause is a "
+            f"prefill chunk size mismatch ({hint}; confirm against "
+            "chunk_tokens in the serve log, since delivered chunks can shrink "
+            "below the configured step). A runtime dispatch failure can also "
+            "disable the path; check the serve log for 'Disabling ANE' "
+            "warnings."
+        )
 
     return {
         "label": candidate.label,
