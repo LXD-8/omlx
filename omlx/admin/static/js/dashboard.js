@@ -7037,6 +7037,12 @@
                 if (Object.keys(ctk).length > 0) out.chat_template_kwargs = ctk;
                 if (forced.length > 0) out.forced_ct_kwargs = forced;
 
+                // Sync top-level reasoning_effort to chat_template_kwargs
+                if (ms.reasoning_effort && !ctk.reasoning_effort) {
+                    if (!out.chat_template_kwargs) out.chat_template_kwargs = {};
+                    out.chat_template_kwargs.reasoning_effort = ms.reasoning_effort;
+                }
+
                 return out;
             },
             formValuesForTemplate() {
@@ -7372,7 +7378,9 @@
                     thinking_default: model?.thinking_default ?? null,
                     enableThinkingBudget: !!(s.thinking_budget_tokens),
                     thinking_budget_tokens: s.thinking_budget_tokens || null,
-                    reasoning_effort: s.reasoning_effort ?? null,
+                    reasoning_effort: s.reasoning_effort
+                        ?? s.chat_template_kwargs?.reasoning_effort
+                        ?? null,
                     guided_grammar_enabled: s.guided_grammar_enabled || false,
                     guided_grammar: s.guided_grammar || '',
                     enableToolResultLimit: !!(s.max_tool_result_tokens),
