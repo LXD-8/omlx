@@ -3619,7 +3619,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "个 token 已应用到上下文窗口"
+            "value" : "个 Token 已应用到上下文窗口"
           }
         }
       }
@@ -4459,7 +4459,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "每次单请求试验要输入的提示 token 数"
+            "value" : "每次单请求试验要输入的提示 Token 数"
           }
         }
       }
@@ -4531,7 +4531,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "每次单请求试验的输出 token 数"
+            "value" : "每次单请求试验的输出 Token 数"
           }
         }
       }
@@ -14088,7 +14088,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "在量化输出中保留多 token 预测头"
+            "value" : "在量化输出中保留多 Token 预测头"
           }
         }
       }
@@ -19687,7 +19687,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "在 usage.sqlite3 中存储各模型每小时的 token 总量。关闭后会保留现有历史。"
+            "value" : "在 usage.sqlite3 中存储各模型每小时的 Token 总量。关闭后会保留现有历史。"
           }
         }
       }
