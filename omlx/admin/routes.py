@@ -14,8 +14,10 @@ import json
 import logging
 import os
 import re
+import shlex
 import shutil
 import signal
+import subprocess
 import sys
 import time
 from collections import deque
@@ -28,14 +30,20 @@ import requests
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from ..api.markitdown import MARKITDOWN_MODEL_ID, markitdown_model_visible
 from ..api.openai_models import _coerce_tool_call_arguments
 from ..api.utils import _try_parse_json
 from ..model_discovery import model_display_name as _model_display_name
 from ..model_profiles import EXCLUDED_FROM_PROFILES
-from ..model_settings import merge_chat_template_kwargs
+from ..model_settings import (
+    MAX_LIGHTNING_MTP_DRAFT_TOKENS,
+    ane_prefill_backend,
+    ane_prefill_fraction,
+    validate_ane_prefill,
+    merge_chat_template_kwargs,
+)
 from ..settings import BURST_DECODE_MODES, SubKeyEntry, burst_decode_env
 from ..utils.release_check import normalize_update_channel, select_latest_release
 from ..websearch import (
@@ -58,6 +66,102 @@ from .auth import (
 logger = logging.getLogger(__name__)
 
 PRESET_REMOTE_URL = "https://omlx.ai/assets/omlx_preset.json"
+
+
+def _clear_cold_remote_cluster_cache_roots(
+    roots: tuple[Path, ...],
+    *,
+    runner: Any = subprocess.run,
+) -> tuple[int, int]:
+    """Remove unloaded cluster snapshots from every configured peer Mac.
+
+    Loaded ranks clear through their live cache managers. With no resident
+    engine, the normal SSD-clear action still has to reach peer-local snapshot
+    trees; deleting only the coordinator root makes the next load silently
+    restore data the user explicitly cleared.
+    """
+
+    from ..cluster.launch import _run_cluster_ssh
+    from ..cluster.registry import get_cluster_registry
+
+    try:
+        deployments = get_cluster_registry().list()
+    except RuntimeError:
+        return 0, 0
+    if not deployments:
+        return 0, 0
+
+    allowed = {"cluster-prompt-snapshots", "prompt-cache-ssd"}
+    if any(path.expanduser().name not in allowed for path in roots):
+        raise RuntimeError("refusing to clear an unexpected cluster cache root")
+
+    node_ids: set[str] = set()
+    remote_targets: set[str] = set()
+    for deployment in deployments:
+        for rank, host in enumerate(deployment.hosts):
+            node_ids.add(host.node_id)
+            if rank > 0:
+                remote_targets.add(host.ssh)
+
+    # Resolve settings on the peer. Sending the coordinator's expanded
+    # /Users/<name>/... roots breaks as soon as the Macs use different login
+    # names, data roots, or SSD-cache locations.
+    script = r"""
+import shutil
+from pathlib import Path
+from omlx.settings import GlobalSettings
+settings = GlobalSettings.load()
+roots = [
+    settings.cache.get_ssd_cache_dir(settings.base_path) / 'cluster-prompt-snapshots',
+    Path(settings.base_path) / 'cluster/runtime/prompt-cache-ssd',
+]
+allowed = {'cluster-prompt-snapshots', 'prompt-cache-ssd'}
+if any(root.name not in allowed for root in roots):
+    raise SystemExit(3)
+deleted = 0
+for root in roots:
+    if not root.exists():
+        continue
+    deleted += sum(1 for item in root.rglob('*') if item.is_file())
+    shutil.rmtree(root)
+print(deleted)
+""".strip()
+    command = shlex.join(["python3", "-c", script])
+    deleted = 0
+    for target in sorted(remote_targets):
+        completed = _run_cluster_ssh(
+            target,
+            command,
+            timeout=45.0,
+            runner=runner,
+        )
+        if completed.returncode != 0:
+            detail = completed.stderr.strip() or completed.stdout.strip()
+            raise RuntimeError(
+                f"cold cluster SSD clear failed on {target}: {detail[:300]}"
+            )
+        try:
+            deleted += max(0, int(completed.stdout.strip() or "0"))
+        except ValueError as exc:
+            raise RuntimeError(
+                f"cold cluster SSD clear returned invalid output on {target}"
+            ) from exc
+    return deleted, len(node_ids)
+
+
+def _oq_a8_kernels_available() -> bool:
+    """True when the oQ A8 prefill kernels can actually run on this host.
+
+    Enabling the setting on a machine without tensor units would leave every
+    projection falling back, so the save is refused rather than accepted into
+    a no-op.
+    """
+    try:
+        from omlx.custom_kernels.qwen35_prefill import fast
+
+        return bool(fast.oq_a8_available())
+    except Exception:
+        return False
 
 
 # =============================================================================
@@ -112,6 +216,8 @@ class CacheProbeRequest(BaseModel):
 class ModelSettingsRequest(BaseModel):
     """Request model for updating per-model settings."""
 
+    model_config = ConfigDict(extra="forbid")
+
     model_alias: str | None = None
     model_type_override: str | None = None
     max_context_window: int | None = None
@@ -129,16 +235,26 @@ class ModelSettingsRequest(BaseModel):
     ttl_seconds: int | None = None
     index_cache_freq: int | None = None
     enable_thinking: bool | None = None
+    # Keep  thinking blocks in historical turns (None = auto, True when the
+    # template supports it). Mirrors ModelSettings.preserve_thinking.
+    preserve_thinking: bool | None = None
+    qwen4_ple_ssd_offload: bool | None = None
+    deepseek_v41_engram_ssd_offload: bool | None = None
+    deepseek_v41_ced_prefill_enabled: bool | None = None
     thinking_budget_enabled: bool | None = None
     thinking_budget_tokens: int | None = None
+    # MTP draft tokens per cycle for legacy MTP (None = adaptive default).
+    mtp_num_draft_tokens: int | None = None
     # TurboQuant KV cache (mlx-vlm backend)
     turboquant_kv_enabled: bool | None = None
     turboquant_kv_bits: float | None = None
+    turboquant_skip_last: bool | None = None
     # Private Qwen3.5/3.6/3.8 ANE/GPU fixed-shape prefill
     qwen35_ane_prefill_enabled: bool | None = None
     qwen35_ane_prefill_sequence_length: int | None = None
     qwen35_ane_prefill_tail_padding_min_tokens: int | None = None
     qwen35_ane_prefill_fraction: float | None = None
+    qwen35_ane_prefill_shared_fraction: float | None = None
     qwen35_ane_prefill_fused_down: bool | None = None
     qwen35_ane_prefill_max_layers: int | None = None
     qwen35_ane_prefill_dual_ane: bool | None = None
@@ -151,6 +267,12 @@ class ModelSettingsRequest(BaseModel):
     qwen35_ane_prefill_cpu_gdn_fraction: float | None = None
     qwen35_ane_prefill_cpu_threads: int | None = None
     qwen35_ane_prefill_cpu_shared_resource: bool | None = None
+    # oQ mixed-bit QxA8 prefill kernels (Qwen3.5/3.6/3.8)
+    qwen35_oq_a8_enabled: bool | None = None
+    qwen35_oq_a8_min_tokens: int | None = None
+    # MoE expert offload (stream non-resident experts from the checkpoint)
+    moe_expert_offload_enabled: bool | None = None
+    moe_expert_offload_resident_fraction: float | None = None
     # SpecPrefill (experimental)
     specprefill_enabled: bool | None = None
     specprefill_draft_model: str | None = None
@@ -247,6 +369,7 @@ class GlobalSettingsRequest(BaseModel):
     burst_decode_mode: str | None = None  # "off" / "light" / "balanced" / "aggressive"
     preserve_mid_system_cache: bool | None = None
     distributed_inference_enabled: bool | None = None
+    max_audio_upload_size: str | None = None
 
     # Model settings
     model_dirs: list[str] | None = None
@@ -287,6 +410,9 @@ class GlobalSettingsRequest(BaseModel):
     # MCP settings
     mcp_config: str | None = None
     mcp_expose_tools: bool | None = None
+
+    # Usage history settings
+    usage_history: bool | None = None
 
     # HuggingFace settings
     hf_endpoint: str | None = None
@@ -561,6 +687,8 @@ def _sanitize_diffusion_settings_dict(settings: dict) -> None:
     settings["turboquant_kv_enabled"] = False
     settings["turboquant_kv_bits"] = 4
     settings["turboquant_skip_last"] = True
+    settings["moe_expert_offload_enabled"] = False
+    settings["moe_expert_offload_resident_fraction"] = 0.25
     settings["specprefill_enabled"] = False
     settings["dflash_enabled"] = False
     settings["dflash_in_memory_cache"] = True
@@ -636,6 +764,8 @@ def _sanitize_diffusion_model_settings(settings) -> None:
     settings.turboquant_kv_enabled = False
     settings.turboquant_kv_bits = 4
     settings.turboquant_skip_last = True
+    settings.moe_expert_offload_enabled = False
+    settings.moe_expert_offload_resident_fraction = 0.25
     settings.specprefill_enabled = False
     settings.specprefill_draft_model = None
     settings.specprefill_keep_pct = None
@@ -673,8 +803,9 @@ def _mtp_compat_for_model(model_info: dict) -> tuple[bool, str]:
     converter actually preserved the MTP tensors, using the loader's
     ``_checkpoint_has_mtp_weights`` so native nextn layouts
     (``model.layers.<num_hidden_layers + i>.*``, e.g. GLM-5.2) count as
-    present (issue #2326). Default mlx-lm converters strip ``mtp.*``;
-    PR 990 ships a separate path that keeps them.
+    present (issue #2326). Qwen4-Exp uses its narrower runtime detector,
+    which accepts only embedded ``mtp.*`` tensors. Default mlx-lm converters
+    strip ``mtp.*``; PR 990 ships a separate path that keeps them.
     """
     import json
     from pathlib import Path
@@ -702,7 +833,14 @@ def _mtp_compat_for_model(model_info: dict) -> tuple[bool, str]:
     model_type = cfg.get("model_type")
     if not _has_mtp_heads(cfg):
         return False, "model has no MTP heads in config"
-    if not _is_mtp_compatible(cfg, model_type):
+    # qwen4_exp (Qwen3.8 Flash Next) attaches its Lightning MTP head through
+    # the dedicated VLM path in omlx.utils.model_loading (vendored mlx-vlm
+    # qwen4_exp model + mlx_lm_mtp dispatch patch) and never goes through the
+    # mlx-lm ``_is_mtp_compatible`` whitelist, which gates the generic
+    # text-model patch. Mirroring the runtime, the admin gate accepts
+    # qwen4_exp and relies on the embedded ``mtp.*`` weight check below —
+    # the same condition the runtime path uses.
+    if model_type != "qwen4_exp" and not _is_mtp_compatible(cfg, model_type):
         return False, (
             f"model_type={model_type!r} is not on the MTP whitelist "
             "(supported: qwen3_5*, qwen3_6*, deepseek_v4*, glm_moe_dsa, "
@@ -717,6 +855,11 @@ def _mtp_compat_for_model(model_info: dict) -> tuple[bool, str]:
             return False, (
                 "MTPLX side-car detected but not imported. Import it to "
                 "merge the MTP head into the checkpoint index."
+            )
+        if model_type == "qwen4_exp":
+            return False, (
+                "Qwen4-Exp Lightning MTP requires embedded mtp.* tensors; "
+                "native nextn layers are not supported by its dedicated runtime."
             )
         return False, (
             "Config declares MTP layers but the weight files contain neither "
@@ -1269,6 +1412,18 @@ def set_hf_uploader(uploader):
 # =============================================================================
 
 
+def _active_bind_host(global_settings) -> str:
+    """Return the bind address in use until the next server restart."""
+
+    server_state = _get_server_state() if _get_server_state is not None else None
+    active_host = (
+        getattr(server_state, "bind_host", None)
+        if getattr(server_state, "global_settings", None) is global_settings
+        else None
+    )
+    return active_host or global_settings.server.host
+
+
 def format_size(size_bytes: int) -> str:
     """
     Format a byte size as a human-readable string.
@@ -1427,9 +1582,12 @@ async def login_page(request: Request):
 
     global_settings = _get_global_settings()
 
-    # Skip login page when skip_api_key_verification is enabled
+    # Skip login only when no-auth mode is confined to loopback.
     if global_settings is not None and global_settings.auth.skip_api_key_verification:
-        return RedirectResponse(url="/admin/dashboard", status_code=302)
+        from ..utils.network import is_loopback_bind
+
+        if is_loopback_bind(_active_bind_host(global_settings)):
+            return RedirectResponse(url="/admin/dashboard", status_code=302)
 
     api_key_configured = bool(global_settings and global_settings.auth.api_key)
     return templates.TemplateResponse(
@@ -1547,7 +1705,11 @@ async def login(request: LoginRequest, response: Response):
 
 
 @router.post("/api/setup-api-key")
-async def setup_api_key(request: SetupApiKeyRequest, response: Response):
+async def setup_api_key(
+    request: SetupApiKeyRequest,
+    response: Response,
+    http_request: Request,
+):
     """
     Set up the initial API key when none is configured.
 
@@ -1558,6 +1720,7 @@ async def setup_api_key(request: SetupApiKeyRequest, response: Response):
     Args:
         request: SetupApiKeyRequest with api_key and api_key_confirm.
         response: FastAPI response object for setting cookies.
+        http_request: Incoming request used to verify the peer address.
 
     Returns:
         JSON response with success status.
@@ -1569,6 +1732,20 @@ async def setup_api_key(request: SetupApiKeyRequest, response: Response):
     from ..server import _server_state
 
     global_settings = _get_global_settings()
+    if global_settings is None:
+        raise HTTPException(status_code=503, detail="Server not initialized")
+
+    from ..utils.network import is_loopback_bind, is_loopback_bind_host
+
+    peer_host = getattr(getattr(http_request, "client", None), "host", None)
+    if (
+        not is_loopback_bind(_active_bind_host(global_settings))
+        or not is_loopback_bind_host(peer_host)
+    ):
+        raise HTTPException(
+            status_code=403,
+            detail="Initial API key setup is only available over loopback.",
+        )
 
     # Only allow setup if no API key is currently configured
     if global_settings and global_settings.auth.api_key:
@@ -1842,6 +2019,33 @@ async def list_grammar_parsers(is_admin: bool = Depends(require_admin)):
 # =============================================================================
 
 
+def _model_options(model_info: dict, settings) -> dict:
+    """Describe model controls once for the web and native settings clients."""
+    from ..patches.k2_horizon import REASONING_EFFORTS
+
+    model_type = (model_info.get("config_model_type") or "").lower().replace("-", "_")
+    is_k2 = model_type == "k2_horizon"
+    thinking_modes = ["auto", "on_limit"] if is_k2 else [
+        "auto", "on_unlimit", "on_limit", "off"
+    ]
+    ane_backend = (
+        None if model_info.get("is_helper") else ane_prefill_backend(model_type)
+    )
+    return {
+        "thinking_forced": is_k2,
+        "thinking_modes": thinking_modes,
+        "reasoning_effort_options": list(REASONING_EFFORTS) if is_k2 else [
+            "low", "medium", "high", "xhigh", "max"
+        ],
+        "reasoning_effort_default": "high" if is_k2 else "low",
+        "reasoning_effort_custom": not is_k2,
+        "ane_prefill_backend": ane_backend,
+        "ane_prefill_default_fraction": ane_prefill_fraction(None, model_type),
+        "ane_prefill_mlp_fractions": [1 / 3, 0.5] if ane_backend == "k2" else [],
+        "ane_prefill_shared_fractions": [0, 1 / 3, 1] if ane_backend == "k2" else [],
+    }
+
+
 def _model_dirs_for_display(global_settings: Any | None) -> list[Path]:
     if global_settings is None:
         return []
@@ -1878,6 +2082,15 @@ async def list_models(is_admin: bool = Depends(require_admin)):
     # Get engine pool status
     status = engine_pool.get_status()
     models_status = status.get("models", [])
+    residency_ceiling = int(status.get("final_ceiling", 0) or 0)
+    fallback_ceiling = getattr(engine_pool, "_fallback_admission_ceiling", None)
+    if callable(fallback_ceiling):
+        try:
+            candidate = fallback_ceiling()
+            if isinstance(candidate, (int, float)) and candidate > 0:
+                residency_ceiling = int(candidate)
+        except Exception:  # noqa: BLE001
+            pass
 
     # Get all model settings
     all_settings = settings_manager.get_all_settings() if settings_manager else {}
@@ -1912,6 +2125,82 @@ async def list_models(is_admin: bool = Depends(require_admin)):
         is_paroquant, paroquant_reason = _paroquant_compat_for_model(model_info)
         compat_ok, compat_reason = _dflash_compat_for_model(model_info)
         mtp_compat_ok, mtp_compat_reason = _mtp_compat_for_model(model_info)
+        from ..patches.moe_offload_compat import moe_offload_compatibility
+
+        moe_offload_supported, _ = moe_offload_compatibility(
+            model_info.get("model_path") or ""
+        )
+        qwen4_ple_ssd_offload_supported = False
+        qwen4_ple_ssd_offload_forced = False
+        qwen4_resident_bytes = 0
+        qwen4_mmap_bytes = 0
+        if (model_info.get("config_model_type") or "").replace(
+            "-", "_"
+        ).lower() == "qwen4_exp":
+            try:
+                from ..patches.mlx_vlm_qwen4_exp_compat.residency import (
+                    qwen4_exp_residency_estimate,
+                )
+
+                estimate = qwen4_exp_residency_estimate(
+                    model_info.get("model_path", "")
+                )
+                if getattr(settings, "moe_expert_offload_enabled", False):
+                    entry = engine_pool.get_entry(model_id)
+                    if entry is not None:
+                        _, _, adjusted = engine_pool._qwen4_ple_offload_status(
+                            entry, settings, ceiling=residency_ceiling
+                        )
+                        if adjusted is not None:
+                            estimate = adjusted
+                qwen4_ple_ssd_offload_supported = estimate.supported
+                qwen4_ple_ssd_offload_forced = estimate.force_ssd_offload(
+                    residency_ceiling
+                )
+                qwen4_resident_bytes = estimate.resident_bytes
+                qwen4_mmap_bytes = estimate.mmap_bytes
+            except (OSError, TypeError, ValueError):
+                logger.debug(
+                    "Could not inspect Qwen4-Exp PLE residency for %s",
+                    model_id,
+                    exc_info=True,
+                )
+
+        deepseek_v41_engram_ssd_offload_supported = False
+        deepseek_v41_engram_ssd_offload_forced = False
+        v41_resident_bytes = 0
+        v41_mmap_bytes = 0
+        if (model_info.get("config_model_type") or "").replace(
+            "-", "_"
+        ).lower() == "deepseek_v41":
+            try:
+                from ..patches.deepseek_v41.residency import (
+                    deepseek_v41_residency_estimate,
+                )
+
+                estimate = deepseek_v41_residency_estimate(
+                    model_info.get("model_path", "")
+                )
+                if getattr(settings, "moe_expert_offload_enabled", False):
+                    entry = engine_pool.get_entry(model_id)
+                    if entry is not None:
+                        _, _, adjusted = engine_pool._deepseek_v41_engram_offload_status(
+                            entry, settings, ceiling=residency_ceiling
+                        )
+                        if adjusted is not None:
+                            estimate = adjusted
+                deepseek_v41_engram_ssd_offload_supported = estimate.supported
+                deepseek_v41_engram_ssd_offload_forced = estimate.force_ssd_offload(
+                    residency_ceiling
+                )
+                v41_resident_bytes = estimate.resident_bytes
+                v41_mmap_bytes = estimate.mmap_bytes
+            except (KeyError, OSError, TypeError, ValueError):
+                logger.debug(
+                    "Could not inspect DeepSeek V4.1 Engram residency for %s",
+                    model_id,
+                    exc_info=True,
+                )
 
         model_data = {
             "id": model_id,
@@ -1956,15 +2245,28 @@ async def list_models(is_admin: bool = Depends(require_admin)):
             "preserve_thinking_default": model_info.get("preserve_thinking_default"),
             "source_type": model_info.get("source_type", "local"),
             "source_repo_id": model_info.get("source_repo_id"),
+            "distributed": model_info.get("distributed", False),
+            "cluster": model_info.get("cluster"),
             "last_access": model_info.get("last_access"),
             "dflash_compatible": compat_ok,
             "dflash_compatibility_reason": compat_reason,
             "dflash_ssd_cache_available": dflash_ssd_cache_available,
             "mtp_compatible": mtp_compat_ok,
             "mtp_compatibility_reason": mtp_compat_reason,
+            "moe_expert_offload_supported": moe_offload_supported,
+            "qwen4_ple_ssd_offload_supported": qwen4_ple_ssd_offload_supported,
+            "qwen4_ple_ssd_offload_forced": qwen4_ple_ssd_offload_forced,
+            "qwen4_ple_resident_bytes": qwen4_resident_bytes,
+            "qwen4_ple_mmap_bytes": qwen4_mmap_bytes,
+            "deepseek_v41_engram_ssd_offload_supported": deepseek_v41_engram_ssd_offload_supported,
+            "deepseek_v41_engram_ssd_offload_forced": deepseek_v41_engram_ssd_offload_forced,
+            "deepseek_v41_engram_resident_bytes": v41_resident_bytes,
+            "deepseek_v41_engram_mmap_bytes": v41_mmap_bytes,
             "is_paroquant": is_paroquant,
             "paroquant_reason": paroquant_reason,
         }
+
+        model_data.update(_model_options(model_data, settings))
 
         # Add settings if available
         if settings:
@@ -2054,9 +2356,12 @@ async def _require_admin_or_bearer(request: Request) -> bool:
     """Allow admin session OR a valid Bearer API key (for CLI use)."""
     gs = _get_global_settings() if _get_global_settings else None
 
-    # No-auth mode: always allow
+    # No-auth mode is restricted to loopback-only binds.
     if gs is not None and gs.auth.skip_api_key_verification:
-        return True
+        from ..utils.network import is_loopback_bind
+
+        if is_loopback_bind(_active_bind_host(gs)):
+            return True
 
     # Valid admin session cookie
     if verify_session(request):
@@ -2286,6 +2591,25 @@ async def update_model_settings(
         )
     if "enable_thinking" in sent:
         current_settings.enable_thinking = request.enable_thinking
+    if "deepseek_v41_ced_prefill_enabled" in sent:
+        is_v41 = (entry.config_model_type or "").replace("-", "_").lower() == "deepseek_v41"
+        current_settings.deepseek_v41_ced_prefill_enabled = bool(
+            request.deepseek_v41_ced_prefill_enabled and is_v41
+        )
+    if "qwen4_ple_ssd_offload" in sent:
+        is_qwen4_exp = (entry.config_model_type or "").replace(
+            "-", "_"
+        ).lower() == "qwen4_exp"
+        current_settings.qwen4_ple_ssd_offload = bool(
+            request.qwen4_ple_ssd_offload and is_qwen4_exp
+        )
+    if "deepseek_v41_engram_ssd_offload" in sent:
+        is_deepseek_v41 = (entry.config_model_type or "").replace(
+            "-", "_"
+        ).lower() == "deepseek_v41"
+        current_settings.deepseek_v41_engram_ssd_offload = bool(
+            request.deepseek_v41_engram_ssd_offload and is_deepseek_v41
+        )
     if "thinking_budget_enabled" in sent:
         current_settings.thinking_budget_enabled = (
             request.thinking_budget_enabled or False
@@ -2296,6 +2620,19 @@ async def update_model_settings(
             if request.thinking_budget_tokens and request.thinking_budget_tokens > 0
             else None
         )
+    if "mtp_num_draft_tokens" in sent:
+        value = request.mtp_num_draft_tokens
+        if value is not None and not 1 <= value <= MAX_LIGHTNING_MTP_DRAFT_TOKENS:
+            raise HTTPException(
+                status_code=400,
+                detail=(
+                    "mtp_num_draft_tokens must be between 1 and "
+                    f"{MAX_LIGHTNING_MTP_DRAFT_TOKENS} (or null)."
+                ),
+            )
+        current_settings.mtp_num_draft_tokens = value
+    if "preserve_thinking" in sent:
+        current_settings.preserve_thinking = request.preserve_thinking
     if "chat_template_kwargs" in sent:
         current_settings.chat_template_kwargs = request.chat_template_kwargs
     if "forced_ct_kwargs" in sent:
@@ -2314,29 +2651,26 @@ async def update_model_settings(
         current_settings.turboquant_kv_enabled = request.turboquant_kv_enabled or False
     if "turboquant_kv_bits" in sent:
         current_settings.turboquant_kv_bits = request.turboquant_kv_bits or 4
-    # Private Qwen3.5/3.6/3.8 ANE/GPU fixed-shape prefill. These are all load-time
-    # controls; the runtime signature below causes a loaded model to be
-    # re-created when the user applies a changed profile.
+    if "turboquant_skip_last" in sent:
+        # null = clear to the model default (True); bool(None) would flip it
+        # to False and silently disable the skip-last corruption guard.
+        current_settings.turboquant_skip_last = (
+            True if request.turboquant_skip_last is None
+            else bool(request.turboquant_skip_last)
+        )
+    # Shared load-time ANE controls. Model metadata selects limits and backend.
+    ane_backend = ane_prefill_backend(entry.config_model_type)
     if "qwen35_ane_prefill_enabled" in sent:
-        enabled = bool(request.qwen35_ane_prefill_enabled)
-        config_type = str(getattr(entry, "config_model_type", "") or "")
-        config_type = config_type.lower().replace("-", "_")
-        if enabled and not config_type.startswith(
-            ("qwen3_5", "qwen3_6", "qwen3_8")
-        ):
-            raise HTTPException(
-                status_code=400,
-                detail="ANE prefill is available only for Qwen3.5/3.6/3.8 models.",
-            )
-        current_settings.qwen35_ane_prefill_enabled = enabled
+        current_settings.qwen35_ane_prefill_enabled = bool(
+            request.qwen35_ane_prefill_enabled
+        )
     if "qwen35_ane_prefill_sequence_length" in sent:
         value = request.qwen35_ane_prefill_sequence_length
-        if value is None or value < 1024 or value % 64:
+        if value is None:
             raise HTTPException(
-                status_code=400,
-                detail="ANE prompt block must be a multiple of 64 and at least 1024.",
+                status_code=400, detail="ANE prompt block cannot be null."
             )
-        current_settings.qwen35_ane_prefill_sequence_length = int(value)
+        current_settings.qwen35_ane_prefill_sequence_length = value
         if (
             current_settings.qwen35_ane_prefill_tail_padding_min_tokens
             >= int(value)
@@ -2357,13 +2691,14 @@ async def update_model_settings(
             )
         current_settings.qwen35_ane_prefill_tail_padding_min_tokens = int(value)
     if "qwen35_ane_prefill_fraction" in sent:
-        value = request.qwen35_ane_prefill_fraction
-        if value is None or not 0.05 <= value <= 0.90:
-            raise HTTPException(
-                status_code=400,
-                detail="MLP ANE fraction must be between 0.05 and 0.90.",
-            )
-        current_settings.qwen35_ane_prefill_fraction = float(value)
+        current_settings.qwen35_ane_prefill_fraction = (
+            request.qwen35_ane_prefill_fraction
+        )
+    if "qwen35_ane_prefill_shared_fraction" in sent:
+        value = request.qwen35_ane_prefill_shared_fraction
+        current_settings.qwen35_ane_prefill_shared_fraction = (
+            1.0 if value is None else value
+        )
     if "qwen35_ane_prefill_max_layers" in sent:
         value = request.qwen35_ane_prefill_max_layers
         if value is None or value < 1:
@@ -2437,9 +2772,25 @@ async def update_model_settings(
         current_settings.qwen35_ane_prefill_cpu_shared_resource = bool(
             request.qwen35_ane_prefill_cpu_shared_resource
         )
+    # oQ mixed-bit QxA8 prefill. Load-time like the ANE controls above: the
+    # runtime signature re-creates a loaded model when this changes.
+    if "qwen35_oq_a8_enabled" in sent:
+        current_settings.qwen35_oq_a8_enabled = bool(request.qwen35_oq_a8_enabled)
+    if "qwen35_oq_a8_min_tokens" in sent:
+        value = request.qwen35_oq_a8_min_tokens
+        if value is None or value < 1:
+            raise HTTPException(
+                status_code=400,
+                detail="oQ A8 min tokens must be at least 1.",
+            )
+        current_settings.qwen35_oq_a8_min_tokens = int(value)
     if (
-        current_settings.qwen35_ane_prefill_fused_down
-        and current_settings.qwen35_ane_prefill_fraction > 0.50
+        ane_backend == "qwen"
+        and current_settings.qwen35_ane_prefill_fused_down
+        and ane_prefill_fraction(
+            current_settings.qwen35_ane_prefill_fraction, entry.config_model_type
+        )
+        > 0.50
     ):
         # The fused loader reuses the MLP fraction for the down projection and
         # rejects anything above 0.50 at enable time. Without this check the
@@ -2452,8 +2803,11 @@ async def update_model_settings(
             ),
         )
     if (
-        current_settings.qwen35_ane_prefill_cpu_enabled
-        and current_settings.qwen35_ane_prefill_fraction
+        ane_backend == "qwen"
+        and current_settings.qwen35_ane_prefill_cpu_enabled
+        and ane_prefill_fraction(
+            current_settings.qwen35_ane_prefill_fraction, entry.config_model_type
+        )
         * (2 if current_settings.qwen35_ane_prefill_fused_down else 1)
         + current_settings.qwen35_ane_prefill_cpu_fraction
         >= 1.0
@@ -2467,7 +2821,8 @@ async def update_model_settings(
             ),
         )
     if (
-        current_settings.qwen35_ane_prefill_cpu_enabled
+        ane_backend == "qwen"
+        and current_settings.qwen35_ane_prefill_cpu_enabled
         and current_settings.qwen35_ane_prefill_gdn
         and current_settings.qwen35_ane_prefill_gdn_fraction
         + current_settings.qwen35_ane_prefill_cpu_gdn_fraction
@@ -2476,6 +2831,17 @@ async def update_model_settings(
         raise HTTPException(
             status_code=400,
             detail="GDN ANE and CPU fractions must total less than 1.0.",
+        )
+    # MoE expert offload settings
+    if "moe_expert_offload_enabled" in sent:
+        current_settings.moe_expert_offload_enabled = (
+            request.moe_expert_offload_enabled or False
+        )
+    if "moe_expert_offload_resident_fraction" in sent:
+        current_settings.moe_expert_offload_resident_fraction = (
+            0.25
+            if request.moe_expert_offload_resident_fraction is None
+            else request.moe_expert_offload_resident_fraction
         )
     # SpecPrefill settings
     if "specprefill_enabled" in sent:
@@ -2637,7 +3003,10 @@ async def update_model_settings(
                     detail=f"MTP enabled but failed to read model config: {e}",
                 )
             model_type = cfg.get("model_type")
-            if not _is_mtp_compatible(cfg, model_type):
+            # qwen4_exp routes through the dedicated VLM Lightning MTP path
+            # (see _mtp_compat_for_model); skip the mlx-lm whitelist here but
+            # keep the mtp.* weight check below.
+            if model_type != "qwen4_exp" and not _is_mtp_compatible(cfg, model_type):
                 raise HTTPException(
                     status_code=400,
                     detail=(
@@ -2649,6 +3018,15 @@ async def update_model_settings(
                     ),
                 )
             if not _checkpoint_has_mtp_weights(entry.model_path):
+                if model_type == "qwen4_exp":
+                    raise HTTPException(
+                        status_code=400,
+                        detail=(
+                            "Qwen4-Exp Lightning MTP requires embedded mtp.* "
+                            "tensors; native nextn layers are not supported by "
+                            "its dedicated runtime."
+                        ),
+                    )
                 raise HTTPException(
                     status_code=400,
                     detail=(
@@ -2726,6 +3104,7 @@ async def update_model_settings(
     if "guided_grammar" in sent:
         grammar = request.guided_grammar.strip() if request.guided_grammar else None
         current_settings.guided_grammar = grammar or None
+    _validate_model_settings(entry, current_settings.to_dict())
     if request.is_pinned is not None:
         current_settings.is_pinned = request.is_pinned
         # Also update the engine pool entry
@@ -2969,6 +3348,64 @@ def _raise_if_alias_conflicts_exposed_profiles(
             )
 
 
+def _validate_model_settings(entry, settings):
+    from ..model_settings import validate_moe_expert_offload
+
+    try:
+        validate_moe_expert_offload(settings)
+        if settings.get("moe_expert_offload_enabled"):
+            from ..patches.moe_offload_compat import moe_offload_compatibility
+
+            supported, reason = moe_offload_compatibility(entry.model_path)
+            if not supported:
+                raise ValueError(reason)
+    except ValueError as error:
+        raise HTTPException(status_code=400, detail=str(error)) from error
+
+    if "qwen35_oq_a8_min_tokens" in settings:
+        value = settings["qwen35_oq_a8_min_tokens"]
+        if isinstance(value, bool) or not isinstance(value, int) or value < 1:
+            raise HTTPException(
+                status_code=400, detail="oQ A8 min tokens must be at least 1."
+            )
+    if settings.get("qwen35_oq_a8_enabled"):
+        config_type = str(getattr(entry, "config_model_type", "") or "")
+        config_type = config_type.lower().replace("-", "_")
+        if not config_type.startswith(("qwen3_5", "qwen3_6", "qwen3_8")):
+            raise HTTPException(
+                status_code=400,
+                detail=(
+                    "oQ A8 prefill is available only for Qwen3.5/3.6/3.8 models."
+                ),
+            )
+        if not _oq_a8_kernels_available():
+            raise HTTPException(
+                status_code=400,
+                detail=(
+                    "oQ A8 prefill needs the native Qwen3.5 prefill kernels and "
+                    "a Metal device with native INT8 tensor operations "
+                    "(M5-series or newer)."
+                ),
+            )
+        if settings.get("qwen35_ane_prefill_enabled"):
+            raise HTTPException(
+                status_code=400,
+                detail="ANE prefill and oQ A8 prefill cannot both be enabled.",
+            )
+    if any(key.startswith("qwen35_ane_prefill_") for key in settings):
+        try:
+            validate_ane_prefill(settings, entry.config_model_type)
+        except ValueError as error:
+            raise HTTPException(status_code=400, detail=str(error)) from error
+    if entry.config_model_type == "k2_horizon":
+        from ..patches.k2_horizon import validate_chat_template_kwargs
+
+        kwargs = dict(settings.get("chat_template_kwargs") or {})
+        if settings.get("enable_thinking") is not None:
+            kwargs["enable_thinking"] = settings["enable_thinking"]
+        validate_chat_template_kwargs(kwargs)
+
+
 @router.get("/api/models/{model_id}/profiles")
 async def list_model_profiles(
     model_id: str,
@@ -2988,7 +3425,8 @@ async def create_model_profile(
     from ..model_profiles import InvalidProfileNameError, filter_universal_fields
 
     mgr = _require_settings_manager()
-    _require_model(model_id)
+    entry = _require_model(model_id)
+    _validate_model_settings(entry, request.settings or {})
     engine_pool = _get_engine_pool()
     try:
         profile = mgr.save_profile(
@@ -3032,7 +3470,8 @@ async def update_model_profile(
     from ..model_profiles import InvalidProfileNameError, filter_universal_fields
 
     mgr = _require_settings_manager()
-    _require_model(model_id)
+    entry = _require_model(model_id)
+    _validate_model_settings(entry, request.settings or {})
     engine_pool = _get_engine_pool()
     try:
         updated = mgr.update_profile(
@@ -3091,7 +3530,11 @@ async def apply_model_profile(
     mgr = _require_settings_manager()
     entry = _require_model(model_id)
     is_diffusion_model = _entry_is_diffusion_model(entry)
-    sanitizer = _sanitize_diffusion_settings_dict if is_diffusion_model else None
+    def sanitizer(settings):
+        if is_diffusion_model:
+            _sanitize_diffusion_settings_dict(settings)
+        _validate_model_settings(entry, settings)
+
     try:
         applied = mgr.apply_profile(model_id, name, settings_sanitizer=sanitizer)
     except ValueError as e:
@@ -3471,6 +3914,7 @@ async def get_global_settings(is_admin: bool = Depends(require_admin)):
                     False,
                 )
             ),
+            "max_audio_upload_size": global_settings.server.max_audio_upload_size,
         },
         "model": {
             "model_dirs": [
@@ -3520,6 +3964,9 @@ async def get_global_settings(is_admin: bool = Depends(require_admin)):
         "mcp": {
             "config_path": global_settings.mcp.config_path,
             "expose_tools": global_settings.mcp.expose_tools,
+        },
+        "usage": {
+            "usage_history": global_settings.usage.usage_history,
         },
         "huggingface": {
             "endpoint": global_settings.huggingface.endpoint,
@@ -3632,6 +4079,60 @@ async def update_global_settings(
     if global_settings is None:
         raise HTTPException(status_code=503, detail="Server not initialized")
 
+    from ..utils.network import (
+        is_loopback_bind,
+        is_valid_bind_host,
+        network_auth_error,
+    )
+
+    candidate_host = (
+        request.host
+        if request.host is not None
+        else getattr(global_settings.server, "host", "127.0.0.1")
+    )
+    host_parts = [host.strip() for host in candidate_host.split(",") if host.strip()]
+    if not host_parts:
+        raise HTTPException(status_code=400, detail="Host cannot be empty")
+    for host in host_parts:
+        if not is_valid_bind_host(host):
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid host: {host!r} (must be a hostname or IP address)",
+            )
+
+    if request.api_key is not None:
+        is_valid, error_msg = validate_api_key(request.api_key)
+        if not is_valid:
+            raise HTTPException(status_code=400, detail=error_msg)
+    candidate_api_key = (
+        request.api_key
+        if request.api_key is not None
+        else global_settings.auth.api_key
+    )
+    candidate_skip_verification = (
+        request.skip_api_key_verification
+        if request.skip_api_key_verification is not None
+        else global_settings.auth.skip_api_key_verification
+    )
+    if auth_error := network_auth_error(
+        candidate_host,
+        candidate_api_key,
+        candidate_skip_verification,
+    ):
+        raise HTTPException(status_code=400, detail=auth_error)
+    if (
+        request.skip_api_key_verification is True
+        and not is_loopback_bind(_active_bind_host(global_settings))
+    ):
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "API key verification cannot be skipped while the running server "
+                "is bound to a non-loopback host. Save a loopback host and restart "
+                "the server first."
+            ),
+        )
+
     # Track which settings were applied at runtime
     runtime_applied: list[str] = []
     pending_embedding_batch_size: int | None = None
@@ -3639,17 +4140,6 @@ async def update_global_settings(
 
     # Apply server settings
     if request.host is not None:
-        from ..utils.network import is_valid_bind_host
-
-        parts = [h.strip() for h in request.host.split(",") if h.strip()]
-        if not parts:
-            raise HTTPException(status_code=400, detail="Host cannot be empty")
-        for part in parts:
-            if not is_valid_bind_host(part):
-                raise HTTPException(
-                    status_code=400,
-                    detail=f"Invalid host: {part!r} (must be a hostname or IP address)",
-                )
         global_settings.server.host = request.host
     if request.port is not None:
         global_settings.server.port = request.port
@@ -3717,6 +4207,23 @@ async def update_global_settings(
         global_settings.server.distributed_inference_enabled = (
             request.distributed_inference_enabled
         )
+    if request.max_audio_upload_size is not None:
+        from ..config import parse_size
+
+        try:
+            audio_upload_size = parse_size(request.max_audio_upload_size)
+        except (AttributeError, TypeError, ValueError) as exc:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid max_audio_upload_size: {exc}",
+            ) from exc
+        if audio_upload_size <= 0:
+            raise HTTPException(
+                status_code=400,
+                detail="max_audio_upload_size must be positive",
+            )
+        global_settings.server.max_audio_upload_size = request.max_audio_upload_size
+        runtime_applied.append("max_audio_upload_size")
 
     if request.server_aliases is not None:
         from ..utils.network import is_valid_alias
@@ -4102,6 +4609,18 @@ async def update_global_settings(
         global_settings.mcp.expose_tools = request.mcp_expose_tools
         runtime_applied.append("mcp_expose_tools")
 
+    # Usage history recording is applied at runtime (no restart needed).
+    # Disabling flushes pending aggregates and leaves usage.sqlite3 in place.
+    if request.usage_history is not None:
+        global_settings.usage.usage_history = request.usage_history
+        from ..server_metrics import get_server_metrics
+
+        history = get_server_metrics().usage_history
+        if history is not None:
+            # Disabling flushes to SQLite; keep that off the event loop.
+            await asyncio.to_thread(history.set_enabled, request.usage_history)
+        runtime_applied.append("usage_history")
+
     # Apply HuggingFace settings (Live - immediately applied via env var)
     if request.hf_endpoint is not None:
         global_settings.huggingface.endpoint = request.hf_endpoint
@@ -4457,10 +4976,6 @@ async def update_global_settings(
     if request.api_key is not None:
         from ..server import _server_state
 
-        is_valid, error_msg = validate_api_key(request.api_key)
-        if not is_valid:
-            raise HTTPException(status_code=400, detail=error_msg)
-
         global_settings.auth.api_key = request.api_key
         _server_state.api_key = request.api_key
         runtime_applied.append("api_key")
@@ -4799,6 +5314,44 @@ def _parse_commits_from_pyproject(pyproject_path, packages: dict[str, str]) -> d
     return commits
 
 
+def _distributed_runtime_cache_stats(engine) -> dict | None:
+    """Rank zero's telemetry cache counters as a runtime-cache row source.
+
+    Distributed engines own no local scheduler, so the paged hot/SSD stats do
+    not exist for them. What rank zero reports is its per-rank prompt cache
+    (in-memory LRU) and prompt-snapshot store — returned here under a
+    separate ``rank_prompt_cache`` key so callers never confuse it with the
+    tiered hot/SSD cache columns or aggregates.
+    """
+
+    get_live = getattr(engine, "get_live_metrics", None)
+    if not callable(get_live):
+        return None
+    try:
+        live = get_live()
+    except Exception:  # noqa: BLE001
+        logger.debug("cluster live metrics failed", exc_info=True)
+        return None
+    if live is None or live.get("stale"):
+        return None
+    metrics = live.get("metrics")
+    cache = metrics.get("cache") if isinstance(metrics, dict) else None
+    if not isinstance(cache, dict):
+        return None
+    return {
+        "rank_prompt_cache": {
+            "entries": int(cache.get("entries", 0) or 0),
+            "bytes": int(cache.get("bytes", 0) or 0),
+            "lookups": int(cache.get("lookups", 0) or 0),
+            "hits": int(cache.get("hits", 0) or 0),
+            "misses": int(cache.get("misses", 0) or 0),
+            "hit_rate": float(cache.get("hit_rate", 0.0) or 0.0),
+            "tokens_reused": int(cache.get("tokens_reused", 0) or 0),
+            "affinity": str(cache.get("affinity", "none")),
+        },
+    }
+
+
 def _build_runtime_cache_observability(
     global_settings,
     model_filter: str = "",
@@ -4893,6 +5446,12 @@ def _build_runtime_cache_observability(
                 )
                 continue
 
+        if not runtime_stats and model_info.get("cluster"):
+            # Distributed engines own no local scheduler; fall back to rank
+            # zero's telemetry cache counters (kept out of the tiered hot/SSD
+            # columns and aggregates — see _distributed_runtime_cache_stats).
+            runtime_stats = _distributed_runtime_cache_stats(entry.engine)
+
         if not runtime_stats:
             continue
 
@@ -4961,6 +5520,12 @@ def _build_runtime_cache_observability(
         gdn_last_restore = prefix_stats.get("gdn_last_restore")
         if not isinstance(gdn_last_restore, dict):
             gdn_last_restore = None
+        boundary_snapshots = runtime_stats.get("boundary_snapshots")
+        if not isinstance(boundary_snapshots, dict):
+            boundary_snapshots = None
+        last_prefix_lookup = runtime_stats.get("last_prefix_lookup")
+        if not isinstance(last_prefix_lookup, dict):
+            last_prefix_lookup = None
 
         # Keep the cache fields at the model-row level so the dashboard and
         # external admin clients can inspect them without knowing scheduler's
@@ -5036,6 +5601,11 @@ def _build_runtime_cache_observability(
             "gdn_staging": gdn_staging_payload,
         }
 
+        if boundary_snapshots is not None:
+            model_payload["boundary_snapshots"] = boundary_snapshots
+        if last_prefix_lookup is not None:
+            model_payload["last_prefix_lookup"] = last_prefix_lookup
+
         for field in ssd_counter_fields:
             if field in ssd_stats:
                 model_payload[field] = int(ssd_stats.get(field, 0) or 0)
@@ -5043,6 +5613,15 @@ def _build_runtime_cache_observability(
         cache_rates = runtime_stats.get("cache_rates")
         if cache_rates:
             model_payload["cache_rates"] = cache_rates
+
+        rank_prompt_cache = runtime_stats.get("rank_prompt_cache")
+        if isinstance(rank_prompt_cache, dict):
+            # Label the row so the UI presents these as rank-local prompt
+            # cache/snapshot stats, never as the tiered hot/SSD cache. Every
+            # tiered numeric field above stays 0, so the hot-cache and SSD
+            # aggregates are unaffected.
+            model_payload["cache_tier"] = "rank-prompt-snapshot"
+            model_payload["rank_prompt_cache"] = rank_prompt_cache
 
         payload["models"].append(model_payload)
         payload["total_num_files"] += model_payload["num_files"]
@@ -5079,19 +5658,40 @@ def _build_runtime_cache_observability(
         try:
             num_files = 0
             total_bytes = 0
-            for subdir in "0123456789abcdef":
-                subdir_path = cache_dir / subdir
-                if not subdir_path.exists():
-                    continue
-                for f in subdir_path.glob("*.safetensors"):
-                    num_files += 1
-                    total_bytes += f.stat().st_size
+            for root in (cache_dir, cache_dir / "deepseek_v41_ced_v1"):
+                for subdir in "0123456789abcdef":
+                    subdir_path = root / subdir
+                    if not subdir_path.exists():
+                        continue
+                    for f in subdir_path.glob("*.safetensors"):
+                        num_files += 1
+                        total_bytes += f.stat().st_size
             payload["total_num_files"] = num_files
             payload["total_size_bytes"] = total_bytes
         except Exception as exc:
             logger.warning("Failed to scan SSD cache directory: %s", exc)
 
     return payload
+
+
+@router.get("/api/usage")
+def get_usage_history(
+    range: Literal["today", "yesterday", "7d", "30d", "90d", "month"] = "today",
+    model: str = "",
+    include_details: bool = False,
+    is_admin: bool = Depends(require_admin),
+):
+    """Local hourly serving history. Sync route keeps SQLite off the event loop."""
+    from ..server_metrics import get_server_metrics
+
+    history = get_server_metrics().usage_history
+    if history is None:
+        raise HTTPException(status_code=503, detail="Usage history unavailable")
+    try:
+        # Exact canonical IDs allow filtering historical models no longer loaded.
+        return history.query(range, model, include_details=include_details)
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail="Usage history unavailable") from exc
 
 
 @router.get("/api/stats")
@@ -5252,6 +5852,28 @@ def _build_active_models_data() -> dict:
                 activity_requests = snapshot.get("active_requests", 0)
                 activities = snapshot.get("activities", [])
 
+        # Cluster (distributed) engines own no local scheduler or collectors;
+        # their live stats come from rank zero's telemetry marker instead.
+        cluster_live = None
+        if (
+            model_info.get("cluster")
+            and entry is not None
+            and entry.engine is not None
+        ):
+            get_live = getattr(entry.engine, "get_live_metrics", None)
+            if callable(get_live):
+                try:
+                    cluster_live = get_live()
+                except Exception:  # noqa: BLE001
+                    logger.debug("cluster live metrics failed", exc_info=True)
+        # A stale marker proves nothing about the ranks' current state; show
+        # the model as idle rather than repeating outdated rates.
+        cluster_metrics = (
+            cluster_live["metrics"]
+            if cluster_live is not None and not cluster_live.get("stale")
+            else None
+        )
+
         prefilling = tracker.get_model_progress(model_id)
         prefilling_ids = {p["request_id"] for p in prefilling}
         if has_scheduler_snapshot:
@@ -5261,6 +5883,10 @@ def _build_active_models_data() -> dict:
         if has_scheduler_snapshot or collector_request_ids:
             active_requests = len(active_request_ids)
         active_requests += activity_requests
+        if cluster_metrics is not None:
+            # Rank zero's count is the only live source for distributed rows.
+            rank_active = cluster_metrics.get("active_requests", 0)
+            active_requests = int(rank_active) if isinstance(rank_active, int) else 0
 
         # Generating = active requests that finished prefill.
         generating = []
@@ -5287,6 +5913,40 @@ def _build_active_models_data() -> dict:
                     "max_tokens": getattr(req, "max_tokens", None) if req else None,
                 }
             )
+
+        if cluster_metrics is not None:
+            # Synthesize scheduler-shaped prefill/generate rows from rank
+            # zero's most recent request sample so the existing sub-row
+            # rendering applies unchanged.
+            last = cluster_metrics.get("last_request")
+            if isinstance(last, dict) and last.get("status") == "running":
+                progress = last.get("prefill_progress")
+                if isinstance(progress, dict) and progress.get("active"):
+                    prefilling.append(
+                        {
+                            "request_id": "rank0",
+                            "processed": progress.get("processed", 0),
+                            "total": progress.get("total", 0),
+                            "speed": progress.get("speed", 0.0),
+                            "eta": progress.get("eta"),
+                            "elapsed": progress.get("elapsed"),
+                            "detail": "cluster prefill",
+                        }
+                    )
+                elif last.get("decode_tps"):
+                    generating.append(
+                        {
+                            "request_id": "rank0",
+                            "elapsed_seconds": last.get("elapsed_seconds"),
+                            "generated_tokens": last.get("completion_tokens", 0),
+                            "tokens_per_second": last.get("decode_tps", 0.0),
+                            "last_activity_age_seconds": cluster_live.get(
+                                "age_seconds"
+                            ),
+                            "prompt_tokens": last.get("prompt_tokens", 0),
+                            "max_tokens": None,
+                        }
+                    )
 
         loading_started_at = model_info.get("loading_started_at")
         loading_elapsed_seconds = (
@@ -5389,6 +6049,11 @@ def _build_active_models_data() -> dict:
                 "idle_seconds": idle_seconds,
                 "ttl_remaining_seconds": ttl_remaining_seconds,
                 "dflash": dflash_info,
+                "cluster": (
+                    {**model_info["cluster"], "live": cluster_live}
+                    if model_info.get("cluster")
+                    else None
+                ),
             }
         )
 
@@ -5470,8 +6135,8 @@ async def clear_alltime_stats(is_admin: bool = Depends(require_admin)):
     return {"status": "ok"}
 
 
-def _iter_loaded_scheduler_records():
-    """Yield (model_id, scheduler, core) for each loaded model.
+def _iter_loaded_engine_records():
+    """Yield (model_id, scheduler-or-None, core) for each loaded model.
 
     Traverses the internal engine hierarchy: pool entry → async engine →
     core engine → scheduler.
@@ -5486,9 +6151,26 @@ def _iter_loaded_scheduler_records():
         entry = engine_pool._entries.get(model_id)
         if entry is None or entry.engine is None:
             continue
-        async_core = getattr(entry.engine, "_engine", None)
-        core = getattr(async_core, "engine", None) if async_core is not None else None
+        # DistributedBatchedEngine is stored directly in the pool; local
+        # batched engines retain the historical async-wrapper chain.
+        direct = entry.engine
+        async_core = getattr(direct, "_engine", None)
+        core = (
+            direct
+            if callable(getattr(direct, "clear_prompt_caches", None))
+            else getattr(async_core, "engine", None)
+            if async_core is not None
+            else None
+        )
         scheduler = getattr(core, "scheduler", None) if core is not None else None
+        if core is not None:
+            yield model_id, scheduler, core
+
+
+def _iter_loaded_scheduler_records():
+    """Yield local scheduler records, excluding distributed proxy engines."""
+
+    for model_id, scheduler, core in _iter_loaded_engine_records():
         if scheduler is not None:
             yield model_id, scheduler, core
 
@@ -5511,8 +6193,24 @@ async def clear_ssd_cache(is_admin: bool = Depends(require_admin)):
     is loaded.
     """
     total_deleted = 0
+    distributed_ranks = 0
+    distributed_failures = []
 
-    for model_id, scheduler in _iter_loaded_schedulers():
+    for model_id, scheduler, core in _iter_loaded_engine_records():
+        distributed_clear = getattr(core, "clear_prompt_caches", None)
+        if callable(distributed_clear):
+            try:
+                report = await distributed_clear(ssd=True)
+                total_deleted += int(report.get("ssd_deleted", 0))
+                distributed_ranks += len(report.get("ranks", ()))
+            except Exception as exc:
+                logger.warning(
+                    "Failed to clear distributed SSD cache for model '%s': %s",
+                    model_id,
+                    exc,
+                )
+                distributed_failures.append(f"{model_id}: {exc}")
+            continue
         ssd_manager = getattr(scheduler, "paged_ssd_cache_manager", None)
         if ssd_manager is not None:
             try:
@@ -5532,20 +6230,64 @@ async def clear_ssd_cache(is_admin: bool = Depends(require_admin)):
         )
         if cache_dir.exists():
             try:
-                for subdir in "0123456789abcdef":
-                    subdir_path = cache_dir / subdir
-                    if not subdir_path.exists():
-                        continue
-                    for f in subdir_path.glob("*.safetensors"):
-                        try:
-                            f.unlink()
-                            total_deleted += 1
-                        except OSError:
-                            pass
+                for root in (cache_dir, cache_dir / "deepseek_v41_ced_v1"):
+                    for subdir in "0123456789abcdef":
+                        subdir_path = root / subdir
+                        if not subdir_path.exists():
+                            continue
+                        for f in subdir_path.glob("*.safetensors"):
+                            try:
+                                f.unlink()
+                                total_deleted += 1
+                            except OSError:
+                                pass
             except Exception as exc:
                 logger.warning("Failed to clean SSD cache directory: %s", exc)
 
-    return {"status": "ok", "total_deleted": total_deleted}
+        # When no distributed engine is resident, no rank-local maintenance
+        # endpoint exists. Clear the coordinator's cold cluster trees directly
+        # and ask every configured peer to resolve and clear its own paths.
+        if distributed_ranks == 0:
+            cluster_roots = (
+                cache_dir / "cluster-prompt-snapshots",
+                Path(global_settings.base_path)
+                / "cluster/runtime/prompt-cache-ssd",
+            )
+            for cluster_root in cluster_roots:
+                if not cluster_root.exists():
+                    continue
+                try:
+                    total_deleted += sum(
+                        1 for item in cluster_root.rglob("*") if item.is_file()
+                    )
+                    shutil.rmtree(cluster_root)
+                except Exception as exc:
+                    logger.warning(
+                        "Failed to clean distributed SSD cache directory %s: %s",
+                        cluster_root,
+                        exc,
+                    )
+            try:
+                remote_deleted, configured_ranks = await asyncio.to_thread(
+                    _clear_cold_remote_cluster_cache_roots,
+                    cluster_roots,
+                )
+                total_deleted += remote_deleted
+                distributed_ranks = configured_ranks
+            except Exception as exc:
+                logger.warning("Failed to clean cold peer SSD cache: %s", exc)
+                distributed_failures.append(f"cold cluster peers: {exc}")
+
+    if distributed_failures:
+        raise HTTPException(
+            status_code=503,
+            detail="; ".join(distributed_failures)[:1000],
+        )
+    return {
+        "status": "ok",
+        "total_deleted": total_deleted,
+        "distributed_ranks": distributed_ranks,
+    }
 
 
 @router.post("/api/hot-cache/clear")
@@ -5565,7 +6307,24 @@ async def clear_hot_cache(is_admin: bool = Depends(require_admin)):
 
     footprint_before = get_phys_footprint()
     total_cleared = 0
+    distributed_ranks = 0
+    distributed_failures = []
     reclaim_targets = []
+    for model_id, scheduler, core in _iter_loaded_engine_records():
+        distributed_clear = getattr(core, "clear_prompt_caches", None)
+        if not callable(distributed_clear):
+            continue
+        try:
+            report = await distributed_clear(hot=True)
+            total_cleared += int(report.get("hot_cleared", 0))
+            distributed_ranks += len(report.get("ranks", ()))
+        except Exception as exc:
+            logger.warning(
+                "Failed to clear distributed hot cache for model '%s': %s",
+                model_id,
+                exc,
+            )
+            distributed_failures.append(f"{model_id}: {exc}")
     for model_id, scheduler, core in _iter_loaded_scheduler_records():
         ssd_manager = getattr(scheduler, "paged_ssd_cache_manager", None)
         if ssd_manager is not None and hasattr(ssd_manager, "clear_hot_cache"):
@@ -5622,10 +6381,16 @@ async def clear_hot_cache(is_admin: bool = Depends(require_admin)):
         await loop.run_in_executor(get_mlx_executor(), _sync_and_clear_cache)
     bytes_reclaimed = max(0, footprint_before - get_phys_footprint())
 
+    if distributed_failures:
+        raise HTTPException(
+            status_code=503,
+            detail="; ".join(distributed_failures)[:1000],
+        )
     return {
         "status": "ok",
         "total_cleared": total_cleared,
         "bytes_reclaimed": bytes_reclaimed,
+        "distributed_ranks": distributed_ranks,
     }
 
 
@@ -6673,7 +7438,7 @@ async def start_ane_tuning(
     request: Request,
     is_admin: bool = Depends(require_admin),
 ):
-    """Tune the Qwen ANE/GPU split without changing persisted settings."""
+    """Tune the model’s ANE/GPU split without changing persisted settings."""
     from .accuracy_benchmark import get_queue_status
     from .ane_tuning import (
         ANETuningRequest,
@@ -6733,6 +7498,7 @@ async def start_ane_tuning(
             detail=f"Model {tuning_request.model_id} is not a supported language model",
         )
 
+    tuning_request.backend = "k2" if entry.config_model_type == "k2_horizon" else "qwen"
     cleanup_old_runs()
     run = create_run(tuning_request)
     run.task = asyncio.create_task(run_tuning(run, engine_pool))
@@ -6766,6 +7532,8 @@ async def cancel_ane_tuning(
         raise HTTPException(
             status_code=400, detail=f"ANE tuning is not running ({run.status})"
         )
+    if run.phase == "cleaning_up":
+        return {"status": "cleaning_up", "tuning_id": tuning_id}
     if run.task is not None and not run.task.done():
         run.task.cancel()
     return {"status": "cancelled", "tuning_id": tuning_id}
