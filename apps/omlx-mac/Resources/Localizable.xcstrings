@@ -15,6 +15,12 @@
             "state" : "translated",
             "value" : "Обработка промпта K2 на ANE"
           }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "K2 ANE 提示词处理"
+          }
         }
       }
     },
@@ -31,6 +37,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Использует ANE для предзаполнения плотных MLP и общих экспертов. Внимание и декодирование остаются на GPU. Применяется после перезагрузки модели."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "使用 ANE 处理稠密与共享专家 MLP 的预填充。注意力和解码仍在 GPU 上。重新加载后生效。"
           }
         }
       }
@@ -49,6 +61,12 @@
             "state" : "translated",
             "value" : "Плотные MLP на ANE"
           }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ANE 上的稠密 MLP"
+          }
         }
       }
     },
@@ -65,6 +83,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Общие MLP на ANE"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ANE 上的共享 MLP"
           }
         }
       }
@@ -2401,7 +2425,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "CMMLU (中文)"
+            "value" : "CMMLU（中文）"
           }
         }
       }
@@ -2425,7 +2449,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "JMMLU (日语)"
+            "value" : "JMMLU（日语）"
           }
         }
       }
@@ -2449,7 +2473,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "KMMLU (韩语)"
+            "value" : "KMMLU（韩语）"
           }
         }
       }
@@ -6112,7 +6136,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "https://hf-mirror.com  （空 = huggingface.co）"
+            "value" : "https://hf-mirror.com （空 = huggingface.co）"
           }
         }
       }
@@ -6256,7 +6280,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "https://modelscope.cn  （空 = ModelScope 默认值）"
+            "value" : "https://modelscope.cn （空 = ModelScope 默认值）"
           }
         }
       }
@@ -12768,7 +12792,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%1$@ 配置文件 · 设置: %2$lld"
+            "value" : "%1$@ 配置文件 · 设置：%2$lld"
           }
         }
       }
@@ -12864,7 +12888,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "聊天模板 · 覆盖: %lld"
+            "value" : "聊天模板 · 覆盖：%lld"
           }
         }
       }
@@ -12888,7 +12912,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "强制 CT · 键: %lld"
+            "value" : "强制 CT · 键：%lld"
           }
         }
       }
@@ -18039,6 +18063,12 @@
             "state" : "translated",
             "value" : "0.0.0.0 & :: (все сети)"
           }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "0.0.0.0 & ::（所有网络）"
+          }
         }
       }
     },
@@ -19903,7 +19933,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "参数: %lld"
+            "value" : "参数：%lld"
           }
         }
       }
@@ -20253,6 +20283,12 @@
             "state" : "translated",
             "value" : "Required because resident loading exceeds the configured model-memory limit."
           }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "必需，因为常驻加载超出了配置的模型内存上限。"
+          }
         }
       }
     },
@@ -20265,6 +20301,12 @@
             "state" : "translated",
             "value" : "SSD N-gram Offload (Qwen4 only)"
           }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "SSD N-gram 卸载（仅 Qwen4）"
+          }
         }
       }
     },
@@ -20276,6 +20318,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Keep the PLE N-gram table on SSD to save memory. Prefill can be slower after context changes."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "将 PLE N-gram 表保留在 SSD 上以节省内存。上下文变化后预填充可能变慢。"
           }
         }
       }
