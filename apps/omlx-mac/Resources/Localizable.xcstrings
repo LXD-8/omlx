@@ -1,6 +1,162 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "app.command.close_window" : {
+      "comment" : "App menu command that hides all windows and drops the Dock icon",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Close Window"
+          }
+        }
+      }
+    },
+    "common.app_name" : {
+      "comment" : "Product name used as the app logo accessibility label and the About screen title",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "oMLX"
+          }
+        }
+      }
+    },
+    "common.copy.help" : {
+      "comment" : "Tooltip on the code chip explaining that clicking copies the value",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Click to copy"
+          }
+        }
+      }
+    },
+    "settings.experimental.qwen_ane.tuner.allow_ane_gdn" : {
+      "comment" : "ANE tuner override: allow GDN layers on the ANE",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Allow GDN on ANE"
+          }
+        }
+      }
+    },
+    "settings.experimental.qwen_ane.tuner.allow_cpu_down" : {
+      "comment" : "ANE tuner override: allow the down projection on the CPU",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Allow CPU down projection"
+          }
+        }
+      }
+    },
+    "settings.experimental.qwen_ane.tuner.allow_cpu_gate" : {
+      "comment" : "ANE tuner override: allow the gate and up projections on the CPU",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Allow CPU gate/up"
+          }
+        }
+      }
+    },
+    "settings.experimental.qwen_ane.tuner.allow_cpu_gdn" : {
+      "comment" : "ANE tuner override: allow GDN layers on the CPU",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Allow GDN on CPU"
+          }
+        }
+      }
+    },
+    "settings.experimental.qwen_ane.tuner.allow_cpu_offload" : {
+      "comment" : "ANE tuner override: allow offloading work to the CPU",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Allow CPU offload"
+          }
+        }
+      }
+    },
+    "settings.experimental.qwen_ane.tuner.allow_cpu_shared" : {
+      "comment" : "ANE tuner override: allow performance-aware CPU scheduling",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Allow performance-aware CPU scheduling"
+          }
+        }
+      }
+    },
+    "settings.experimental.qwen_ane.tuner.menu" : {
+      "comment" : "Menu label for hardware overrides in the ANE split tuner",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tuner overrides"
+          }
+        }
+      }
+    },
+    "settings.experimental.qwen_ane.tuner.tune_again" : {
+      "comment" : "Button that re-runs the ANE split tuner",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tune again"
+          }
+        }
+      }
+    },
+    "settings.experimental.qwen_ane.tuner.tune_for_mac" : {
+      "comment" : "Button that starts ANE split tuning for the current Mac",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tune for this Mac"
+          }
+        }
+      }
+    },
+    "settings.experimental.qwen_ane.tuner.use_result" : {
+      "comment" : "Button that applies the ANE tuner recommendation",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Use result"
+          }
+        }
+      }
+    },
     "settings.experimental.k2_ane.label" : {
       "extractionState" : "manual",
       "localizations" : {
