@@ -617,6 +617,8 @@ final class MenubarControllerPortTests: XCTestCase {
     func testWebAdminURLPercentEncodesToken() throws {
         // A token with URL-reserved characters must survive intact — raw
         // string interpolation would corrupt it; URLComponents encodes it.
+        // The value below is a deliberate worst case, not a shape a real
+        // serializer token takes (those are URL-safe base64).
         let url = try XCTUnwrap(
             MenubarController.webAdminURL(host: "127.0.0.1", port: 8000, authToken: "a+b/c&d")
         )

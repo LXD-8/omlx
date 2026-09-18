@@ -1450,9 +1450,10 @@ extension MenubarController {
     /// `URLComponents.queryItems` percent-encodes the token, so a token
     /// containing `&`, `=`, `/`, spaces etc. is transmitted intact. The one
     /// exception is `+`: URLComponents leaves it unescaped and servers
-    /// decode `+` as a space (form-urlencoded semantics), which would
-    /// corrupt a token containing `+` — `URLSafeTimedSerializer` emits
-    /// base64, so that is a real case. We escape it explicitly below.
+    /// decode a bare `+` as a space (form-urlencoded semantics). A
+    /// `URLSafeTimedSerializer` token is URL-safe base64 — `-` and `_`, never
+    /// `+` — so today's tokens cannot hit this, but we escape it explicitly
+    /// below so the URL stays correct for any token source.
     ///
     /// Internal (not private) so `MenubarControllerPortTests` can exercise
     /// it without a live `NSStatusBar`.
