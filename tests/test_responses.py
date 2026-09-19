@@ -802,40 +802,57 @@ class TestConvertResponsesTools:
         assert "parameters" not in result[0]["function"]
 
     @pytest.mark.parametrize(
-        "tool_type",
+        "tool_type,label",
         [
-            "local_shell",
-            "mcp",
-            "web_search",
-            "web_search_preview",
-            "file_search",
-            "computer_use_preview",
-            "code_interpreter",
-            "image_generation",
-            "custom",
-            "not_a_real_tool_type",
+            ("local_shell", "local_shell (hosted)"),
+            ("mcp", "mcp (hosted)"),
+            ("web_search", "web_search (hosted)"),
+            ("web_search_preview", "web_search_preview (hosted)"),
+            ("file_search", "file_search (hosted)"),
+            ("computer_use_preview", "computer_use_preview (hosted)"),
+            ("code_interpreter", "code_interpreter (hosted)"),
+            ("image_generation", "image_generation (hosted)"),
+            ("custom", "custom (hosted)"),
+            ("not_a_real_tool_type", "not_a_real_tool_type (unknown type)"),
         ],
     )
-    def test_unsupported_tool_types_are_rejected_by_name(self, tool_type):
-        """A hosted/unknown tool must fail loudly, never be silently dropped.
+    def test_unsupported_tool_types_are_accepted_but_not_exposed(
+        self, tool_type, label
+    ):
+        """A declaration the model cannot use is accepted and named, not 400.
 
-        The old contract skipped these, so a client that declared a tool was
-        told the request succeeded while the model never saw it (P0).
+        Declaring a capability is separate from using it: the model never sees
+        the tool, so an unused declaration cannot change the response. Codex
+        declares ``web_search`` unconditionally, so rejecting it made the
+        endpoint unusable. The degradation is reported instead of silent.
         """
-        with pytest.raises(InvalidRequestError) as excinfo:
-            convert_responses_tools([ResponsesTool(type=tool_type)])
-        assert tool_type in str(excinfo.value)
-        assert excinfo.value.field == "tools"
+        unexposed = []
+        result = convert_responses_tools(
+            [ResponsesTool(type=tool_type)], unexposed=unexposed
+        )
+        assert result is None
+        assert unexposed == [label]
 
-    def test_supported_and_unsupported_tools_mixed_still_rejects(self):
-        """One bad tool fails the request rather than dropping just that tool."""
+    def test_unexposed_label_cannot_inject_a_header(self):
+        """A client-supplied type is constrained to header-safe characters."""
+        unexposed = []
+        convert_responses_tools(
+            [ResponsesTool(type='web"search\r\nX-Evil: 1')], unexposed=unexposed
+        )
+        assert unexposed == ["web_search__X-Evil:_1 (unknown type)"]
+        for label in unexposed:
+            assert '"' not in label and "\r" not in label and "\n" not in label
+
+    def test_supported_and_unsupported_tools_mixed_keeps_supported(self):
+        """A supported tool is still exposed alongside an unexposed declaration."""
+        unexposed = []
         tools = [
             ResponsesTool(type="function", name="fn_a"),
             ResponsesTool(type="web_search"),
         ]
-        with pytest.raises(InvalidRequestError) as excinfo:
-            convert_responses_tools(tools)
-        assert "web_search" in str(excinfo.value)
+        result = convert_responses_tools(tools, unexposed=unexposed)
+        assert [t["function"]["name"] for t in result] == ["fn_a"]
+        assert unexposed == ["web_search (hosted)"]
 
     def test_function_tool_without_a_name_is_rejected(self):
         with pytest.raises(InvalidRequestError) as excinfo:
@@ -926,7 +943,9 @@ class TestConvertResponsesTools:
         assert "mcp__demo__" in str(excinfo.value)
         assert excinfo.value.field == "tools"
 
-    def test_namespace_with_hosted_member_is_rejected(self):
+    def test_namespace_with_hosted_member_is_dropped_and_reported(self):
+        """A hosted namespace member follows the same declared-vs-used rule."""
+        unexposed = []
         tools = [
             ResponsesTool(
                 type="namespace",
@@ -934,12 +953,13 @@ class TestConvertResponsesTools:
                 tools=[{"type": "web_search"}],
             )
         ]
-        with pytest.raises(InvalidRequestError) as excinfo:
-            convert_responses_tools(tools)
-        assert "web_search" in str(excinfo.value)
-        assert "mcp__demo__" in str(excinfo.value)
+        result = convert_responses_tools(tools, unexposed=unexposed)
+        assert result is None
+        assert unexposed == ["web_search (hosted) in namespace mcp__demo__"]
 
-    def test_nested_namespace_is_rejected(self):
+    def test_nested_namespace_is_dropped_and_reported(self):
+        """A nested namespace is never exposed, so it too is accepted."""
+        unexposed = []
         tools = [
             ResponsesTool(
                 type="namespace",
@@ -947,9 +967,9 @@ class TestConvertResponsesTools:
                 tools=[{"type": "namespace", "name": "inner__"}],
             )
         ]
-        with pytest.raises(InvalidRequestError) as excinfo:
-            convert_responses_tools(tools)
-        assert "nested namespace" in str(excinfo.value)
+        result = convert_responses_tools(tools, unexposed=unexposed)
+        assert result is None
+        assert unexposed == ["namespace (nested) in namespace mcp__demo__"]
 
     def test_split_namespace_tool_name(self):
         registry = ToolBindingRegistry()
@@ -1897,8 +1917,9 @@ class TestResponsesRequest:
         assert len(req.tools) == 2
         assert req.tools[0].type == "local_shell"
         assert req.tools[1].name == "read_file"
-        # The body parses, but local_shell has no local executor: the request
-        # must be refused rather than answering as if the tool were available.
-        with pytest.raises(InvalidRequestError) as excinfo:
-            convert_responses_tools(req.tools)
-        assert "local_shell" in str(excinfo.value)
+        # local_shell has no local executor: its declaration is accepted but
+        # never exposed, and is named so the caller can be warned.
+        unexposed = []
+        result = convert_responses_tools(req.tools, unexposed=unexposed)
+        assert [t["function"]["name"] for t in result] == ["read_file"]
+        assert unexposed == ["local_shell (hosted)"]

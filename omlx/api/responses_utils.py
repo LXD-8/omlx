@@ -4,6 +4,7 @@
 import copy
 import json
 import logging
+import re
 from collections import OrderedDict
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, Union
@@ -177,14 +178,22 @@ def _consolidate_system_messages(
 # Capability Validation
 # =============================================================================
 
-# Tool types the endpoint can expose to a local model as callable functions.
+# A "namespace" tool is a container of client-executed function tools; oMLX
+# expands its members eagerly.
 _CONTAINER_TOOL_TYPES = frozenset({"namespace"})
 # ``tool_search`` asks the host to lazily load namespace members. oMLX expands
-# every member eagerly, so the tool is redundant, not unsupported.
-_DEGRADED_TOOL_TYPES = frozenset({"tool_search"})
-# Types a host would execute on the server. oMLX has no executor for them, and
-# a chat template cannot emit their wire shapes, so they are rejected by name.
-_UNSUPPORTED_TOOL_TYPES = frozenset(
+# every member eagerly, so the capability the declaration asks for is already
+# present and dropping it is not a degradation: it is accepted silently.
+_REDUNDANT_TOOL_TYPES = frozenset({"tool_search"})
+# Hosted/server-executed tool types. oMLX has no executor for them and a chat
+# template cannot emit their wire shapes, so they can never be exposed to the
+# model. They are still ACCEPTED as declarations -- an unused declaration
+# provably cannot change the model's behaviour -- and ``convert_responses_tools``
+# records them so the caller is warned (see ``_unexposed_tool_label``) instead
+# of the request failing. A declaration of any other unrecognised type follows
+# the same path for the same reason; the set below only lets the warning mark
+# the types the Responses schema defines as hosted.
+_HOSTED_TOOL_TYPES = frozenset(
     {
         "local_shell",
         "custom",
@@ -231,25 +240,44 @@ _UNSUPPORTED_INPUT_ITEM_TYPES = frozenset(
 _DEGRADED_INCLUDE_VALUES = frozenset({"reasoning.encrypted_content"})
 
 
-def _unsupported_tool_error(tool_type: str, *, namespace: Optional[str] = None):
-    location = f"tool type {tool_type!r}"
+_WARNING_LABEL_UNSAFE = re.compile(r"[^A-Za-z0-9_.:/+-]")
+_WARNING_LABEL_LIMIT = 80
+
+
+def _warning_label_token(value: str) -> str:
+    """Make a client-supplied identifier safe inside a quoted Warning header."""
+    cleaned = _WARNING_LABEL_UNSAFE.sub("_", value)[:_WARNING_LABEL_LIMIT]
+    return cleaned or "?"
+
+
+def _unexposed_tool_label(tool_type: str, *, namespace: Optional[str] = None) -> str:
+    """Name one accepted-but-unexposed tool declaration for the Warning header.
+
+    Every character is constrained to a header-safe set so a ``type`` taken
+    verbatim from the request body cannot inject a header, and the label says
+    whether the type is a known hosted one, an unrecognised type, or a nested
+    namespace, so the caller can tell a typo from an unimplemented capability.
+    """
+    if tool_type in _HOSTED_TOOL_TYPES:
+        label = f"{_warning_label_token(tool_type)} (hosted)"
+    elif tool_type in _CONTAINER_TOOL_TYPES:
+        label = f"{_warning_label_token(tool_type)} (nested)"
+    else:
+        label = f"{_warning_label_token(tool_type)} (unknown type)"
     if namespace:
-        location = f"tool type {tool_type!r} in namespace {namespace!r}"
-    return InvalidRequestError(
-        f"{location} is not supported by /v1/responses. oMLX can expose "
-        "client-executed function tools and namespace groups of function "
-        "tools; hosted/server-executed tools are not available locally. "
-        "Remove the tool or declare it as a function tool.",
-        field="tools",
-    )
+        label += f" in namespace {_warning_label_token(namespace)}"
+    return label
 
 
 def validate_responses_request(request: ResponsesRequest) -> None:
-    """Reject request capabilities the endpoint cannot honour.
+    """Reject request capabilities the endpoint cannot honour at all.
 
-    Anything not implemented here is refused with a 400 naming the field rather
-    than being accepted and ignored, so a client never believes a tool,
-    truncation mode or hosted feature is active when it is not.
+    Only capabilities that cannot be silently degraded are refused with a 400
+    naming the field. Tool *declarations* are handled separately: a declaration
+    the model cannot use is accepted but not exposed and reported through the
+    Warning header (see ``convert_responses_tools``), while request modes that
+    would change the meaning of the response (``truncation: "auto"``,
+    ``tool_choice: "required"`` and so on) still fail loudly here.
     """
     tool_choice = request.tool_choice
     if isinstance(tool_choice, str):
@@ -677,9 +705,11 @@ def _as_responses_tool(tool: Any) -> Optional[ResponsesTool]:
 
 
 def _register_flat_tool(
-    tool: ResponsesTool, registry: ToolBindingRegistry
+    tool: ResponsesTool,
+    registry: ToolBindingRegistry,
+    unexposed: List[str],
 ) -> List[Dict[str, Any]]:
-    """Register one top-level tool, or reject its type by name."""
+    """Register one top-level tool, or record it as accepted-but-unexposed."""
     if tool.type == "function":
         if not tool.name:
             raise InvalidRequestError(
@@ -693,22 +723,31 @@ def _register_flat_tool(
             strict=tool.strict,
         )
         return [binding.to_chat_tool()]
-    if tool.type in _DEGRADED_TOOL_TYPES:
+    if tool.type in _REDUNDANT_TOOL_TYPES:
         # tool_search only lazy-loads namespace members; they are all exposed
-        # eagerly here, so the tool has nothing left to do.
+        # eagerly here, so the tool has nothing left to do and its absence
+        # costs the model no capability.
         return []
     if tool.type in _CONTAINER_TOOL_TYPES:
-        return _register_namespace_tool(tool, registry)
-    raise _unsupported_tool_error(tool.type)
+        return _register_namespace_tool(tool, registry, unexposed)
+    # A declaration oMLX cannot expose is accepted and named for the caller
+    # rather than rejected: the model never sees it, so an unused declaration
+    # cannot change the response, and a real Codex session (which always
+    # declares web_search) must still complete (#3757).
+    unexposed.append(_unexposed_tool_label(tool.type))
+    return []
 
 
 def _register_namespace_tool(
-    tool: ResponsesTool, registry: ToolBindingRegistry
+    tool: ResponsesTool,
+    registry: ToolBindingRegistry,
+    unexposed: List[str],
 ) -> List[Dict[str, Any]]:
     """Expand a namespace group into its member function tools.
 
-    Namespace members are the one place ``type`` is not a top-level branch, so a
-    member the endpoint cannot expose is reported with its group named.
+    Namespace members are the one place ``type`` is not a top-level branch. A
+    member the endpoint cannot expose is dropped and labelled with its group
+    instead of failing, by the same declared-vs-used rule as a flat tool.
     """
     if not tool.name:
         raise InvalidRequestError(
@@ -724,18 +763,22 @@ def _register_namespace_tool(
                 "tool object.",
                 field="tools",
             )
-        if member.type in _DEGRADED_TOOL_TYPES:
+        if member.type in _REDUNDANT_TOOL_TYPES:
             continue
         if member.type in _CONTAINER_TOOL_TYPES:
-            # Nested namespaces would need a second join level the client
-            # cannot resolve; reject rather than flatten one level silently.
-            raise InvalidRequestError(
-                f"Namespace {tool.name!r} contains a nested namespace "
-                f"{member.name!r}; nested namespaces are not supported.",
-                field="tools",
+            # A nested namespace would need a second join level the client
+            # cannot resolve, so it is never exposed; since nothing is exposed
+            # for it, accepting and dropping the declaration cannot mislead
+            # the model.
+            unexposed.append(
+                _unexposed_tool_label(member.type, namespace=tool.name)
             )
+            continue
         if member.type != "function":
-            raise _unsupported_tool_error(member.type, namespace=tool.name)
+            unexposed.append(
+                _unexposed_tool_label(member.type, namespace=tool.name)
+            )
+            continue
         if not member.name:
             raise InvalidRequestError(
                 f"Namespace {tool.name!r} contains a function member without "
@@ -757,6 +800,7 @@ def convert_responses_tools(
     tools: Optional[List[ResponsesTool]],
     registry: Optional[ToolBindingRegistry] = None,
     aliases: Optional[Dict[str, Tuple[str, str]]] = None,
+    unexposed: Optional[List[str]] = None,
 ) -> Optional[List[Dict[str, Any]]]:
     """Convert Responses API tools to Chat Completions tool definitions.
 
@@ -768,18 +812,24 @@ def convert_responses_tools(
     expanded under a joined wire name and recorded in ``registry`` so a
     resulting call can be returned with its namespace intact (#3371).
 
-    Every other tool type has no local executor and no wire shape a chat
-    template can call, so it raises ``InvalidRequestError`` instead of being
-    dropped: a client that declares a hosted tool must not be told the request
-    succeeded while the model never saw it.
+    Declaring a capability is separate from using it: a tool type oMLX cannot
+    expose (a hosted/server-executed type, an unknown type, or a nested
+    namespace) is accepted as a declaration and simply left out of the returned
+    tool list, because the model never sees it and an unused declaration cannot
+    change the response. Each such declaration is appended to ``unexposed`` (a
+    human-readable label) so the caller can surface the degradation in a
+    ``Warning`` header instead of dropping the tool silently. Only malformed
+    declarations -- a function with no name, a namespace member that is not a
+    tool object -- still raise.
     """
     if not tools:
         return None
 
     registry = registry if registry is not None else ToolBindingRegistry()
+    sink = unexposed if unexposed is not None else []
     result: List[Dict[str, Any]] = []
     for tool in tools:
-        result.extend(_register_flat_tool(tool, registry))
+        result.extend(_register_flat_tool(tool, registry, sink))
     if aliases is not None:
         aliases.update(registry.aliases())
     return result if result else None
