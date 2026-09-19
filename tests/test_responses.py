@@ -21,11 +21,11 @@ from omlx.api.responses_utils import (
     build_function_call_output_item,
     build_message_output_item,
     build_reasoning_output_item,
+    build_response_object,
     build_response_store_record,
     build_response_usage,
     convert_responses_input_to_messages,
     convert_responses_tools,
-    convert_stored_response_to_messages,
     format_sse_event,
     normalize_response_output_to_messages,
     split_namespace_tool_name,
@@ -912,10 +912,146 @@ class TestBuildOutputItems:
         assert item.summary[0].type == "summary_text"
         assert item.summary[0].text == "Step 1: foo. Step 2: bar."
 
+    def test_build_reasoning_output_item_publishes_both_shapes(self):
+        """Clients disagree on where the CoT lives, so it goes in both places.
+
+        OpenAI's hosts publish ``summary``; Responses-dialect clients read
+        ``content[]`` with a ``reasoning_text`` part and show nothing without it.
+        """
+        text = "Step 1: foo. Step 2: bar."
+        item = build_reasoning_output_item(text)
+        assert [part.text for part in item.content] == [text]
+        assert item.content[0].type == "reasoning_text"
+
     def test_build_reasoning_output_item_empty_text(self):
         item = build_reasoning_output_item("")
         assert item.type == "reasoning"
         assert item.summary == []
+        assert item.content == []
+
+    def test_build_response_object_is_a_complete_envelope(self):
+        """Both response paths serialize this, so it must carry every field.
+
+        The key names come from the model definition, so presence alone says
+        nothing about whether the builder mapped the request onto them; the
+        values below are what a client actually receives. Non-default request
+        values are used so a builder that ignores the request cannot pass.
+        """
+        request = ResponsesRequest(
+            model="m",
+            input="hi",
+            instructions="be terse",
+            store=True,
+            parallel_tool_calls=False,
+            reasoning={"effort": "low"},
+            truncation="disabled",
+        )
+        env = build_response_object(
+            request,
+            response_id="resp_test",
+            created_at=1,
+            output_items=[],
+            usage=None,
+            truncated=False,
+            temperature=0.25,
+            top_p=0.5,
+        ).model_dump()
+        for key in (
+            "id",
+            "object",
+            "created_at",
+            "model",
+            "status",
+            "output",
+            "usage",
+            "text",
+            "truncation",
+            "error",
+            "incomplete_details",
+            "instructions",
+            "store",
+            "parallel_tool_calls",
+            "reasoning",
+            "metadata",
+            "previous_response_id",
+        ):
+            assert key in env, key
+        assert env["status"] == "completed"
+
+        # Echoed request fields must carry the request's values, not defaults.
+        assert env["instructions"] == "be terse"
+        assert env["store"] is True
+        assert env["parallel_tool_calls"] is False
+        assert env["reasoning"] == {"effort": "low"}
+        assert env["temperature"] == 0.25
+        assert env["top_p"] == 0.5
+        assert env["model"] == "m"
+        assert env["id"] == "resp_test"
+        assert env["created_at"] == 1
+        assert env["output"] == []
+        assert env["usage"] is None
+
+    def test_build_response_object_agrees_across_both_serializations(self):
+        """The SSE terminal event and the JSON body are the same envelope.
+
+        The non-streaming path returns ``model_dump_json()`` (nulls kept) while
+        the streaming terminal emits ``model_dump(exclude_none=True)`` (nulls
+        dropped). The two are built once, so every echoed field must hold the
+        same value in both -- the difference is only which null keys are shown.
+        """
+        request = ResponsesRequest(
+            model="m",
+            input="hi",
+            instructions="be terse",
+            store=True,
+            parallel_tool_calls=False,
+            reasoning={"effort": "low"},
+            truncation="disabled",
+        )
+        common = dict(
+            response_id="resp_test",
+            created_at=1,
+            output_items=[],
+            usage=None,
+            truncated=False,
+            temperature=0.25,
+            top_p=0.5,
+        )
+        body = json.loads(build_response_object(request, **common).model_dump_json())
+        terminal = build_response_object(request, **common).model_dump(
+            exclude_none=True
+        )
+
+        for field, expected in (
+            ("model", "m"),
+            ("status", "completed"),
+            ("instructions", "be terse"),
+            ("store", True),
+            ("parallel_tool_calls", False),
+            ("reasoning", {"effort": "low"}),
+            ("temperature", 0.25),
+            ("top_p", 0.5),
+        ):
+            assert body[field] == expected, field
+            assert terminal[field] == expected, field
+
+        # A non-null truncation survives into both; a null one is only absent
+        # from the streamed terminal, which is the documented key-set drift.
+        assert terminal.get("truncation") == body.get("truncation")
+
+    def test_build_response_object_marks_truncation(self):
+        env = build_response_object(
+            ResponsesRequest(model="m", input="hi", max_output_tokens=8),
+            response_id="resp_test",
+            created_at=1,
+            output_items=[],
+            usage=None,
+            truncated=True,
+            temperature=None,
+            top_p=None,
+        )
+        assert env.status == "incomplete"
+        assert env.incomplete_details == {"reason": "max_output_tokens"}
 
 
 class TestResponseObject:
@@ -1119,61 +1255,6 @@ class TestResponseStore:
 
 
 class TestConvertStoredResponse:
-    def test_message_output(self):
-        stored = {
-            "output": [
-                {
-                    "type": "message",
-                    "role": "assistant",
-                    "content": [{"type": "output_text", "text": "Hello!"}],
-                }
-            ]
-        }
-        messages = convert_stored_response_to_messages(stored)
-        assert len(messages) == 1
-        assert messages[0]["role"] == "assistant"
-        assert messages[0]["content"] == "Hello!"
-
-    def test_function_call_output(self):
-        stored = {
-            "output": [
-                {
-                    "type": "message",
-                    "role": "assistant",
-                    "content": [{"type": "output_text", "text": "Let me check."}],
-                },
-                {
-                    "type": "function_call",
-                    "call_id": "call_abc",
-                    "name": "get_weather",
-                    "arguments": '{"location": "Paris"}',
-                },
-            ]
-        }
-        messages = convert_stored_response_to_messages(stored)
-        assert len(messages) == 1
-        assert messages[0]["role"] == "assistant"
-        assert messages[0]["content"] == "Let me check."
-        assert messages[0]["tool_calls"][0]["function"]["name"] == "get_weather"
-        # arguments should be parsed as dict for Jinja2 chat templates
-        assert messages[0]["tool_calls"][0]["function"]["arguments"] == {
-            "location": "Paris"
-        }
-
-    def test_empty_output(self):
-        stored = {"output": []}
-        messages = convert_stored_response_to_messages(stored)
-        assert messages == []
-
-    def test_state_record_prefers_output_messages(self):
-        stored = {
-            "output_messages": [
-                {"role": "assistant", "content": "Stored"},
-            ]
-        }
-        messages = convert_stored_response_to_messages(stored)
-        assert messages == [{"role": "assistant", "content": "Stored"}]
-
     def test_normalize_response_output_merges_assistant_tool_call_turn(self):
         output_items = [
             {
