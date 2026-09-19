@@ -14,6 +14,10 @@ from .responses_models import (
     InputTokensDetails,
     OutputContent,
     OutputItem,
+    OutputTokensDetails,
+    ReasoningSummaryPart,
+    ResponseObject,
+    ResponsesRequest,
     ResponsesTool,
     ResponseUsage,
 )
@@ -365,10 +369,13 @@ def convert_responses_input_to_messages(
                 output_content = (
                     extracted if extracted is not None else json.dumps(item.output)
                 )
+            # Same fallback the function_call side uses, so an omitted
+            # call_id never reaches the template as an empty tool_call_id.
+            call_id = item.call_id or item.id or f"call_{uuid.uuid4().hex[:8]}"
             messages.append(
                 {
                     "role": "tool",
-                    "tool_call_id": item.call_id or "",
+                    "tool_call_id": call_id,
                     "content": output_content,
                 }
             )
@@ -553,15 +560,26 @@ def build_reasoning_output_item(
     item_id: Optional[str] = None,
     status: str = "completed",
 ) -> OutputItem:
-    """Build a reasoning-type OutputItem with full CoT in summary[0].text."""
-    from .responses_models import ReasoningSummaryPart
+    """Build a reasoning-type OutputItem carrying the full CoT.
 
+    The text is published in both shapes the ecosystem reads: ``summary``, which
+    OpenAI's own hosts emit, and a ``reasoning_text`` content part, which is what
+    Responses-dialect clients look at (``@ai-sdk/open-responses`` reads
+    ``item.content[].text`` and would otherwise drop the reasoning entirely).
+    Emitting both is additive — a client that knows one shape ignores the other.
+    """
     summary = [ReasoningSummaryPart(text=reasoning_text)] if reasoning_text else []
+    content = (
+        [OutputContent(type="reasoning_text", text=reasoning_text)]
+        if reasoning_text
+        else []
+    )
     return OutputItem(
         type="reasoning",
         id=item_id or generate_id(IDPrefix.REASONING),
         status=status,
         summary=summary,
+        content=content,
     )
 
 
@@ -572,14 +590,54 @@ def build_response_usage(
     cached_tokens: int = 0,
 ) -> ResponseUsage:
     """Build ResponseUsage from token counts."""
-    from .responses_models import OutputTokensDetails
-
     return ResponseUsage(
         input_tokens=input_tokens,
         output_tokens=output_tokens,
         total_tokens=input_tokens + output_tokens,
         input_tokens_details=InputTokensDetails(cached_tokens=cached_tokens),
         output_tokens_details=OutputTokensDetails(reasoning_tokens=reasoning_tokens),
+    )
+
+
+def build_response_object(
+    request: ResponsesRequest,
+    *,
+    response_id: str,
+    created_at: int,
+    output_items: List[Any],
+    usage: Optional[ResponseUsage],
+    truncated: bool,
+    temperature: Optional[float],
+    top_p: Optional[float],
+) -> ResponseObject:
+    """Build the one response envelope both response paths serialize.
+
+    A single builder keeps the non-streaming body and the streaming terminal
+    event from drifting apart in which request fields they echo. The streaming
+    caller still serializes with ``exclude_none``, so its null-valued fields
+    stay omitted: that predates this builder and the streaming integration
+    tests pin it.
+    """
+    return ResponseObject(
+        id=response_id,
+        created_at=created_at,
+        model=request.model,
+        status="incomplete" if truncated else "completed",
+        output=output_items,
+        usage=usage,
+        tools=request.tools or [],
+        tool_choice=request.tool_choice or "auto",
+        temperature=temperature,
+        top_p=top_p,
+        max_output_tokens=request.max_output_tokens,
+        previous_response_id=request.previous_response_id,
+        incomplete_details={"reason": "max_output_tokens"} if truncated else None,
+        instructions=request.instructions,
+        store=request.store,
+        parallel_tool_calls=request.parallel_tool_calls,
+        reasoning=request.reasoning,
+        text=request.text,
+        metadata=request.metadata or {},
     )
 
 
@@ -785,15 +843,6 @@ class ResponseStore:
 # =============================================================================
 # Previous Response Conversion
 # =============================================================================
-
-
-def convert_stored_response_to_messages(
-    response_data: Dict[str, Any],
-) -> List[Dict[str, Any]]:
-    """Convert a stored public response or state record back to messages."""
-    if "output_messages" in response_data:
-        return copy.deepcopy(response_data.get("output_messages", []))
-    return normalize_response_output_to_messages(response_data.get("output", []))
 
 
 def normalize_response_output_to_messages(
