@@ -4858,6 +4858,25 @@ def _response_format_warning_header(response_format) -> str:
     return f'199 omlx "{text}"'
 
 
+def _unexposed_tools_warning_header(unexposed_tools: list[str]) -> str:
+    """Build an RFC 7234 ``Warning`` header for accepted-but-unexposed tools.
+
+    ``convert_responses_tools`` accepts a tool declaration oMLX cannot expose
+    (hosted/server-executed types such as ``web_search``, unknown types, nested
+    namespaces) and leaves it out of what the model sees.  Accepting the
+    declaration is safe -- an unused declaration cannot change the response --
+    but the degradation must not be silent, so the caller is told through the
+    same ``Warning`` mechanism the structured-output path uses (#3757).  The
+    labels are sanitised to header-safe characters where they are built.
+    """
+    listed = ", ".join(unexposed_tools)
+    text = (
+        f"tools accepted but not exposed to the model: {listed}; "
+        "oMLX cannot execute hosted tools and did not tell the model about them"
+    )
+    return f'199 omlx "{text}"'
+
+
 # =============================================================================
 # Streaming Helpers
 # =============================================================================
@@ -6932,8 +6951,19 @@ async def create_response(
         # Convert tools: flat → nested. The registry is the one place both
         # emission paths resolve a wire name back to its client-facing
         # (namespace, name), so a namespace call round-trips intact (#3371).
+        # Declarations oMLX cannot expose are accepted and listed here so the
+        # degradation can be reported in a Warning header rather than failing
+        # the request or passing silently (#3757).
         tool_bindings = ToolBindingRegistry()
-        openai_tools = convert_responses_tools(request.tools, tool_bindings)
+        unexposed_tools: list[str] = []
+        openai_tools = convert_responses_tools(
+            request.tools, tool_bindings, unexposed=unexposed_tools
+        )
+        tools_warning = (
+            _unexposed_tools_warning_header(unexposed_tools)
+            if unexposed_tools
+            else None
+        )
         tool_bindings.apply_to_messages(messages)
         if (
             getattr(engine, "is_diffusion_model", False)
@@ -7184,6 +7214,8 @@ async def create_response(
 
         if request.stream:
             sse_headers = {"X-Accel-Buffering": "no", "Cache-Control": "no-cache"}
+            if tools_warning:
+                sse_headers["Warning"] = tools_warning
             return StreamingResponse(
                 _release_after_stream(
                     _with_request_disconnect_abort(
@@ -7361,7 +7393,10 @@ async def create_response(
             return response_obj.model_dump_json()
 
         return await _json_response_or_keepalive(
-            http_request, _build_responses_api(), lease=lease
+            http_request,
+            _build_responses_api(),
+            lease=lease,
+            headers={"Warning": tools_warning} if tools_warning else None,
         )
 
     except BaseException:

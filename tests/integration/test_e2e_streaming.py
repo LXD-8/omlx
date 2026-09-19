@@ -5444,30 +5444,91 @@ def test_responses_stream_event_order_and_delta_done_pairing(monkeypatch):
     client.close()
 
 
+@pytest.mark.parametrize("stream", [False, True])
 @pytest.mark.parametrize(
     "tool,needle",
     [
-        ({"type": "local_shell"}, "local_shell"),
-        ({"type": "web_search"}, "web_search"),
-        ({"type": "web_search_preview"}, "web_search_preview"),
-        ({"type": "file_search", "vector_store_ids": ["vs_1"]}, "file_search"),
-        ({"type": "mcp", "server_label": "demo"}, "mcp"),
-        ({"type": "computer_use_preview"}, "computer_use_preview"),
+        ({"type": "local_shell"}, "local_shell (hosted)"),
+        ({"type": "web_search"}, "web_search (hosted)"),
+        ({"type": "web_search_preview"}, "web_search_preview (hosted)"),
+        ({"type": "file_search", "vector_store_ids": ["vs_1"]}, "file_search (hosted)"),
+        ({"type": "mcp", "server_label": "demo"}, "mcp (hosted)"),
+        ({"type": "computer_use_preview"}, "computer_use_preview (hosted)"),
         ({"type": "code_interpreter", "container": {"type": "auto"}},
-         "code_interpreter"),
-        ({"type": "image_generation"}, "image_generation"),
-        ({"type": "custom", "name": "free_form"}, "custom"),
+         "code_interpreter (hosted)"),
+        ({"type": "image_generation"}, "image_generation (hosted)"),
+        ({"type": "custom", "name": "free_form"}, "custom (hosted)"),
+        ({"type": "some_future_tool"}, "some_future_tool (unknown type)"),
     ],
 )
-def test_responses_unsupported_tools_fail_loudly(monkeypatch, tool, needle):
-    """A declared hosted tool must 400 by name, never be silently skipped."""
+def test_responses_unsupported_tool_declarations_are_accepted_with_warning(
+    monkeypatch, stream, tool, needle
+):
+    """A declared hosted tool must not 400; it is named in a Warning header.
+
+    Codex 0.154 declares ``web_search`` in every session, so a 400 here made a
+    real client unusable. The declaration is accepted but never exposed to the
+    model, and the degradation is reported on both the streaming and
+    non-streaming paths (the stream carries headers with the SSE response).
+    """
     client = _responses_tool_call_client(monkeypatch, "I cannot.")
     response = client.post(
         "/v1/responses",
-        json={"model": "test-model", "input": "hi", "tools": [tool]},
+        json={
+            "model": "test-model",
+            "input": "hi",
+            "stream": stream,
+            "tools": [tool],
+        },
     )
-    assert response.status_code == 400, response.text
-    assert needle in response.text
+    assert response.status_code == 200, response.text
+    warning = response.headers.get("warning")
+    assert warning is not None, response.headers
+    assert warning.startswith('199 omlx "'), warning
+    assert needle in warning, warning
+    client.close()
+
+
+@pytest.mark.parametrize("stream", [False, True])
+def test_responses_codex_tool_list_with_web_search_succeeds(monkeypatch, stream):
+    """The Codex 0.154 shape -- functions + namespace + web_search -- works.
+
+    This is the regression the policy change exists for: the session must
+    complete with its function tool still exposed, and the hosted declaration
+    must be named in the Warning rather than failing the request.
+    """
+    client = _responses_tool_call_client(
+        monkeypatch,
+        '<tool_call>{"name": "exec_command", '
+        '"arguments": {"cmd": "echo hi"}}</tool_call>',
+    )
+    response = client.post(
+        "/v1/responses",
+        json={
+            "model": "test-model",
+            "input": "run echo hi",
+            "stream": stream,
+            "tools": [
+                {
+                    "type": "function",
+                    "name": "exec_command",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {"cmd": {"type": "string"}},
+                        "required": ["cmd"],
+                    },
+                },
+                {"type": "namespace", "name": "multi_agent_v1", "tools": []},
+                {"type": "web_search"},
+            ],
+        },
+    )
+    assert response.status_code == 200, response.text
+    warning = response.headers.get("warning", "")
+    assert "web_search (hosted)" in warning, warning
+    items = _response_output_items(response, stream)
+    calls = [item for item in items if item["type"] == "function_call"]
+    assert [call["name"] for call in calls] == ["exec_command"]
     client.close()
 
 
