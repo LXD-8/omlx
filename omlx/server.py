@@ -139,14 +139,12 @@ from .api.rerank_models import (
 )
 from .api.responses_models import (
     OutputItem,
-    ResponseObject,
     ResponsesRequest,
 )
 from .api.responses_utils import (
     ResponseStateCorruptError,
     ResponseStateNotFoundError,
     ResponseStore,
-    apply_namespace_tool_aliases,
     build_function_call_output_item,
     build_message_output_item,
     build_reasoning_output_item,
@@ -158,8 +156,10 @@ from .api.responses_utils import (
     format_sse_event,
     normalize_response_output_to_messages,
     split_namespace_tool_name,
+    validate_responses_request,
 )
 from .api.shared_models import IDPrefix, generate_id, get_unix_timestamp
+from .api.tool_bindings import ToolBindingRegistry, ensure_call_id
 from .api.thinking import ThinkingParser, extract_thinking, prompt_opens_thinking
 from .api.tool_calling import (
     ToolCallExtraction,
@@ -6888,6 +6888,10 @@ async def create_response(
         f"Responses API request: model={request.model}, stream={request.stream}"
     )
 
+    # Refuse unimplemented capabilities up front, before any model work, so a
+    # client never gets a success for a tool or mode the model never saw.
+    validate_responses_request(request)
+
     load_start = time.perf_counter()
     lease = _LLMEngineLease()
     try:
@@ -6925,11 +6929,12 @@ async def create_response(
             preserve_images=preserve_tool_images,
         )
 
-        # Convert tools: flat → nested. namespace_aliases maps each expanded
-        # namespace member's wire name back for the return path.
-        namespace_aliases: dict = {}
-        openai_tools = convert_responses_tools(request.tools, namespace_aliases)
-        apply_namespace_tool_aliases(messages, namespace_aliases)
+        # Convert tools: flat → nested. The registry is the one place both
+        # emission paths resolve a wire name back to its client-facing
+        # (namespace, name), so a namespace call round-trips intact (#3371).
+        tool_bindings = ToolBindingRegistry()
+        openai_tools = convert_responses_tools(request.tools, tool_bindings)
+        tool_bindings.apply_to_messages(messages)
         if (
             getattr(engine, "is_diffusion_model", False)
             and not getattr(engine, "supports_tool_calling", False)
@@ -6968,7 +6973,6 @@ async def create_response(
         # Handle text.format (structured output)
         response_format = None
         compiled_grammar = None
-        response_format_warning = None
         if request.text and request.text.format:
             fmt = request.text.format
             if fmt.type == "json_object":
@@ -6998,14 +7002,18 @@ async def create_response(
                     reasoning_parser=reasoning_parser,
                 )
                 if compiled_grammar is None:
-                    # Non-strict formats still degrade to prompt injection, so
-                    # surface it to the caller with the same Warning response
-                    # header /v1/chat/completions uses; the log line alone only
-                    # ever reaches the operator (#1241).
-                    response_format_warning = _response_format_warning_header(rf)
-                    json_instruction = build_json_system_prompt(rf)
-                    if json_instruction:
-                        messages = _inject_json_instruction(messages, json_instruction)
+                    # Unlike /v1/chat/completions, which warns and degrades to
+                    # prompt injection, Responses refuses: text.format is an
+                    # explicit output contract, and returning text that need not
+                    # satisfy the schema is worse than a clear error.
+                    raise InvalidRequestError(
+                        "text.format could not be enforced for this model: no "
+                        "grammar could be compiled, so the output would not "
+                        "reliably match the requested schema. Remove "
+                        "text.format or use a model that supports structured "
+                        "output here.",
+                        field="text.format",
+                    )
             else:
                 compiled_grammar = None
 
@@ -7176,8 +7184,6 @@ async def create_response(
 
         if request.stream:
             sse_headers = {"X-Accel-Buffering": "no", "Cache-Control": "no-cache"}
-            if response_format_warning:
-                sse_headers["Warning"] = response_format_warning
             return StreamingResponse(
                 _release_after_stream(
                     _with_request_disconnect_abort(
@@ -7192,7 +7198,7 @@ async def create_response(
                                 resolved_model=resolved_model,
                                 response_format=response_format,
                                 native_reasoning=native_reasoning,
-                                namespace_aliases=namespace_aliases,
+                                tool_bindings=tool_bindings,
                                 **chat_kwargs,
                             ),
                             http_request=http_request,
@@ -7302,19 +7308,20 @@ async def create_response(
                         name = tc.function.name
                         arguments = tc.function.arguments
                     elif isinstance(tc, dict):
-                        call_id = tc.get(
-                            "call_id", tc.get("id", f"call_{uuid.uuid4().hex[:8]}")
-                        )
+                        call_id = ensure_call_id(tc.get("call_id") or tc.get("id"))
                         name = tc.get("name", "")
                         arguments = tc.get("arguments", "{}")
                     else:
-                        continue
-                    namespace, name = split_namespace_tool_name(name, namespace_aliases)
+                        raise InvalidRequestError(
+                            "Tool-call parser returned an unsupported entry.",
+                            field="tools",
+                        )
+                    namespace, name = split_namespace_tool_name(name, tool_bindings)
                     output_items.append(
                         build_function_call_output_item(
                             name=name,
                             arguments=arguments,
-                            call_id=call_id,
+                            call_id=ensure_call_id(call_id),
                             namespace=namespace,
                         )
                     )
@@ -7353,11 +7360,8 @@ async def create_response(
 
             return response_obj.model_dump_json()
 
-        json_headers = (
-            {"Warning": response_format_warning} if response_format_warning else None
-        )
         return await _json_response_or_keepalive(
-            http_request, _build_responses_api(), lease=lease, headers=json_headers
+            http_request, _build_responses_api(), lease=lease
         )
 
     except BaseException:
@@ -7375,7 +7379,7 @@ async def stream_responses_api(
     resolved_model: Optional[str] = None,
     response_format=None,
     native_reasoning: bool = False,
-    namespace_aliases: Optional[dict] = None,
+    tool_bindings: Optional[ToolBindingRegistry] = None,
     **kwargs,
 ) -> AsyncIterator[str]:
     """Stream Responses API events (SSE with named event types)."""
@@ -7415,18 +7419,18 @@ async def stream_responses_api(
     reasoning_output_index: Optional[int] = None  # captured when reasoning opens
     msg_output_index: Optional[int] = None  # captured when message opens
 
-    # Build initial response object (in_progress, empty output)
-    initial_response = ResponseObject(
-        id=response_id,
-        model=request.model,
+    # Build the opening snapshot from the same envelope builder as the terminal
+    # event, so response.created/in_progress echo the same request fields.
+    initial_response = build_response_object(
+        request,
+        response_id=response_id,
+        created_at=get_unix_timestamp(),
+        output_items=[],
+        usage=None,
+        truncated=False,
+        temperature=kwargs.get("temperature"),
+        top_p=kwargs.get("top_p"),
         status="in_progress",
-        output=[],
-        tools=request.tools or [],
-        tool_choice=request.tool_choice or "auto",
-        temperature=request.temperature,
-        top_p=request.top_p,
-        max_output_tokens=request.max_output_tokens,
-        previous_response_id=request.previous_response_id,
     )
     initial_data = initial_response.model_dump(exclude_none=True)
 
@@ -7561,7 +7565,13 @@ async def stream_responses_api(
                         # item a streamed response ends on matches the one a
                         # non-streamed response returns.
                         "content": (
-                            [{"type": "reasoning_text", "text": reasoning_text}]
+                            [
+                                {
+                                    "type": "reasoning_text",
+                                    "text": reasoning_text,
+                                    "annotations": [],
+                                }
+                            ]
                             if reasoning_text
                             else []
                         ),
@@ -7968,7 +7978,13 @@ async def stream_responses_api(
                 "id": reasoning_id,
                 "status": "completed",
                 "summary": [{"type": "summary_text", "text": reasoning_text}],
-                "content": [{"type": "reasoning_text", "text": reasoning_text}],
+                "content": [
+                    {
+                        "type": "reasoning_text",
+                        "text": reasoning_text,
+                        "annotations": [],
+                    }
+                ],
             }
         )
     output_items.append(
@@ -7990,15 +8006,16 @@ async def stream_responses_api(
                 name = tc.function.name
                 arguments = tc.function.arguments
             elif isinstance(tc, dict):
-                call_id = tc.get(
-                    "call_id", tc.get("id", f"call_{uuid.uuid4().hex[:8]}")
-                )
+                call_id = ensure_call_id(tc.get("call_id") or tc.get("id"))
                 name = tc.get("name", "")
                 arguments = tc.get("arguments", "{}")
             else:
-                continue
+                raise InvalidRequestError(
+                    "Tool-call parser returned an unsupported entry.",
+                    field="tools",
+                )
 
-            namespace, name = split_namespace_tool_name(name, namespace_aliases)
+            namespace, name = split_namespace_tool_name(name, tool_bindings)
             fc_id = generate_id(IDPrefix.FUNCTION_CALL)
             fc_item = {
                 "type": "function_call",
@@ -8141,8 +8158,8 @@ async def stream_responses_api(
         output_items=output_items,
         usage=usage_data,
         truncated=truncated,
-        temperature=request.temperature,
-        top_p=request.top_p,
+        temperature=kwargs.get("temperature"),
+        top_p=kwargs.get("top_p"),
     ).model_dump(exclude_none=True)
 
     seq += 1
