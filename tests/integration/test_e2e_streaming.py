@@ -5543,24 +5543,17 @@ def test_responses_stream_event_order_and_delta_done_pairing(monkeypatch):
     events = _responses_events(response)
     types = [event["type"] for event in events]
 
-    summary_delta = "".join(
-        event["delta"]
-        for event in events
-        if event["type"] == "response.reasoning_summary_text.delta"
-    )
-    assert summary_delta == "Need to reason."
-    summary_done = next(
-        event
-        for event in events
-        if event["type"] == "response.reasoning_summary_text.done"
-    )
-    assert summary_done["text"] == summary_delta
+    # Reasoning is published on the raw channel only: the summary events are
+    # not sent at all, so a client that listens to both names cannot double up.
+    assert not [
+        event for event in events if "reasoning_summary_text" in event["type"]
+    ]
     raw_delta = "".join(
         event["delta"]
         for event in events
         if event["type"] == "response.reasoning_text.delta"
     )
-    assert raw_delta == summary_delta
+    assert raw_delta == "Need to reason."
     raw_done = next(
         event for event in events if event["type"] == "response.reasoning_text.done"
     )
@@ -5584,7 +5577,7 @@ def test_responses_stream_event_order_and_delta_done_pairing(monkeypatch):
         if event["type"] == "response.output_item.added"
         and event["item"]["type"] == "message"
     )
-    assert types.index("response.reasoning_summary_text.done") < message_added
+    assert types.index("response.reasoning_text.done") < message_added
     assert types[-1] == "response.completed"
 
     reasoning_done = next(
@@ -5600,7 +5593,6 @@ def test_responses_stream_event_order_and_delta_done_pairing(monkeypatch):
         and event["item"]["type"] == "message"
     )
     # Ids are stable across the delta, done and item.done events.
-    assert summary_done["item_id"] == reasoning_done["item"]["id"]
     assert raw_done["item_id"] == reasoning_done["item"]["id"]
     assert text_done["item_id"] == message_done["item"]["id"]
     # Output indexes increase and are the ones the item events reported.
@@ -5608,8 +5600,8 @@ def test_responses_stream_event_order_and_delta_done_pairing(monkeypatch):
     assert message_done["output_index"] == 1
     assert text_done["output_index"] == message_done["output_index"]
     assert text_done["content_index"] == 0
-    assert reasoning_done["item"]["summary"][0]["text"] == summary_delta
-    assert reasoning_done["item"]["content"][0]["text"] == summary_delta
+    assert reasoning_done["item"]["summary"] == []
+    assert reasoning_done["item"]["content"][0]["text"] == raw_delta
     client.close()
 
 

@@ -472,12 +472,23 @@ class TestResponsesEndpoint:
         assert data["output"][1]["content"][0]["text"] == "Hello!"
         assert data["usage"]["output_tokens_details"]["reasoning_tokens"] == 3
 
-    def test_response_endpoint_echoes_text_format_on_the_wire(self, client, mock_llm_engine):
+    def test_response_endpoint_echoes_text_format_on_the_wire(
+        self, client, mock_llm_engine, monkeypatch
+    ):
         """`schema_` is a Python-side name; the client must see `schema`.
 
         The envelope echoes the request's `text`, and the alias only survives a
         dump that asks for it — the field name leaks into the JSON otherwise.
+        The compiler is stubbed because this endpoint refuses a `text.format` it
+        cannot enforce, which would hide the echo behind a 400.
         """
+        import omlx.server as server_module
+
+        monkeypatch.setattr(
+            server_module,
+            "_compile_grammar_for_request",
+            lambda *args, **kwargs: object(),
+        )
         mock_llm_engine.chat = AsyncMock(
             return_value=MockGenerationOutput(
                 text="{}",
