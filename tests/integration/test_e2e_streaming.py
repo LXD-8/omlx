@@ -5658,6 +5658,22 @@ def test_responses_unsupported_tool_declarations_are_accepted_with_warning(
     client.close()
 
 
+def test_unexposed_tool_warning_stays_inside_a_legal_response_line():
+    """The header cannot grow with the client's tool list.
+
+    `http.client` raises `LineTooLong` above 65536 bytes, so an uncapped list of
+    labels would make most Python clients lose the whole response.
+    """
+    from omlx.server import _unexposed_tools_warning_header
+
+    labels = [f"tool_{index:04d}_with_a_fairly_long_name (unknown type)" for index in range(1000)]
+    header = _unexposed_tools_warning_header(labels)
+    assert len(header.encode()) < 4096, len(header)
+    assert "and 995 more" in header
+    assert "tool_0000" in header
+    assert "tool_0999" not in header
+
+
 @pytest.mark.parametrize("stream", [False, True])
 def test_responses_codex_tool_list_with_web_search_succeeds(monkeypatch, stream):
     """The Codex 0.154 shape -- functions + namespace + web_search -- works.

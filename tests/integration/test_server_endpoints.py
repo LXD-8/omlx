@@ -2450,9 +2450,7 @@ class TestJsonOutputParsing:
         parsed = json.loads(content)
         assert parsed == {"key": "value"}
 
-    def test_responses_parses_markdown_json(
-        self, client, mock_llm_engine, monkeypatch
-    ):
+    def test_responses_parses_markdown_json(self, client, mock_llm_engine, monkeypatch):
         """Responses API should parse markdown-wrapped JSON with text.format.
 
         Grammar compilation is stubbed: the endpoint refuses text.format when

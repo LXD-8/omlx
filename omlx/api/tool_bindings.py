@@ -15,7 +15,7 @@ It deliberately does not unify the wire dialects of the other paths: Chat picks
 
 import uuid
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, Iterable, List, Optional, Set, Tuple
 
 
 def ensure_call_id(value: Optional[str]) -> str:
@@ -64,12 +64,21 @@ class ToolBindingRegistry:
 
     _by_wire: Dict[str, ToolBinding] = field(default_factory=dict)
     _by_identity: Dict[Tuple[Optional[str], str], str] = field(default_factory=dict)
+    # Wire names claimed before anything is registered. A flat function tool
+    # keeps the name the client declared, so all of them are claimed up front;
+    # otherwise a namespace member expanded first takes the joined name and the
+    # later flat registration overwrites it, losing the namespace.
+    _claimed: Set[str] = field(default_factory=set)
+
+    def claim(self, names: Iterable[str]) -> None:
+        """Reserve wire names a later registration must not shadow."""
+        self._claimed.update(name for name in names if name)
 
     def _unique_wire_name(self, namespace: str, name: str) -> str:
         joined = f"{namespace.rstrip('_')}__{name.lstrip('_')}"
         wire = joined
         suffix = 2
-        while wire in self._by_wire:
+        while wire in self._by_wire or wire in self._claimed:
             wire = f"{joined}_{suffix}"
             suffix += 1
         return wire
@@ -84,9 +93,7 @@ class ToolBindingRegistry:
         strict: Optional[bool] = None,
     ) -> ToolBinding:
         """Register a tool under a collision-free wire name and return it."""
-        wire_name = (
-            self._unique_wire_name(namespace, name) if namespace else name
-        )
+        wire_name = self._unique_wire_name(namespace, name) if namespace else name
         binding = ToolBinding(
             wire_name=wire_name,
             name=name,
@@ -129,21 +136,3 @@ class ToolBindingRegistry:
                     function["name"] = self.resolve_identity(
                         namespace, function["name"]
                     )
-
-    def aliases(self) -> Dict[str, Tuple[Optional[str], str]]:
-        """Wire-name map, for callers that still pass plain dicts around."""
-        return {
-            wire_name: binding.identity
-            for wire_name, binding in self._by_wire.items()
-            if binding.namespace
-        }
-
-    @property
-    def wire_names(self) -> List[str]:
-        return list(self._by_wire)
-
-    def __len__(self) -> int:
-        return len(self._by_wire)
-
-    def __bool__(self) -> bool:
-        return bool(self._by_wire)

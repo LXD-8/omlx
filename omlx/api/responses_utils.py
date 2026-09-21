@@ -9,6 +9,8 @@ from collections import OrderedDict
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, Union
 
+from pydantic import ValidationError
+
 from ..exceptions import InvalidRequestError
 from .responses_models import (
     InputItem,
@@ -664,11 +666,24 @@ def convert_responses_input_to_messages(
 # =============================================================================
 
 def _as_responses_tool(tool: Any) -> Optional[ResponsesTool]:
-    """Coerce one namespace member to a ResponsesTool, if it is shaped like one."""
+    """Coerce one namespace member to a ResponsesTool, if it is shaped like one.
+
+    A member lives inside the group's ``tools`` list, which FastAPI never
+    validates, so a malformed one has to be turned into the same 400 the
+    top-level checks raise rather than escaping as a pydantic error.
+    """
     if isinstance(tool, ResponsesTool):
         return tool
     if isinstance(tool, dict):
-        return ResponsesTool(**tool)
+        try:
+            return ResponsesTool(**tool)
+        except ValidationError as error:
+            name = tool.get("name")
+            raise InvalidRequestError(
+                f"Namespace member {name!r} is malformed: "
+                f"{error.errors()[0]['msg']}",
+                field="tools",
+            ) from error
     return None
 
 def _register_flat_tool(
@@ -736,14 +751,10 @@ def _register_namespace_tool(
             # cannot resolve, so it is never exposed; since nothing is exposed
             # for it, accepting and dropping the declaration cannot mislead
             # the model.
-            unexposed.append(
-                _unexposed_tool_label(member.type, namespace=tool.name)
-            )
+            unexposed.append(_unexposed_tool_label(member.type, namespace=tool.name))
             continue
         if member.type != "function":
-            unexposed.append(
-                _unexposed_tool_label(member.type, namespace=tool.name)
-            )
+            unexposed.append(_unexposed_tool_label(member.type, namespace=tool.name))
             continue
         if not member.name:
             raise InvalidRequestError(
@@ -791,6 +802,11 @@ def convert_responses_tools(
 
     registry = registry if registry is not None else ToolBindingRegistry()
     sink = unexposed if unexposed is not None else []
+    # A flat function tool keeps the name the client declared, so claim every one
+    # of them before any namespace expands: a member that would join to a flat
+    # name is suffixed instead of shadowing it, whichever order the request
+    # lists them in.
+    registry.claim(tool.name for tool in tools if tool.type == "function")
     result: List[Dict[str, Any]] = []
     for tool in tools:
         result.extend(_register_flat_tool(tool, registry, sink))

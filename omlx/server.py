@@ -4734,6 +4734,32 @@ def _response_format_requests_grammar(response_format) -> bool:
     return _build_format_element(response_format=response_format) is not None
 
 
+def _grammar_unavailable_detail() -> str:
+    """Say what to do about missing grammar support, for this install.
+
+    Shared by the paths that stop on an unenforceable output contract, so the
+    caller is told which install step is missing rather than only that the
+    request could not be honoured.
+    """
+    from omlx.utils.install import get_install_method
+
+    method = get_install_method()
+    if method == "homebrew":
+        return (
+            "Structured output requires xgrammar. "
+            "Reinstall with: brew reinstall omlx --with-grammar"
+        )
+    if method == "dmg":
+        # DMG bundles xgrammar with a torch stub; reaching this branch means the
+        # bundled load failed (e.g. native binding incompatibility). Surface it
+        # instead of pointing users to a different install method.
+        return (
+            "Structured output is unavailable: xgrammar failed to load in this "
+            "build. Please report this issue."
+        )
+    return "Structured output requires xgrammar. Install with: pip install 'omlx[grammar]'"
+
+
 def _compile_grammar_for_request(
     engine: BaseEngine,
     structured_outputs=None,
@@ -4763,29 +4789,7 @@ def _compile_grammar_for_request(
 
     if compiler is None:
         if structured_outputs is not None:
-            from omlx.utils.install import get_install_method
-
-            method = get_install_method()
-            if method == "homebrew":
-                detail = (
-                    "Structured output requires xgrammar. "
-                    "Reinstall with: brew reinstall omlx --with-grammar"
-                )
-            elif method == "dmg":
-                # DMG bundles xgrammar with a torch stub; reaching this
-                # branch means the bundled load failed (e.g. native binding
-                # incompatibility). Surface it instead of pointing users to
-                # a different install method.
-                detail = (
-                    "Structured output is unavailable: xgrammar failed to "
-                    "load in this build. Please report this issue."
-                )
-            else:
-                detail = (
-                    "Structured output requires xgrammar. "
-                    "Install with: pip install 'omlx[grammar]'"
-                )
-            raise HTTPException(status_code=400, detail=detail)
+            raise HTTPException(status_code=400, detail=_grammar_unavailable_detail())
         if response_format is not None:
             _warn_response_format_not_enforced(response_format)
         return None
@@ -4860,6 +4864,13 @@ def _response_format_warning_header(response_format) -> str:
     return f'199 omlx "{text}"'
 
 
+# How many unexposed declarations the Warning header names before it counts the
+# rest. `http.client` refuses a line longer than `_MAXLINE` (65536 bytes) and a
+# client may declare hundreds of tools, so the list cannot be joined unbounded:
+# losing the whole response to `LineTooLong` would be worse than a short list.
+_UNEXPOSED_TOOLS_IN_WARNING = 5
+
+
 def _unexposed_tools_warning_header(unexposed_tools: list[str]) -> str:
     """Build an RFC 7234 ``Warning`` header for accepted-but-unexposed tools.
 
@@ -4869,9 +4880,14 @@ def _unexposed_tools_warning_header(unexposed_tools: list[str]) -> str:
     declaration is safe -- an unused declaration cannot change the response --
     but the degradation must not be silent, so the caller is told through the
     same ``Warning`` mechanism the structured-output path uses (#3757).  The
-    labels are sanitised to header-safe characters where they are built.
+    labels are sanitised to header-safe characters where they are built, and the
+    list is capped so the header stays well inside a legal response line.
     """
-    listed = ", ".join(unexposed_tools)
+    named = unexposed_tools[:_UNEXPOSED_TOOLS_IN_WARNING]
+    listed = ", ".join(named)
+    remaining = len(unexposed_tools) - len(named)
+    if remaining:
+        listed += f", and {remaining} more"
     text = (
         f"tools accepted but not exposed to the model: {listed}; "
         "oMLX cannot execute hosted tools and did not tell the model about them"
@@ -6973,6 +6989,17 @@ async def create_response(
         openai_tools = convert_responses_tools(
             request.tools, tool_bindings, unexposed=unexposed_tools
         )
+        if unexposed_tools:
+            # The client is told through the Warning header; the operator is told
+            # here, so a real session running without a tool the model never
+            # received is visible in the log (the structured-output degrade logs
+            # the same way, #1241).
+            logger.info(
+                "Responses request declared %d tool(s) oMLX cannot expose; "
+                "left out of the model's tool list: %s",
+                len(unexposed_tools),
+                ", ".join(unexposed_tools[:_UNEXPOSED_TOOLS_IN_WARNING]),
+            )
         tools_warning = (
             _unexposed_tools_warning_header(unexposed_tools)
             if unexposed_tools
@@ -7049,11 +7076,19 @@ async def create_response(
                     # Unlike /v1/chat/completions, which warns and degrades to
                     # prompt injection, Responses refuses: text.format is an
                     # explicit output contract, and returning text that need not
-                    # satisfy the schema is worse than a clear error.
+                    # satisfy the schema is worse than a clear error. When the
+                    # engine has no compiler at all, say which install step is
+                    # missing -- the common case is a default install without
+                    # the grammar extra.
+                    missing = (
+                        f" {_grammar_unavailable_detail()}"
+                        if getattr(engine, "grammar_compiler", None) is None
+                        else ""
+                    )
                     raise InvalidRequestError(
                         "text.format could not be enforced for this model: no "
                         "grammar could be compiled, so the output would not "
-                        "reliably match the requested schema. Remove "
+                        f"reliably match the requested schema.{missing} Remove "
                         "text.format or use a model that supports structured "
                         "output here.",
                         field="text.format",
@@ -7352,7 +7387,7 @@ async def create_response(
             if tool_calls:
                 for tc in tool_calls:
                     if hasattr(tc, "function"):
-                        call_id = tc.id
+                        call_id = ensure_call_id(tc.id)
                         name = tc.function.name
                         arguments = tc.function.arguments
                     elif isinstance(tc, dict):
@@ -7369,9 +7404,9 @@ async def create_response(
                         build_function_call_output_item(
                             name=name,
                             arguments=arguments,
-                            # call_id was already normalized above (the dict
-                            # branch). Re-ensuring it here was a redundant
-                            # second pass; the streaming path passes it once.
+                            # Normalized at the branch above, for both shapes, so
+                            # a pair built from an entry with an empty id still
+                            # matches its function_call_output.
                             call_id=call_id,
                             namespace=namespace,
                         )
@@ -8023,7 +8058,7 @@ async def stream_responses_api(
         output_index = next_output_index
         for tc in tool_calls:
             if hasattr(tc, "function"):
-                call_id = tc.id
+                call_id = ensure_call_id(tc.id)
                 name = tc.function.name
                 arguments = tc.function.arguments
             elif isinstance(tc, dict):
@@ -8031,10 +8066,16 @@ async def stream_responses_api(
                 name = tc.get("name", "")
                 arguments = tc.get("arguments", "{}")
             else:
-                raise InvalidRequestError(
-                    "Tool-call parser returned an unsupported entry.",
-                    field="tools",
+                # The stream has already emitted events, so the 400 the
+                # non-streaming path raises is no longer possible: report the
+                # same failure as a parse error through response.failed instead
+                # of letting the generator die mid-stream.
+                tool_failure = tool_failure or _openai_error_body(
+                    "Model output contains an unsupported tool-call entry.",
+                    500,
+                    code="invalid_tool_call",
                 )
+                break
 
             namespace, name = split_namespace_tool_name(name, tool_bindings)
             fc_id = generate_id(IDPrefix.FUNCTION_CALL)

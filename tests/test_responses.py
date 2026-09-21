@@ -905,10 +905,11 @@ class TestConvertResponsesTools:
             "Get the current weather for a city."
         )
         assert result[0]["function"]["parameters"]["required"] == ["city"]
-        assert registry.aliases() == {
-            "mcp__demo__get_weather": ("mcp__demo__", "get_weather"),
-            "mcp__demo__get_time": ("mcp__demo__", "get_time"),
-        }
+        assert registry.resolve("mcp__demo__get_weather") == (
+            "mcp__demo__",
+            "get_weather",
+        )
+        assert registry.resolve("mcp__demo__get_time") == ("mcp__demo__", "get_time")
 
     def test_namespace_wire_name_survives_collision(self):
         """A flat tool already holding the joined name must not be shadowed."""
@@ -926,9 +927,46 @@ class TestConvertResponsesTools:
             "mcp__demo__get_weather",
             "mcp__demo__get_weather_2",
         ]
-        assert registry.aliases() == {
-            "mcp__demo__get_weather_2": ("mcp__demo__", "get_weather")
-        }
+        assert registry.resolve("mcp__demo__get_weather_2") == (
+            "mcp__demo__",
+            "get_weather",
+        )
+        # ...and the flat tool still answers to its own declared name.
+        assert registry.resolve("mcp__demo__get_weather") == (
+            None,
+            "mcp__demo__get_weather",
+        )
+
+    def test_namespace_first_does_not_shadow_a_later_flat_name(self):
+        """Registration order must not decide who owns a wire name.
+
+        The same two tools as above, listed the other way round: expanding the
+        namespace first used to take the joined name outright, after which the
+        flat tool overwrote it -- the model saw two functions with one name and
+        a real namespace call came back without its namespace.
+        """
+        registry = ToolBindingRegistry()
+        tools = [
+            ResponsesTool(
+                type="namespace",
+                name="mcp__demo__",
+                tools=[{"type": "function", "name": "get_weather"}],
+            ),
+            ResponsesTool(type="function", name="mcp__demo__get_weather"),
+        ]
+        result = convert_responses_tools(tools, registry)
+        assert [t["function"]["name"] for t in result] == [
+            "mcp__demo__get_weather_2",
+            "mcp__demo__get_weather",
+        ]
+        assert registry.resolve("mcp__demo__get_weather_2") == (
+            "mcp__demo__",
+            "get_weather",
+        )
+        assert registry.resolve("mcp__demo__get_weather") == (
+            None,
+            "mcp__demo__get_weather",
+        )
 
     def test_namespace_member_without_a_name_is_rejected(self):
         tools = [
@@ -1059,6 +1097,25 @@ class TestConvertResponsesTools:
             convert_responses_tools(tools)
         assert "junk__" in str(excinfo.value)
 
+    def test_malformed_namespace_member_is_a_400_not_a_crash(self):
+        """A member the schema rejects must name ``tools`` like every sibling.
+
+        FastAPI never validates a namespace's ``tools`` list, so without this the
+        pydantic error escapes the request handler and the client gets a 500
+        instead of the 400 the endpoint promises.
+        """
+        tools = [
+            ResponsesTool(
+                type="namespace",
+                name="junk__",
+                tools=[{"type": "function", "name": "x", "parameters": "oops"}],
+            )
+        ]
+        with pytest.raises(InvalidRequestError) as excinfo:
+            convert_responses_tools(tools)
+        assert excinfo.value.field == "tools"
+        assert "malformed" in str(excinfo.value)
+
 
 class TestValidateResponsesRequest:
     """Unimplemented capabilities are refused by field, never echoed back."""
@@ -1079,9 +1136,7 @@ class TestValidateResponsesRequest:
     def test_named_function_tool_choice_is_rejected(self):
         with pytest.raises(InvalidRequestError) as excinfo:
             validate_responses_request(
-                self._request(
-                    tool_choice={"type": "function", "name": "get_weather"}
-                )
+                self._request(tool_choice={"type": "function", "name": "get_weather"})
             )
         assert excinfo.value.field == "tool_choice"
 
@@ -1108,9 +1163,7 @@ class TestValidateResponsesRequest:
 
     def test_parallel_tool_calls_false_is_rejected(self):
         with pytest.raises(InvalidRequestError) as excinfo:
-            validate_responses_request(
-                self._request(parallel_tool_calls=False)
-            )
+            validate_responses_request(self._request(parallel_tool_calls=False))
         assert excinfo.value.field == "parallel_tool_calls"
 
     def test_background_is_rejected(self):
@@ -1120,9 +1173,7 @@ class TestValidateResponsesRequest:
 
     def test_conversation_is_rejected(self):
         with pytest.raises(InvalidRequestError) as excinfo:
-            validate_responses_request(
-                self._request(conversation={"id": "conv_1"})
-            )
+            validate_responses_request(self._request(conversation={"id": "conv_1"}))
         assert excinfo.value.field == "conversation"
 
     def test_max_tool_calls_is_rejected(self):
@@ -1159,9 +1210,7 @@ class TestValidateResponsesRequest:
     def test_unknown_text_format_is_rejected(self):
         with pytest.raises(InvalidRequestError) as excinfo:
             validate_responses_request(
-                self._request(
-                    text=TextConfig(format=TextFormatConfig(type="xml"))
-                )
+                self._request(text=TextConfig(format=TextFormatConfig(type="xml")))
             )
         assert excinfo.value.field == "text.format"
 
@@ -1170,9 +1219,7 @@ class TestValidateResponsesRequest:
             self._request(text=TextConfig(format=TextFormatConfig(type="text")))
         )
         validate_responses_request(
-            self._request(
-                text=TextConfig(format=TextFormatConfig(type="json_object"))
-            )
+            self._request(text=TextConfig(format=TextFormatConfig(type="json_object")))
         )
         validate_responses_request(
             self._request(
@@ -1891,9 +1938,7 @@ class TestPreviousResponseToolRoundTrip:
         assert store.get("resp_1")["output"][0]["call_id"] == "call_stable"
         history = store.resolve_chain_messages("resp_1")
         replayed = [
-            call
-            for message in history
-            for call in message.get("tool_calls", [])
+            call for message in history for call in message.get("tool_calls", [])
         ]
         assert replayed[0]["id"] == "call_stable"
 
