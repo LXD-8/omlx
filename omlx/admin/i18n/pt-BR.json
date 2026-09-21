@@ -423,7 +423,7 @@
   "settings.global.section_label": "Configurações Globais",
   "settings.global.heading": "Configuração do Servidor",
   "settings.global.restart_notice": "Configurações marcadas com",
-  "settings.global.restart_badge": "Reiniciar",
+  "settings.global.restart_badge": "Reinicialização necessária",
   "settings.global.restart_suffix": "requerem reinicialização do servidor.",
   "settings.integrations.section_label": "Integrações",
   "settings.integrations.heading": "Configurações de Integração",

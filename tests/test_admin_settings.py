@@ -242,11 +242,20 @@ def test_sections_that_mix_both_carry_no_section_badge():
 
 
 def test_restart_only_rows_keep_their_own_badge():
-    for key in RESTART_ROWS:
-        assert f"{{{{ t('{key}') }}}}" in SETTINGS, key
-    # Five rows carry the row badge; the header sentence and the section-badge
-    # macro add the rest.
-    assert SETTINGS.count("settings.global.restart_badge") == len(RESTART_ROWS) + 5
+    # One badge component and one wording everywhere: the review found "重启"
+    # next to "需要重启" on neighbouring rows, and two rows wearing both.
+    badge = "ui.badge(t('settings.global.restart_badge'), tone='orange')"
+    assert badge in SETTINGS
+    assert "restart_badge') }}</span>" not in SETTINGS, "no hand-written badge span left"
+    for key in ("settings.resource.restart_badge", "settings.mcp.restart_badge",
+                "settings.advanced.restart_badge"):
+        assert f"{{{{ t('{key}') }}}}" not in SETTINGS, f"{key} is the same wording as the shared key"
+    # One badge per restart-only row (the five the backend marks, plus the two
+    # server rows and the memory guard), the header sentence, and the band the
+    # section-badge macro renders. Two rows used to wear it twice.
+    assert SETTINGS.count(badge) == 10
+    for line in SETTINGS.splitlines():
+        assert line.count(badge) <= 1
 
 
 def test_the_restart_rows_are_the_ones_the_routes_call_restart_required():

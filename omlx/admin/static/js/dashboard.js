@@ -1045,8 +1045,15 @@
                             sections.push(section);
                         }
                         if (!sections.length) return;
+                        // The line is the bottom of the sticky sub-tab row: a
+                        // section clicked in the rail lands there, so the rail
+                        // marks what the reader asked for, not the one above it.
+                        const clearance = window.OMLXSettingsNav.activeClearance(
+                            document.querySelector('#panel-settings .page-tabs'),
+                            document.getElementById(sections[0].id)
+                        );
                         this.settingsActiveSection = window.OMLXSettingsNav.activeSection(
-                            offsets, 0, sections
+                            offsets, 0, sections, clearance
                         );
                     };
                     this._settingsScrollHandler = sync;

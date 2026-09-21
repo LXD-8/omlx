@@ -423,7 +423,7 @@
   "settings.global.section_label": "Paramètres globaux",
   "settings.global.heading": "Configuration du serveur",
   "settings.global.restart_notice": "Les paramètres marqués avec",
-  "settings.global.restart_badge": "Redémarrage",
+  "settings.global.restart_badge": "Redémarrage nécessaire",
   "settings.global.restart_suffix": "nécessitent un redémarrage du serveur.",
   "settings.integrations.section_label": "Integrations",
   "settings.integrations.heading": "Integration Settings",

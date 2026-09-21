@@ -83,10 +83,9 @@
                     <div class="min-w-0 flex-1">
                         <div class="text-sm font-medium text-neutral-800 min-w-0 break-words leading-snug" x-text="m.id"></div>
                         <div class="mt-1 flex flex-wrap items-center gap-1" x-show="m.cluster" x-cloak>
-                            <span class="px-1.5 py-0.5 text-[12px] font-semibold rounded bg-neutral-100 text-neutral-700 border border-neutral-200"
-                                  x-text="clusterBadgeLabel(m.cluster)"></span>
+                            <span class="badge" x-text="clusterBadgeLabel(m.cluster)"></span>
                             <span x-show="m.cluster.live && m.cluster.live.stale"
-                                  class="px-1.5 py-0.5 text-[12px] font-semibold rounded bg-amber-50 text-amber-600 border border-amber-200"
+                                  class="badge badge--orange"
                                   x-text="window.t('cluster.badge.stale')"></span>
                         </div>
                         <div class="mt-1.5 space-y-1 min-w-0">
@@ -138,10 +137,9 @@
                         <!-- Cluster badge -->
                         <template x-if="m.cluster">
                             <span class="flex items-center gap-1">
-                                <span class="px-1.5 py-0.5 text-[12px] font-semibold rounded bg-neutral-100 text-neutral-700 border border-neutral-200 whitespace-nowrap"
-                                      x-text="clusterBadgeLabel(m.cluster)"></span>
+                                <span class="badge whitespace-nowrap" x-text="clusterBadgeLabel(m.cluster)"></span>
                                 <span x-show="m.cluster.live && m.cluster.live.stale" x-cloak
-                                      class="px-1.5 py-0.5 text-[12px] font-semibold rounded bg-amber-50 text-amber-600 border border-amber-200 whitespace-nowrap"
+                                      class="badge badge--orange whitespace-nowrap"
                                       x-text="window.t('cluster.badge.stale')"></span>
                             </span>
                         </template>
