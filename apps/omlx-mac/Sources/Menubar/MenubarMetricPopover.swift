@@ -136,7 +136,7 @@ struct MetricPopoverView: View {
 
     private func graphCaption(_ text: String) -> some View {
         Text(text)
-            .font(.omlxMono(9))
+            .font(.omlxMono(DesignTokens.FontSize.aux))
             .foregroundStyle(theme.textTertiary)
     }
 

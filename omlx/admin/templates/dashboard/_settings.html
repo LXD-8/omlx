@@ -1,4 +1,4 @@
-            <div x-show="mainTab === 'settings'" x-cloak role="tabpanel" id="panel-settings" aria-labelledby="tab-settings">
+            <div x-show="mainTab === 'settings'" class="page-narrow" x-cloak role="tabpanel" id="panel-settings" aria-labelledby="tab-settings">
             <!-- Tab Navigation -->
             <div class="flex items-center gap-2 mb-10 animate-fade-in-up">
                 <button
@@ -39,7 +39,7 @@
                             <h2 class="text-xs font-bold uppercase tracking-widest text-neutral-400 mb-2">{{ t('settings.global.section_label') }}</h2>
                             <h3 class="text-2xl font-bold tracking-tight text-neutral-900">{{ t('settings.global.heading') }}</h3>
                             <p class="text-sm text-neutral-500 mt-2">
-                                {{ t('settings.global.restart_notice') }} <span class="px-1 py-0.5 text-[9px] font-medium rounded bg-amber-50 text-amber-600 border border-amber-200">{{ t('settings.global.restart_badge') }}</span> {{ t('settings.global.restart_suffix') }}
+                                {{ t('settings.global.restart_notice') }} <span class="px-1 py-0.5 text-[10px] font-medium rounded bg-amber-50 text-amber-600 border border-amber-200">{{ t('settings.global.restart_badge') }}</span> {{ t('settings.global.restart_suffix') }}
                             </p>
                         </div>
                         <button type="button" @click="resetGlobalSettingsDefaults()"
@@ -242,7 +242,7 @@
                                      }">
                                     <div class="flex items-center gap-2">
                                         <label class="text-sm text-neutral-700">{{ t('settings.server.host') }}</label>
-                                        <span class="px-1.5 py-0.5 text-[9px] font-medium rounded bg-amber-50 text-amber-600 border border-amber-200">{{ t('settings.global.restart_badge') }}</span>
+                                        <span class="px-1.5 py-0.5 text-[10px] font-medium rounded bg-amber-50 text-amber-600 border border-amber-200">{{ t('settings.global.restart_badge') }}</span>
                                     </div>
                                     <div class="flex flex-col items-end gap-1">
                                         <div class="flex items-center gap-2">
@@ -264,7 +264,7 @@
                                 <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 px-4 sm:px-6 py-4">
                                     <div class="flex items-center gap-2">
                                         <label class="text-sm text-neutral-700">{{ t('settings.server.port') }}</label>
-                                        <span class="px-1.5 py-0.5 text-[9px] font-medium rounded bg-amber-50 text-amber-600 border border-amber-200">{{ t('settings.global.restart_badge') }}</span>
+                                        <span class="px-1.5 py-0.5 text-[10px] font-medium rounded bg-amber-50 text-amber-600 border border-amber-200">{{ t('settings.global.restart_badge') }}</span>
                                     </div>
                                     <input type="number" x-model.number="globalSettings.server.port"
                                            class="w-full sm:w-48 px-3 py-2 text-sm text-right border border-neutral-200 rounded-lg focus:ring-2 focus:ring-neutral-900 focus:border-transparent transition-all">
@@ -382,7 +382,7 @@
                                     <div>
                                         <div class="flex items-center gap-2">
                                             <label class="text-sm text-neutral-700">{{ t('settings.resource.prefill_memory_guard') }}</label>
-                                            <span class="px-1.5 py-0.5 text-[9px] font-medium rounded bg-amber-50 text-amber-600 border border-amber-200">{{ t('settings.resource.restart_badge') }}</span>
+                                            <span class="px-1.5 py-0.5 text-[10px] font-medium rounded bg-amber-50 text-amber-600 border border-amber-200">{{ t('settings.resource.restart_badge') }}</span>
                                         </div>
                                         <p class="text-xs text-neutral-400 mt-0.5">{{ t('settings.resource.prefill_memory_guard_description') }}</p>
                                         <p class="text-xs text-neutral-500 mt-1"
@@ -507,7 +507,7 @@
                                     <div>
                                         <div class="flex items-center gap-2">
                                             <label class="text-sm text-neutral-700">{{ t('settings.resource.max_concurrent_requests') }}</label>
-                                            <span class="px-1.5 py-0.5 text-[9px] font-medium rounded-full bg-amber-50 text-amber-600 border border-amber-200">
+                                            <span class="px-1.5 py-0.5 text-[10px] font-medium rounded-full bg-amber-50 text-amber-600 border border-amber-200">
                                                 {{ t('settings.resource.restart_badge') }}
                                             </span>
                                         </div>
@@ -623,7 +623,7 @@
                                     <div>
                                         <div class="flex items-center gap-2">
                                             <label class="text-sm text-neutral-700">{{ t('settings.cache.hot_cache_only') }}</label>
-                                            <span class="px-1.5 py-0.5 text-[9px] font-medium rounded-full bg-amber-50 text-amber-600 border border-amber-200">
+                                            <span class="px-1.5 py-0.5 text-[10px] font-medium rounded-full bg-amber-50 text-amber-600 border border-amber-200">
                                                 {{ t('settings.global.restart_badge') }}
                                             </span>
                                         </div>
@@ -1673,7 +1673,7 @@
                                                 <span class="inline-flex items-center gap-1 px-2.5 py-0.5 text-xs font-medium rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200"
                                                       @mouseenter="showTip($event.currentTarget, profileTooltip(profile))"
                                                       @mouseleave="hideTip()">
-                                                    <span class="px-1 py-0.5 text-[9px] font-bold rounded bg-white/70"
+                                                    <span class="px-1 py-0.5 text-[10px] font-bold rounded bg-white/70"
                                                           :class="profile.has_engine_fields ? 'text-amber-700' : 'text-emerald-700'">API</span>
                                                     <span x-text="profile.api_name || profile.name"></span>
                                                 </span>

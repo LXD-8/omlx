@@ -160,22 +160,22 @@
              :class="stats.runtime_cache?.hot_cache_max_bytes > 0 ? 'grid-cols-2 sm:grid-cols-4' : 'grid-cols-2'"
              class="grid gap-3 border border-neutral-100 rounded-lg p-3">
             <div>
-                <p class="text-[11px] text-neutral-400 mb-0.5">{{ t('status.runtime_cache.prefix_hit_rate') }}</p>
+                <p class="text-[12px] text-neutral-400 mb-0.5">{{ t('status.runtime_cache.prefix_hit_rate') }}</p>
                 <p class="text-lg font-bold text-neutral-900"
                    x-text="((c.prefix_hit_rate || 0) * 100).toFixed(1) + '%'"></p>
             </div>
             <div x-show="stats.runtime_cache?.hot_cache_max_bytes > 0">
-                <p class="text-[11px] text-neutral-400 mb-0.5">{{ t('status.runtime_cache.memory_hit_rate') }}</p>
+                <p class="text-[12px] text-neutral-400 mb-0.5">{{ t('status.runtime_cache.memory_hit_rate') }}</p>
                 <p class="text-lg font-bold text-neutral-900"
                    x-text="((c.ssd_hot_rate || 0) * 100).toFixed(1) + '%'"></p>
             </div>
             <div>
-                <p class="text-[11px] text-neutral-400 mb-0.5">{{ t('status.runtime_cache.prefix_evictions') }}</p>
+                <p class="text-[12px] text-neutral-400 mb-0.5">{{ t('status.runtime_cache.prefix_evictions') }}</p>
                 <p class="text-lg font-bold text-neutral-900"
                    x-text="(c.evictions || 0).toLocaleString()"></p>
             </div>
             <div x-show="stats.runtime_cache?.hot_cache_max_bytes > 0">
-                <p class="text-[11px] text-neutral-400 mb-0.5">{{ t('status.runtime_cache.memory_evictions') }}</p>
+                <p class="text-[12px] text-neutral-400 mb-0.5">{{ t('status.runtime_cache.memory_evictions') }}</p>
                 <p class="text-lg font-bold text-neutral-900"
                    x-text="(c.hot_cache_evictions || 0).toLocaleString()"></p>
             </div>
@@ -246,7 +246,7 @@
             </table>
         </div>
 
-        <div class="text-[11px] text-neutral-500">
+        <div class="text-[12px] text-neutral-500">
             {{ t('status.runtime_cache.subblock_note') }}
         </div>
     </div>

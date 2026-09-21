@@ -187,7 +187,7 @@ struct UsageHistoryView: View {
                 Text("").frame(width: 78)
                 ForEach(0..<24) { hour in
                     Text(hour % 3 == 0 ? String(format: "%02d", hour) : "")
-                        .font(.omlxMono(9)).frame(maxWidth: .infinity)
+                        .font(.omlxMono(DesignTokens.FontSize.aux)).frame(maxWidth: .infinity)
                 }
             }
             ScrollView {

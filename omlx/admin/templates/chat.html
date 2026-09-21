@@ -23,44 +23,8 @@
 <script defer src="/admin/static/js/katex-auto-render.min.js"></script>
 
 <style>
-    /* CSS Variables for theming */
-    :root {
-        --bg-primary: #ffffff;
-        --bg-secondary: #f8fafc;
-        --bg-tertiary: #f1f5f9;
-        --text-primary: #0f172a;
-        --text-secondary: #475569;
-        --text-tertiary: #64748b;
-        --text-muted: #94a3b8;
-        --border-faint: #e2e8f0;
-        --border-normal: #cbd5e1;
-        --code-bg: #f3f4f6;
-        --btn-primary: #171717;
-        --btn-primary-hover: #27272a;
-        --btn-primary-text: #ffffff;
-        --text-danger: #ef4444;
-        --bg-danger-hover: rgba(239, 68, 68, 0.1);
-        --timeline-accent: #3b82f6;
-    }
-
-    [data-theme="dark"] {
-        --bg-primary: #1d1d20;
-        --bg-secondary: #252529;
-        --bg-tertiary: #2d2d32;
-        --text-primary: #efefef;
-        --text-secondary: #a1a1aa;
-        --text-tertiary: #71717a;
-        --text-muted: #52525b;
-        --border-faint: #3f3f46;
-        --border-normal: #52525b;
-        --code-bg: #27272a;
-        --btn-primary: #e5e5e5;
-        --btn-primary-hover: #d4d4d4;
-        --btn-primary-text: #18181b;
-        --text-danger: #f87171;
-        --bg-danger-hover: rgba(239, 68, 68, 0.2);
-        --timeline-accent: #60a5fa;
-    }
+    /* Theming tokens live in the generated static/css/tokens.css (loaded from
+       base.html). Do not redeclare colours or font sizes here. */
 
     [data-theme="dark"] ::selection {
         background-color: #3f3f46;
@@ -258,7 +222,7 @@
 
     .message-body {
         padding: 12px;
-        font-size: 14px;
+        font-size: var(--fs-body);
         line-height: 1.6;
         color: var(--text-primary);
         overflow-x: auto;
@@ -280,7 +244,7 @@
         background: var(--bg-secondary);
         border-radius: 24px;
         padding: 8px 16px;
-        font-size: 14px;
+        font-size: var(--fs-body);
         line-height: 1.6;
         color: var(--text-primary);
         max-width: 100%;
@@ -578,7 +542,7 @@
 
     .svg-allow-warning {
         margin-top: 0.25rem;
-        font-size: 10px;
+        font-size: var(--fs-aux);
         line-height: 1.35;
         color: var(--text-tertiary);
     }
@@ -638,7 +602,7 @@
         background: var(--bg-primary);
         color: var(--text-primary);
         font-family: inherit;
-        font-size: 14px;
+        font-size: var(--fs-body);
         line-height: 1.6;
         outline: none;
     }
@@ -814,7 +778,8 @@
             left: auto;
         }
 
-        /* Prevent iOS auto-zoom on input focus (requires >= 16px) */
+        /* Prevent iOS auto-zoom on input focus (requires >= 16px). Documented
+           exception to the six-step scale: lowering this re-enables auto-zoom. */
         textarea,
         input[type="text"],
         input[type="password"] {
@@ -1764,7 +1729,7 @@
 
                     <!-- Many-images context warning (non-blocking) -->
                     <div x-show="uploadImages.length >= 12" x-cloak
-                        class="mx-2 mt-2 px-2.5 py-1.5 rounded-lg text-[11px] flex items-center gap-1.5 border"
+                        class="mx-2 mt-2 px-2.5 py-1.5 rounded-lg text-[12px] flex items-center gap-1.5 border"
                         style="color: var(--text-secondary); background-color: var(--bg-tertiary); border-color: var(--border-faint);">
                         <i data-lucide="alert-triangle" class="w-3.5 h-3.5 flex-shrink-0" style="color: var(--text-tertiary);"></i>
                         <span><span x-text="uploadImages.length"></span> <span x-text="window.t('chat.many_images_warning')"></span></span>
@@ -1843,7 +1808,7 @@
                             <i x-show="!micActive()" data-lucide="mic" class="w-4 h-4" style="color: var(--text-tertiary);"></i>
                             <div x-show="micActive()" class="w-3 h-3 rounded-[2px]" style="background-color: var(--text-danger);"></div>
                         </button>
-                        <span x-show="micActive()" x-cloak class="self-center text-[11px] font-mono px-1"
+                        <span x-show="micActive()" x-cloak class="self-center text-[12px] font-mono px-1"
                             style="color: var(--text-danger);" x-text="formatRecordingTime(micSeconds)"></span>
                         <!-- Web search toggle -->
                         <button x-show="!hasAsrSupport()" @click="chatSettings.webSearchEnabled = !chatSettings.webSearchEnabled; saveChatSettings()"
@@ -1888,7 +1853,7 @@
                 <div x-show="currentModel && contextTokensUsed() > 0" x-cloak
                     class="flex items-center justify-between gap-3 mt-1.5 px-1">
                     <!-- Active model -->
-                    <span class="flex items-center gap-1.5 min-w-0" style="font-size: 11px; color: var(--text-secondary);">
+                    <span class="flex items-center gap-1.5 min-w-0" style="font-size: var(--fs-body); color: var(--text-secondary);">
                         <span class="w-1.5 h-1.5 rounded-full flex-shrink-0"
                             style="background-color: #34d399; box-shadow: 0 0 0 3px rgba(52,211,153,0.22);"></span>
                         <span class="truncate" x-text="(availableModels.find(m => m.id === currentModel)?.name) || currentModel"></span>
@@ -1898,10 +1863,10 @@
                         @mouseenter="ctxHover = true" @mouseleave="ctxHover = false">
                         <span class="flex items-center gap-2 rounded-full border border-line bg-surface-muted"
                             style="padding: 4px 6px 4px 11px;">
-                            <span class="tabular-nums" style="font-size: 11px; color: var(--text-secondary);"
+                            <span class="tabular-nums" style="font-size: var(--fs-body); color: var(--text-secondary);"
                                 x-text="contextTokensUsed().toLocaleString() + ' ' + window.t('chat.tokens_unit')"></span>
-                            <span style="font-size: 11px; color: var(--text-tertiary);">·</span>
-                            <span class="tabular-nums" style="font-size: 11px; color: var(--text-secondary);"
+                            <span style="font-size: var(--fs-body); color: var(--text-tertiary);">·</span>
+                            <span class="tabular-nums" style="font-size: var(--fs-body); color: var(--text-secondary);"
                                 x-text="contextUsagePercent() + '%'"></span>
                             <svg width="15" height="15" viewBox="0 0 36 36" style="transform: rotate(-90deg); display: block;">
                                 <!-- track -->
@@ -2332,7 +2297,7 @@
         <div class="p-3 border-t border-line bg-surface flex-shrink-0">
             <div class="grid grid-cols-2 gap-2">
                 <div class="bg-surface-muted p-2 rounded-xl border border-line flex flex-col justify-between">
-                    <span class="text-[9px] font-bold uppercase tracking-wider"
+                    <span class="text-[10px] font-bold uppercase tracking-wider"
                         style="color: var(--text-tertiary);">{{ t('chat.stats.prefill') }}</span>
                     <div class="flex items-end justify-between">
                         <div class="text-sm font-semibold" style="color: var(--text-primary);"
@@ -2343,7 +2308,7 @@
                     </div>
                 </div>
                 <div class="bg-surface-muted p-2 rounded-xl border border-line flex flex-col justify-between">
-                    <span class="text-[9px] font-bold uppercase tracking-wider"
+                    <span class="text-[10px] font-bold uppercase tracking-wider"
                         style="color: var(--text-tertiary);">{{ t('chat.stats.token_generation') }}</span>
                     <div class="flex items-end justify-between">
                         <div class="text-sm font-semibold" style="color: var(--text-primary);"
@@ -2354,7 +2319,7 @@
                     </div>
                 </div>
                 <div class="bg-surface-muted p-2 rounded-xl border border-line flex flex-col justify-between">
-                    <span class="text-[9px] font-bold uppercase tracking-wider"
+                    <span class="text-[10px] font-bold uppercase tracking-wider"
                         style="color: var(--text-tertiary);">{{ t('chat.stats.thinking') }}</span>
                     <div class="flex items-end justify-between">
                         <div class="text-sm font-semibold" style="color: var(--text-primary);"
@@ -2366,7 +2331,7 @@
                     </div>
                 </div>
                 <div class="bg-surface-muted p-2 rounded-xl border border-line flex flex-col justify-between">
-                    <span class="text-[9px] font-bold uppercase tracking-wider"
+                    <span class="text-[10px] font-bold uppercase tracking-wider"
                         style="color: var(--text-tertiary);">{{ t('chat.stats.duration') }}</span>
                     <div class="flex items-end justify-between">
                         <div class="text-sm font-semibold" style="color: var(--text-primary);"
@@ -2479,19 +2444,19 @@
             <div class="px-5 py-4 space-y-3 text-sm" style="color: var(--text-primary);">
                 <div class="flex items-center justify-between gap-4">
                     <span>{{ t('chat.shortcut_send') }}</span>
-                    <kbd class="text-[11px] px-2 py-1 rounded-md border border-line bg-surface-muted flex-shrink-0">{{ t('chat.shortcut_key_enter') }}</kbd>
+                    <kbd class="text-[12px] px-2 py-1 rounded-md border border-line bg-surface-muted flex-shrink-0">{{ t('chat.shortcut_key_enter') }}</kbd>
                 </div>
                 <div class="flex items-center justify-between gap-4">
                     <span>{{ t('chat.shortcut_newline') }}</span>
-                    <kbd class="text-[11px] px-2 py-1 rounded-md border border-line bg-surface-muted flex-shrink-0">{{ t('chat.shortcut_shift_enter') }}</kbd>
+                    <kbd class="text-[12px] px-2 py-1 rounded-md border border-line bg-surface-muted flex-shrink-0">{{ t('chat.shortcut_shift_enter') }}</kbd>
                 </div>
                 <div class="flex items-center justify-between gap-4">
                     <span>{{ t('chat.shortcut_stop') }}</span>
-                    <kbd class="text-[11px] px-2 py-1 rounded-md border border-line bg-surface-muted flex-shrink-0">{{ t('chat.shortcut_key_esc') }}</kbd>
+                    <kbd class="text-[12px] px-2 py-1 rounded-md border border-line bg-surface-muted flex-shrink-0">{{ t('chat.shortcut_key_esc') }}</kbd>
                 </div>
                 <div class="flex items-center justify-between gap-4">
                     <span>{{ t('chat.shortcut_help') }}</span>
-                    <kbd class="text-[11px] px-2 py-1 rounded-md border border-line bg-surface-muted flex-shrink-0">?</kbd>
+                    <kbd class="text-[12px] px-2 py-1 rounded-md border border-line bg-surface-muted flex-shrink-0">?</kbd>
                 </div>
             </div>
         </div>
@@ -6931,7 +6896,7 @@
         const userIcon = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline-block;vertical-align:middle;margin-right:4px;"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>';
         const botIcon = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline-block;vertical-align:middle;margin-right:4px;"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M9 9h6v6H9z"/><path d="M15 2v2"/><path d="M9 2v2"/><path d="M15 20v2"/><path d="M9 20v2"/></svg>';
         const icon = msg.role === 'user' ? userIcon : botIcon;
-        this.timelineTooltip.content = `<span style="font-size:11px;">${icon}${this.escapeHtml(excerpt)}${excerpt.length >= 120 ? '...' : ''}</span>`;
+        this.timelineTooltip.content = `<span style="font-size: var(--fs-body);">${icon}${this.escapeHtml(excerpt)}${excerpt.length >= 120 ? '...' : ''}</span>`;
         const rect = event.currentTarget.getBoundingClientRect();
         this.timelineTooltip.x = rect.right + 8;
         this.timelineTooltip.y = rect.top + rect.height / 2 - 16;

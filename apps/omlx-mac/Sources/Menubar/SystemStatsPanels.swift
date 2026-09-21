@@ -293,7 +293,7 @@ private struct StatsPanelCaption: View {
 
     var body: some View {
         Text(window.isEmpty ? text : "\(text) · \(window)")
-            .font(.omlxText(9.5))
+            .font(.omlxText(DesignTokens.FontSize.aux))
             .foregroundStyle(theme.textTertiary)
     }
 }

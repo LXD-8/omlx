@@ -1,0 +1,55 @@
+/*
+ * Shared component specs for the oMLX admin console.
+ *
+ * Every value here comes from a token in tokens.json (via the generated
+ * tokens.css); no literal colour, spacing or font size belongs in this file,
+ * and tests/test_design_tokens.py fails the build if one appears.
+ *
+ * The specs are written once and implemented per platform: this file is the
+ * web implementation, DesignTokens.swift + OMLXTheme is the app-side one.
+ */
+
+/* === Surfaces === */
+
+/* A content surface: solid, micro shadow, no hard border. */
+.surface-card {
+    background-color: var(--bg-primary);
+    border: 1px solid var(--border-faint);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-card);
+}
+
+/* A grouped block inside a page (the "grey group" of macOS settings). */
+.surface-group {
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border-faint);
+    border-radius: var(--radius-lg);
+}
+
+/* Recessed area inside a card: table headers, code blocks, empty states. */
+.surface-inset {
+    background-color: var(--bg-tertiary);
+    border-radius: var(--radius-md);
+}
+
+/* === Structure === */
+
+.section-stack > * + * {
+    margin-top: var(--space-5);
+}
+
+.card-stack > * + * {
+    margin-top: var(--space-3);
+}
+
+.hairline {
+    border: 0;
+    border-top: 1px solid var(--border-faint);
+    margin: 0;
+}
+
+.row {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+}

@@ -1171,7 +1171,7 @@ struct ProfileDetailCard: View {
     @ViewBuilder
     private func badge(text: String, fg: Color, bg: Color, border: Color? = nil) -> some View {
         Text(text)
-            .font(.omlxText(9.5, weight: .heavy))
+            .font(.omlxText(DesignTokens.FontSize.aux, weight: .heavy))
             .kerning(0.7)
             .foregroundStyle(fg)
             .padding(.horizontal, 6).padding(.vertical, 2)

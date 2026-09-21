@@ -6,22 +6,16 @@
     <title>{% block title %}{{ t('app.title') }}{% endblock %}</title>
     <link rel="icon" type="image/svg+xml" href="/admin/static/favicon.svg">
 
-    <!-- Inter Font (self-hosted, Latin) -->
-    <link rel="stylesheet" href="/admin/static/fonts/inter/inter.css">
-
-    <!-- CJK Font (conditional, self-hosted) -->
-    {% if current_lang == 'zh' %}
-    <link rel="stylesheet" href="/admin/static/fonts/noto-sans-sc/noto-sans-sc.css">
-    {% elif current_lang == 'zh-TW' %}
-    <link rel="stylesheet" href="/admin/static/fonts/noto-sans-tc/noto-sans-tc.css">
-    {% elif current_lang == 'ko' %}
-    <link rel="stylesheet" href="/admin/static/fonts/noto-sans-kr/noto-sans-kr.css">
-    {% elif current_lang == 'ja' %}
-    <link rel="stylesheet" href="/admin/static/fonts/noto-sans-jp/noto-sans-jp.css">
-    {% endif %}
-
     <!-- Tailwind CSS (pre-compiled) -->
     <link rel="stylesheet" href="{{ static('css/tailwind.css') }}">
+
+    <!-- Design tokens (generated from omlx/admin/tokens.json; loaded after the
+         Tailwind utilities so the token type scale wins, and before the
+         per-page stylesheets so page rules still win over it) -->
+    <link rel="stylesheet" href="{{ static('css/tokens.css') }}">
+
+    <!-- Shared component specs (Button/Badge/Card/FormRow/Segmented/EmptyState) -->
+    <link rel="stylesheet" href="{{ static('css/components.css') }}">
 
     <!-- Alpine.js -->
     <script defer src="/admin/static/js/alpine.min.js"></script>
@@ -66,26 +60,8 @@
             display: inline-block;
         }
 
-        /* Global UI tokens */
-        :root {
-            --focus-ring-color: #171717;
-            {% if current_lang == 'ko' %}
-            --font-sans: 'Noto Sans KR', 'Inter', system-ui, sans-serif;
-            {% elif current_lang == 'zh' %}
-            --font-sans: 'PingFang SC', 'SF Pro Text', 'Noto Sans SC', 'Inter', system-ui, sans-serif;
-            {% elif current_lang == 'zh-TW' %}
-            --font-sans: 'PingFang TC', 'SF Pro Text', 'Noto Sans TC', 'Inter', system-ui, sans-serif;
-            {% elif current_lang == 'ja' %}
-            --font-sans: 'Noto Sans JP', 'Inter', system-ui, sans-serif;
-            {% else %}
-            --font-sans: 'Inter', system-ui, sans-serif;
-            {% endif %}
-        }
-
-        [data-theme="dark"] {
-            --focus-ring-color: #efefef;
-        }
-
+        /* Colour, type and layout tokens live in the generated tokens.css.
+           Nothing about the palette or the type scale belongs here. */
         body {
             font-family: var(--font-sans) !important;
             -webkit-font-smoothing: antialiased;
@@ -202,7 +178,11 @@
         /* Font-size floor: lift all <12px text to 12px. KaTeX is intentionally
            excluded (its font-size stays untouched, preserving 1.21em scaling).
            Tailwind arbitrary-value classes MUST use the escaped form
-           (.text-\[10px\]) to match the compiled selector. */
+           (.text-\[10px\]) to match the compiled selector. 12px is --fs-body;
+           the literal is kept because the cascade-corrected order of this
+           block is pinned by tests/test_admin_enhanced_readability.py.
+           tokens.css already pulls 9px up to the auxiliary step, so it is
+           listed here too and lands on 12px in this mode. */
         [data-enhanced-readability] .text-\[9px\],
         [data-enhanced-readability] .text-\[10px\],
         [data-enhanced-readability] .text-\[11px\],
