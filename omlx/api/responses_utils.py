@@ -499,6 +499,20 @@ def convert_responses_input_to_messages(
                 "input type.",
                 field="input",
             )
+        if item_type in ("function_call", "function_call_output") and not (
+            (getattr(item, "call_id", None) or "").strip()
+        ):
+            # The Open Responses schema requires `call_id` on both items. Without
+            # it the service cannot tell which call a result answers — inventing
+            # an id, or pairing with the oldest call still waiting, would attach
+            # results to calls on a guess — so the request is refused instead.
+            raise InvalidRequestError(
+                f"input item type {item_type!r} requires 'call_id': return the "
+                "'call_id' the model's function_call carried. oMLX does not "
+                "guess which call a result answers, and an item's own 'id' is "
+                "not a substitute.",
+                field="input",
+            )
 
         if item_type != "function_call_output":
             _flush_pending_tool_images(messages, pending_tool_images)
@@ -593,7 +607,7 @@ def convert_responses_input_to_messages(
 
         elif item_type == "function_call":
             # Assistant's tool call — accumulate for grouping
-            call_id = item.call_id or item.id or f"call_{uuid.uuid4().hex[:8]}"
+            call_id = ensure_call_id(item.call_id or item.id)
             namespace = getattr(item, "namespace", None)
             pending_tool_calls.append(
                 {
@@ -626,12 +640,10 @@ def convert_responses_input_to_messages(
                 output_content = (
                     extracted if extracted is not None else json.dumps(item.output)
                 )
-            # Same fallback the function_call side uses, so an omitted
-            # call_id never reaches the template as an empty tool_call_id.
-            # Guaranteeing a *matching* id is not this layer's job: the Open
-            # Responses schema requires `call_id` on both items, and a request
-            # that omits it is rejected (see `validate_responses_request`).
-            call_id = item.call_id or item.id or f"call_{uuid.uuid4().hex[:8]}"
+            # The same helper the function_call side uses, so an id can never
+            # reach the template empty. An item that omits `call_id` outright is
+            # refused above rather than paired on a guess.
+            call_id = ensure_call_id(item.call_id or item.id)
             messages.append(
                 {
                     "role": "tool",

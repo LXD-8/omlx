@@ -619,16 +619,31 @@ class TestConvertResponsesInput:
         assert "input_file" in str(excinfo.value)
         assert excinfo.value.field == "input"
 
-    def test_omitted_call_ids_still_pair(self):
-        """function_call and its output generate the same fallback id."""
-        items = [
+    @pytest.mark.parametrize(
+        "item",
+        [
             InputItem(type="function_call", name="lookup", arguments="{}"),
             InputItem(type="function_call_output", output="result"),
-        ]
-        messages = convert_responses_input_to_messages(items)
-        call_id = messages[0]["tool_calls"][0]["id"]
-        assert call_id.startswith("call_")
-        assert messages[1]["tool_call_id"] == call_id
+        ],
+    )
+    def test_an_item_without_call_id_is_rejected(self, item):
+        """`call_id` is required on both items; guessing pairs the wrong call.
+
+        The Open Responses schema requires it, and `@ai-sdk/open-responses`
+        writes `call_id: part.toolCallId` unconditionally (1.0.34 and 2.0.49
+        alike), so a client that follows the schema never hits this.
+        """
+        with pytest.raises(InvalidRequestError) as excinfo:
+            convert_responses_input_to_messages([item])
+        assert excinfo.value.field == "input"
+        assert "call_id" in str(excinfo.value)
+
+    def test_a_blank_call_id_is_not_a_call_id(self):
+        with pytest.raises(InvalidRequestError) as excinfo:
+            convert_responses_input_to_messages(
+                [InputItem(type="function_call_output", call_id="  ", output="x")]
+            )
+        assert excinfo.value.field == "input"
 
     def test_ensure_call_id_is_stable_and_nonempty(self):
         assert ensure_call_id("call_abc") == "call_abc"
