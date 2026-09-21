@@ -23,16 +23,16 @@
                         <div class="flex flex-wrap items-center justify-end gap-2 pt-1">
                             <button type="button" @click="openSettingsApply('reset')"
                                     :disabled="savingModelSettings || settingsApply.phase === 'loading'"
-                                    class="px-3 py-1.5 text-xs font-medium text-neutral-700 bg-neutral-100 hover:bg-neutral-200 rounded-full border border-neutral-200 transition-all disabled:opacity-50 disabled:cursor-not-allowed">{{ t('modal.model_settings.actions.reset') }}</button>
+                                    class="px-3 py-1.5 text-xs font-medium text-neutral-700 bg-neutral-100 hover:bg-neutral-200 rounded-lg border border-neutral-200 transition-all disabled:opacity-50 disabled:cursor-not-allowed">{{ t('modal.model_settings.actions.reset') }}</button>
                             <button type="button" @click="openSettingsApply('optimal')"
                                     :disabled="savingModelSettings || settingsApply.phase === 'loading'"
-                                    class="px-3 py-1.5 text-xs font-medium text-neutral-700 bg-neutral-100 hover:bg-neutral-200 rounded-full border border-neutral-200 transition-all disabled:opacity-50 disabled:cursor-not-allowed">{{ t('modal.model_settings.actions.optimal') }}</button>
+                                    class="px-3 py-1.5 text-xs font-medium text-neutral-700 bg-neutral-100 hover:bg-neutral-200 rounded-lg border border-neutral-200 transition-all disabled:opacity-50 disabled:cursor-not-allowed">{{ t('modal.model_settings.actions.optimal') }}</button>
                             <button type="button" @click="openSettingsApply('recipe')"
                                     :disabled="savingModelSettings || settingsApply.phase === 'loading'"
-                                    class="px-3 py-1.5 text-xs font-medium text-neutral-700 bg-neutral-100 hover:bg-neutral-200 rounded-full border border-neutral-200 transition-all disabled:opacity-50 disabled:cursor-not-allowed">{{ t('modal.model_settings.actions.recipe') }}</button>
+                                    class="px-3 py-1.5 text-xs font-medium text-neutral-700 bg-neutral-100 hover:bg-neutral-200 rounded-lg border border-neutral-200 transition-all disabled:opacity-50 disabled:cursor-not-allowed">{{ t('modal.model_settings.actions.recipe') }}</button>
                         </div>
                         <button @click="showModelSettingsModal = false"
-                                class="p-2 text-neutral-400 hover:text-neutral-600 hover:bg-neutral-100 rounded-full transition-all">
+                                class="p-2 text-neutral-400 hover:text-neutral-600 hover:bg-neutral-100 rounded-lg transition-all">
                             <i data-lucide="x" class="w-5 h-5"></i>
                         </button>
                     </div>
@@ -74,7 +74,7 @@
                                     :disabled="refreshingPresets"
                                     @mouseenter="showTip($event.currentTarget, 'Fetch latest presets from omlx.ai')"
                                     @mouseleave="hideTip()"
-                                    class="p-1 rounded-full text-neutral-400 hover:text-neutral-700 hover:bg-neutral-100 transition-all disabled:opacity-50">
+                                    class="p-1 rounded-lg text-neutral-400 hover:text-neutral-700 hover:bg-neutral-100 transition-all disabled:opacity-50">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
                                      :class="refreshingPresets ? 'animate-spin' : ''" class="w-3.5 h-3.5">
                                     <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
@@ -97,7 +97,7 @@
                                 <button type="button" @click="applyPresetToForm(p)"
                                         @mouseenter="showTip($event.currentTarget, p.description)"
                                         @mouseleave="hideTip()"
-                                        class="px-2.5 py-1 text-xs rounded-full border border-neutral-200 bg-neutral-100 text-neutral-800 hover:bg-neutral-200 transition-all"
+                                        class="px-2.5 py-1 text-xs rounded-lg border border-neutral-200 bg-neutral-100 text-neutral-800 hover:bg-neutral-200 transition-all"
                                         x-text="p.display_name || p.name"></button>
                             </template>
                             <span x-show="presets.length === 0" x-cloak class="text-xs text-neutral-400 italic">{{ t('modal.model_settings.profiles.no_presets') }}</span>
@@ -112,8 +112,8 @@
                             <template x-for="tmpl in templates" :key="tmpl.name">
                                 <div class="inline-flex items-center gap-1">
                                     <button type="button" @click="applyTemplateToForm(tmpl)"
-                                            :class="activeTemplateName === tmpl.name ? 'bg-neutral-1000 text-white border-blue-500' : 'border-neutral-200 bg-neutral-100 text-neutral-800 hover:bg-neutral-200'"
-                                            class="px-2.5 py-1 text-xs rounded-full border transition-all"
+                                            :class="activeTemplateName === tmpl.name ? 'bg-accent text-accent-fg border-accent' : 'border-neutral-200 bg-neutral-100 text-neutral-800 hover:bg-neutral-200'"
+                                            class="px-2.5 py-1 text-xs rounded-lg border transition-all"
                                             x-text="tmpl.display_name || tmpl.name"></button>
                                     <button type="button" @click="editingTemplate = tmpl.name"
                                             class="p-0.5 text-neutral-400 hover:text-neutral-700 hover:bg-neutral-200 rounded transition-colors"
@@ -134,7 +134,7 @@
                                 </div>
                             </template>
                             <button type="button" @click="showNewTemplateForm = true; newTemplate = {name:'',display_name:'',description:''}"
-                                    class="px-2.5 py-1 text-xs rounded-full border border-dashed border-neutral-300 text-neutral-500 hover:text-neutral-900 hover:border-neutral-500 transition-all">
+                                    class="px-2.5 py-1 text-xs rounded-lg border border-dashed border-neutral-300 text-neutral-500 hover:text-neutral-900 hover:border-neutral-500 transition-all">
                                 {{ t('modal.model_settings.profiles.new_template') }}
                             </button>
                         </div>
@@ -150,7 +150,7 @@
                             <button type="button" @click="showNewTemplateForm = false"
                                     class="px-3 py-1 text-xs text-neutral-600 hover:bg-neutral-100 rounded">{{ t('modal.model_settings.profiles.cancel') }}</button>
                             <button type="button" @click="createTemplate()"
-                                    class="px-3 py-1 text-xs bg-neutral-900 text-white rounded hover:bg-neutral-800">{{ t('modal.model_settings.profiles.save') }}</button>
+                                    class="px-3 py-1 text-xs bg-accent text-accent-fg rounded hover:bg-accent-hover">{{ t('modal.model_settings.profiles.save') }}</button>
                         </div>
                     </div>
 
@@ -162,7 +162,7 @@
                             <div class="flex justify-between gap-2">
                                 <button type="button"
                                         @click="updateTemplate(tmpl.name, {display_name: tmpl.display_name, settings: formValuesForTemplate()})"
-                                        class="px-3 py-1 text-xs bg-neutral-900 text-white rounded hover:bg-neutral-800">
+                                        class="px-3 py-1 text-xs bg-accent text-accent-fg rounded hover:bg-accent-hover">
                                     {{ t('modal.model_settings.profiles.update_from_form') }}
                                 </button>
                                 <button type="button" @click="editingTemplate = null"
@@ -186,7 +186,7 @@
                                             :class="activeProfileName === p.name
                                                 ? 'bg-emerald-500 text-white border border-emerald-500'
                                                 : 'bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100'"
-                                            class="px-2.5 py-1 text-xs rounded-full transition-all flex items-center gap-1">
+                                            class="px-2.5 py-1 text-xs rounded-lg transition-all flex items-center gap-1">
                                         <span x-show="p.expose_as_model"
                                               class="px-1 py-0.5 text-[12px] font-bold rounded bg-white/70"
                                               :class="p.has_engine_fields ? 'text-amber-700' : 'text-emerald-700'">API</span>
@@ -214,7 +214,7 @@
                             </template>
                             <button type="button"
                                     @click="showNewProfileForm = true; profileError = ''; newProfile = {display_name:'',api_name:'',api_name_touched:false,description:'',also_as_template:false,expose_as_model:false}"
-                                    class="px-2.5 py-1 text-xs rounded-full border border-dashed border-neutral-300 text-neutral-500 hover:text-neutral-900 hover:border-neutral-500 transition-all">
+                                    class="px-2.5 py-1 text-xs rounded-lg border border-dashed border-neutral-300 text-neutral-500 hover:text-neutral-900 hover:border-neutral-500 transition-all">
                                 {{ t('modal.model_settings.profiles.new_profile') }}
                             </button>
                         </div>
@@ -246,7 +246,7 @@
                             <button type="button" @click="showNewProfileForm = false"
                                     class="px-3 py-1 text-xs text-neutral-600 hover:bg-neutral-100 rounded">{{ t('modal.model_settings.profiles.cancel') }}</button>
                             <button type="button" @click="createProfile()"
-                                    class="px-3 py-1 text-xs bg-neutral-900 text-white rounded hover:bg-neutral-800">{{ t('modal.model_settings.profiles.save') }}</button>
+                                    class="px-3 py-1 text-xs bg-accent text-accent-fg rounded hover:bg-accent-hover">{{ t('modal.model_settings.profiles.save') }}</button>
                         </div>
                     </div>
 
@@ -288,7 +288,7 @@
                                 <div class="flex gap-2 flex-wrap">
                                     <button type="button"
                                             @click="updateProfileFromEdit(p)"
-                                            class="px-3 py-1 text-xs bg-neutral-900 text-white rounded hover:bg-neutral-800">
+                                            class="px-3 py-1 text-xs bg-accent text-accent-fg rounded hover:bg-accent-hover">
                                         {{ t('modal.model_settings.profiles.save') }}
                                     </button>
                                     <button type="button"
@@ -777,7 +777,7 @@
                                                     @click="importMtplxSidecar()"
                                                     :disabled="importingMtplx"
                                                     :class="importingMtplx ? 'opacity-40 cursor-not-allowed' : ''"
-                                                    class="mt-2 px-3 py-1.5 text-xs font-medium rounded-lg bg-neutral-900 text-white hover:bg-neutral-700 transition-colors"
+                                                    class="mt-2 px-3 py-1.5 text-xs font-medium rounded-lg bg-accent text-accent-fg hover:bg-accent-hover transition-colors"
                                                     x-text="importingMtplx ? '{{ t('modal.model_settings.mtplx_importing')|replace('\\', '\\\\')|replace("'", "\\'") }}' : '{{ t('modal.model_settings.mtplx_import')|replace('\\', '\\\\')|replace("'", "\\'") }}'"></button>
                                             <p x-show="modelSettings.mtp_compatible && modelSettings.dflash_enabled"
                                                class="text-xs text-amber-600 mt-1">{{ t('modal.model_settings.mtp_conflict_dflash') }}</p>
@@ -1075,7 +1075,7 @@
                                                             x-show="aneTuningForSelectedModel() && !aneTuning.running && aneTuning.status?.recommendation"
                                                             @click="applyANETuningRecommendation()"
                                                             :disabled="aneTuning.applying || aneTuning.applied"
-                                                            class="px-3 py-1.5 text-xs font-medium rounded-lg bg-neutral-900 text-white hover:bg-neutral-700 transition-colors disabled:opacity-40"
+                                                            class="px-3 py-1.5 text-xs font-medium rounded-lg bg-accent text-accent-fg hover:bg-accent-hover transition-colors disabled:opacity-40"
                                                             x-text="aneTuning.applied
                                                                 ? '{{ t('modal.model_settings.qwen_ane_tune_applied')|replace('\\', '\\\\')|replace("'", "\\'") }}'
                                                                 : (aneTuning.applying
@@ -1513,13 +1513,13 @@
                 <!-- Actions: pinned, so Save is reachable however long the form is -->
                 <footer class="sheet__footer">
                     <button @click="showModelSettingsModal = false"
-                            class="px-5 py-2.5 text-sm font-medium text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100 rounded-full transition-all">
+                            class="px-5 py-2.5 text-sm font-medium text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100 rounded-lg transition-all">
                         {{ t('modal.model_settings.cancel') }}
                     </button>
                     <button @click="saveModelSettings"
                             :disabled="savingModelSettings"
-                            class="px-6 py-2.5 bg-neutral-900 text-white text-sm font-semibold rounded-full
-                                   hover:bg-neutral-800 focus:outline-none focus:ring-2 focus:ring-neutral-900 focus:ring-offset-2
+                            class="px-6 py-2.5 bg-accent text-accent-fg text-sm font-semibold rounded-lg
+                                   hover:bg-accent-hover focus:outline-none focus:ring-2 focus:ring-neutral-900 focus:ring-offset-2
                                    transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed">
                         <span x-show="!savingModelSettings">{{ t('modal.model_settings.save') }}</span>
                         <span x-show="savingModelSettings">{{ t('modal.model_settings.saving') }}</span>

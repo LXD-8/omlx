@@ -1,6 +1,6 @@
 {% import "components/ui.html" as ui %}
 <!-- Active Models -->
-<div class="bg-white rounded-2xl border border-neutral-200">
+<div class="card">
     <div class="lg:hidden flex flex-col gap-2 px-4 py-4 bg-neutral-100 border-b border-neutral-200 rounded-t-2xl">
         <div class="flex items-center gap-3">
             <i data-lucide="activity" class="w-4 h-4 text-neutral-500"></i>
@@ -98,7 +98,7 @@
                             </template>
                             <template x-if="!m.is_loading && m.prefilling && m.prefilling.length > 0">
                                 <div class="flex items-center gap-1.5 text-xs text-neutral-700 font-medium">
-                                    <span class="w-2 h-2 rounded-full bg-neutral-1000 animate-pulse shrink-0"></span>
+                                    <span class="w-2 h-2 rounded-full bg-accent animate-pulse shrink-0"></span>
                                     <span x-text="m.prefilling.length + ' PP' + (m.active_requests > 0 ? ' · ' + m.active_requests + ' ' + window.t('status.active_models.req') : '')"></span>
                                 </div>
                             </template>
@@ -159,7 +159,7 @@
                             <!-- Prefilling -->
                             <template x-if="!m.is_loading && m.prefilling && m.prefilling.length > 0">
                                 <div class="flex items-center gap-1.5">
-                                    <span class="w-2 h-2 rounded-full bg-neutral-1000 animate-pulse"></span>
+                                    <span class="w-2 h-2 rounded-full bg-accent animate-pulse"></span>
                                     <span class="text-xs text-neutral-700 font-medium" x-text="m.prefilling.length + ' PP' + (m.active_requests > 0 ? ' · ' + m.active_requests + ' ' + window.t('status.active_models.req') : '')"></span>
                                 </div>
                             </template>

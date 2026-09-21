@@ -1589,11 +1589,12 @@ def test_strategy_picker_renders_between_models_and_roles():
     template = _read(TEMPLATE)
 
     assert "data-cluster-v2-strategy-picker" in template
-    # Same segmented-control pattern as the role picker (neutral-900 active).
+    # Same segmented-control pattern as the role picker, on the console's one
+    # accent: a strategy chip that is on is the tinted one.
     picker = template.split("data-cluster-v2-strategy-picker", 1)[1].split(
         "data-cluster-v2-node-roles", 1
     )[0]
-    assert "bg-neutral-900 text-white" in picker
+    assert "bg-accent text-accent-fg" in picker
     assert ':data-cluster-v2-strategy="option.key"' in picker
     # Green "Recommended" pill, exactly one at a time.
     assert "data-cluster-v2-strategy-recommended" in picker

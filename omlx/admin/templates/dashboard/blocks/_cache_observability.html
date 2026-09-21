@@ -1,5 +1,5 @@
 <!-- Runtime Cache Observability / 运行时缓存可观测性 -->
-<div class="bg-white rounded-2xl border border-neutral-200 overflow-hidden">
+<div class="card overflow-hidden">
     <div class="lg:hidden flex flex-col gap-3 px-4 py-4 bg-neutral-100 border-b border-neutral-200">
         <div class="flex items-center gap-3 min-w-0">
             <i data-lucide="database" class="w-4 h-4 text-neutral-500 shrink-0"></i>
@@ -24,7 +24,7 @@
                     <div x-show="showClearHotCacheConfirm" x-cloak class="flex items-center gap-1.5">
                         <span class="text-xs text-red-600">{{ t('status.runtime_cache.clear_memory_confirm') }}</span>
                         <button @click="clearHotCache()"
-                                class="px-2.5 py-1 text-xs font-medium text-white bg-red-500 hover:bg-red-600 rounded-lg transition-all">
+                                class="px-2.5 py-1 text-xs font-medium text-white bg-red-500 hover:brightness-95 rounded-lg transition-all">
                             {{ t('status.clear_yes') }}
                         </button>
                         <button @click="showClearHotCacheConfirm = false"
@@ -52,7 +52,7 @@
                     <div x-show="showClearSsdCacheConfirm" x-cloak class="flex items-center gap-1.5">
                         <span class="text-xs text-red-600" x-text="window.t('status.clear_ssd_cache_confirm')"></span>
                         <button @click="clearSsdCache()"
-                                class="px-2.5 py-1 text-xs font-medium text-white bg-red-500 hover:bg-red-600 rounded-lg transition-all">
+                                class="px-2.5 py-1 text-xs font-medium text-white bg-red-500 hover:brightness-95 rounded-lg transition-all">
                             {{ t('status.clear_yes') }}
                         </button>
                         <button @click="showClearSsdCacheConfirm = false"
@@ -89,7 +89,7 @@
                     <div x-show="showClearHotCacheConfirm" x-cloak class="flex items-center gap-1.5">
                         <span class="text-xs text-red-600">{{ t('status.runtime_cache.clear_memory_confirm') }}</span>
                         <button @click="clearHotCache()"
-                                class="px-2.5 py-1 text-xs font-medium text-white bg-red-500 hover:bg-red-600 rounded-lg transition-all">
+                                class="px-2.5 py-1 text-xs font-medium text-white bg-red-500 hover:brightness-95 rounded-lg transition-all">
                             {{ t('status.clear_yes') }}
                         </button>
                         <button @click="showClearHotCacheConfirm = false"
@@ -121,7 +121,7 @@
                 <div x-show="showClearSsdCacheConfirm" x-cloak class="flex items-center gap-1.5">
                     <span class="text-xs text-red-600" x-text="window.t('status.clear_ssd_cache_confirm')"></span>
                     <button @click="clearSsdCache()"
-                            class="px-2.5 py-1 text-xs font-medium text-white bg-red-500 hover:bg-red-600 rounded-lg transition-all">
+                            class="px-2.5 py-1 text-xs font-medium text-white bg-red-500 hover:brightness-95 rounded-lg transition-all">
                         {{ t('status.clear_yes') }}
                     </button>
                     <button @click="showClearSsdCacheConfirm = false"

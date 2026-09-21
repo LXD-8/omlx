@@ -115,7 +115,9 @@ def _geometry_vars(tokens: dict) -> list[tuple[str, str]]:
         ("--container-form", f"{layout['formMaxWidth']}px"),
         ("--container-wide", f"var(--measure-{DEFAULT_MEASURE})"),
         ("--topbar-height", f"{layout['topBarHeight']}px"),
-        ("--sticky-offset", f"{layout['stickyOffset']}px"),
+        ("--sub-tab-height", f"{layout['subTabHeight']}px"),
+        ("--sticky-gap", f"{layout['stickyGap']}px"),
+        ("--sticky-offset", f"calc(var(--topbar-height) + var(--sub-tab-height) + var(--sticky-gap))"),
     ]
     pairs += [
         (f"--measure-{name}", "none" if value == 0 else f"{value}px")

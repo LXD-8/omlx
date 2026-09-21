@@ -21,11 +21,20 @@ test('Chinese counts use 万/亿 and never K/M', () => {
     assert.equal(formatCount(1070000, 'zh'), '107万');
     assert.equal(formatCount(12345678, 'zh'), '1234.6万');
     assert.equal(formatCount(123456789, 'zh'), '1.2亿');
+    // The top of the ladder: 万亿, spelled out here rather than left to Intl,
+    // because engines disagree about how far the Chinese scale goes.
+    assert.equal(formatCount(560000000000, 'zh'), '5600亿');
+    assert.equal(formatCount(1200000000000, 'zh'), '1.2万亿');
+    assert.equal(formatCount(34000000000000, 'zh'), '34万亿');
+    assert.equal(formatCount(-4200000000000, 'zh'), '-4.2万亿');
 });
 
 test('Traditional Chinese keeps its own characters', () => {
     assert.equal(formatCount(10000, 'zh-TW'), '1萬');
     assert.equal(formatCount(120000000, 'zh-TW'), '1.2億');
+    // Taiwan stops the ladder at 兆 rather than 万亿.
+    assert.equal(formatCount(1200000000000, 'zh-TW'), '1.2兆');
+    assert.equal(formatCount(34000000000000, 'zh-TW'), '34兆');
 });
 
 test('English counts use K/M/B/T', () => {
