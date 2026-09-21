@@ -99,6 +99,29 @@
     const DASHBOARD_SETTINGS_TABS = new Set(['global', 'integrations', 'models']);
     const DASHBOARD_MODELS_TABS = new Set(['manager', 'downloader', 'quantizer', 'uploader']);
     const DASHBOARD_BENCH_TABS = new Set(['throughput', 'accuracy', 'context']);
+    // The palette needs a stable order and a label key per tab; the sets above
+    // only answer "is this a real tab".
+    const DASHBOARD_TAB_ORDER = [
+        ['status', 'navbar.tab.status'],
+        ['models', 'navbar.tab.models'],
+        ['settings', 'navbar.tab.settings'],
+        ['logs', 'navbar.tab.logs'],
+        ['bench', 'navbar.tab.bench'],
+        ['cluster', 'navbar.tab.cluster'],
+    ];
+    const DASHBOARD_SETTINGS_ORDER = [
+        ['global', 'settings.tab.global'],
+        ['models', 'settings.tab.models'],
+        ['integrations', 'settings.tab.integrations'],
+    ];
+    // Restart status -> toast tone. The message is already localized.
+    const RESTART_TONES = {
+        restarting: 'blue',
+        waiting: 'blue',
+        idle: 'green',
+        unsupported: 'orange',
+        error: 'red',
+    };
     const THEME_STORAGE_KEY = 'omlx-chat-theme';
     const ENHANCED_READABILITY_KEY = 'omlx-enhanced-readability';
     // Log rows mounted above and below the viewport: enough that a fast scroll
@@ -458,6 +481,9 @@
             dashSaveError: '',
             dashPlacedIds: [],
             dashEditAvailable: true,
+            // False until the first /api/stats payload (or its failure) lands:
+            // the Status tab shows skeletons until then instead of zeroes.
+            statsLoaded: false,
             // Rolling samples for the KPI sparklines, one array per card.
             kpiHistory: {requests: [], prompt: [], cached: [], cache: []},
             kpiHistoryLimit: 40,
@@ -869,6 +895,41 @@
 
                 window.addEventListener('focus', () => this.refreshOpenModelSettings());
 
+                this.registerPaletteCommands();
+
+                // The four notices the console used to render inline (restart
+                // banner, settings save error, log error) now arrive as toasts:
+                // one watcher per state instead of one banner per screen.
+                this.$watch('restartServer.status', (status) => {
+                    if (status === 'idle' && !this.restartServer.message) return;
+                    this.notify({
+                        id: 'server-restart',
+                        tone: RESTART_TONES[status] || 'neutral',
+                        title: window.t('toast.server_restart'),
+                        message: this.restartServer.message,
+                    });
+                });
+
+                this.$watch('saveError', (value) => {
+                    if (!value) return;
+                    this.notify({
+                        id: 'settings-save',
+                        tone: 'red',
+                        title: window.t('toast.settings_save_failed'),
+                        message: value,
+                    });
+                });
+
+                this.$watch('logError', (value) => {
+                    if (!value) return;
+                    this.notify({
+                        id: 'log-load',
+                        tone: 'red',
+                        title: window.t('toast.log_load_failed'),
+                        message: value,
+                    });
+                });
+
                 // Pause stats polling when tab is hidden to reduce server load
                 document.addEventListener('visibilitychange', () => {
                     if (document.hidden) {
@@ -1130,6 +1191,76 @@
                     const target = event.shiftKey ? controls.at(-1) : controls[0];
                     (target || dialog.querySelector('[autofocus]')).focus();
                 }
+            },
+
+            /* --- Transient feedback and the command palette --- */
+
+            // Every notice the dashboard raises goes through the one toast
+            // implementation in static/js/ui.js; a page-local banner would be a
+            // second, differently-behaving report of the same event.
+            notify(options) {
+                if (typeof window.omlxToast === 'function') window.omlxToast(options);
+            },
+
+            // The palette asks for the commands when it opens, so `dashPlaced`
+            // and the restart state are always the current ones.
+            registerPaletteCommands() {
+                if (!window.omlxPalette || this._paletteRegistered) return;
+                this._paletteRegistered = true;
+                window.omlxPalette.register(() => this.paletteCommands());
+            },
+
+            paletteCommands() {
+                const commands = [];
+                DASHBOARD_TAB_ORDER.forEach(([tab, key]) => {
+                    if (!DASHBOARD_MAIN_TABS.has(tab)) return;
+                    if (tab === 'cluster' && !this.globalSettings.server.distributed_inference_active) return;
+                    commands.push({
+                        id: `tab-${tab}`,
+                        label: window.t(key),
+                        group: window.t('palette.group_tabs'),
+                        run: () => this.setMainTab(tab),
+                    });
+                });
+                const layout = this._dashLayoutLib();
+                (layout ? layout.BLOCK_IDS : []).forEach(id => {
+                    commands.push({
+                        id: `block-${id}`,
+                        label: window.t(`status.layout.block.${id}`),
+                        group: window.t('palette.group_blocks'),
+                        hint: this.dashPlaced(id) ? '' : window.t('palette.block_not_placed'),
+                        run: () => this.paletteJumpToBlock(id),
+                    });
+                });
+                DASHBOARD_SETTINGS_ORDER.forEach(([tab, key]) => {
+                    if (!DASHBOARD_SETTINGS_TABS.has(tab)) return;
+                    commands.push({
+                        id: `settings-${tab}`,
+                        label: window.t(key),
+                        group: window.t('palette.group_settings'),
+                        run: () => this.setSettingsTab(tab),
+                    });
+                });
+                return commands;
+            },
+
+            // "Jump to a block" lands on the block: the Status tab first, the
+            // layout editor as well when the block is not on the grid, then a
+            // scroll and a glow so the target is obvious.
+            paletteJumpToBlock(id) {
+                this.setMainTab('status');
+                if (!this.dashPlaced(id) && this.dashEditAvailable) this.startDashboardEdit();
+                this.$nextTick(() => {
+                    const element = this.dashPlaced(id)
+                        ? this._dashBlockEl(id)
+                        : document.querySelector(`.dash-tray-pill[data-block="${id}"]`);
+                    if (!element || typeof element.scrollIntoView !== 'function') return;
+                    const reduced = typeof window.omlxPrefersReducedMotion === 'function'
+                        && window.omlxPrefersReducedMotion();
+                    element.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'center' });
+                    element.classList.add('jump-hit');
+                    setTimeout(() => element.classList.remove('jump-hit'), 1200);
+                });
             },
 
             setSettingsTab(tab) {
@@ -4211,6 +4342,7 @@
                     if (response.ok) {
                         const data = await response.json();
                         this.stats = { ...this.stats, ...data };
+                        this.statsLoaded = true;
                         this.recordKpiHistory();
                     } else if (response.status === 401) {
                         window.location.href = '/admin';
@@ -4234,6 +4366,9 @@
                     }
                 } catch (err) {
                     console.error('Failed to load stats:', err);
+                    // The attempt is over either way: a skeleton that outlives
+                    // the request would be a lie about a server that is down.
+                    this.statsLoaded = true;
                 }
             },
 
@@ -4450,6 +4585,13 @@
             },
 
             /* --- Status header / KPI cards / memory watermark --- */
+
+            // One field of the payload the KPI cards show, read through the
+            // scope toggle so the cards and the sparkline always agree.
+            kpiValue(field) {
+                const snapshot = this.statsScope === 'alltime' ? this.alltimeStats : this.stats;
+                return snapshot ? snapshot[field] : undefined;
+            },
 
             // The sparkline keeps its own history: the stats payload is a
             // snapshot, and a single sample has no shape to draw.

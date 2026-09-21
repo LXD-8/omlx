@@ -16,13 +16,14 @@
     --border-normal:     #cbd5e1;
     --text-primary:      #0f172a;
     --text-secondary:    #475569;
-    --text-tertiary:     #64748b;
-    --text-muted:        #94a3b8;
-    --text-danger:       #ef4444;
+    --text-tertiary:     #525f72;
+    --text-muted:        #656f7e;
+    --text-danger:       #b91c1c;
     --link-color:        #2563eb;
     --btn-primary:       #171717;
     --btn-primary-hover: #27272a;
     --btn-primary-text:  #ffffff;
+    --btn-danger:        #dc2626;
     --bg-danger-hover:   rgba(239, 68, 68, 0.1);
     --danger-fg:         #ffffff;
     --focus-ring-color:  #171717;
@@ -34,6 +35,11 @@
     --timeline-accent:   #3b82f6;
     --topbar-bg:         rgba(255, 255, 255, 0.72);
     --topbar-border:     rgba(15, 23, 42, 0.08);
+    --scrim:             rgba(15, 23, 42, 0.45);
+    --badge-green-fg:    #166534;
+    --badge-orange-fg:   #9a3412;
+    --badge-red-fg:      #b91c1c;
+    --badge-blue-fg:     #1d4ed8;
     --fs-aux:            10px;
     --fs-body:           12px;
     --fs-emphasis:       15px;
@@ -74,6 +80,12 @@
     --settings-rail-stack-below: 900px;
     --topbar-blur:               20px;
     --topbar-saturate:           1.8;
+    --duration-fast:             120ms;
+    --duration-normal:           200ms;
+    --duration-slow:             300ms;
+    --duration-shimmer:          1400ms;
+    --toast-max-width:           384px;
+    --palette-max-width:         560px;
     --shadow-card:               0 1px 2px rgba(15, 23, 42, 0.04), 0 1px 3px rgba(15, 23, 42, 0.06);
     --shadow-popover:            0 8px 24px rgba(15, 23, 42, 0.12);
     --shadow-glow:               0 0 0 3px rgba(10, 132, 255, 0.18);
@@ -89,13 +101,14 @@
     --border-normal:     #52525b;
     --text-primary:      #efefef;
     --text-secondary:    #a1a1aa;
-    --text-tertiary:     #71717a;
-    --text-muted:        #52525b;
+    --text-tertiary:     #9a9aa5;
+    --text-muted:        #9494a4;
     --text-danger:       #f87171;
     --link-color:        #60a5fa;
     --btn-primary:       #e5e5e5;
     --btn-primary-hover: #d4d4d4;
     --btn-primary-text:  #18181b;
+    --btn-danger:        #dc2626;
     --bg-danger-hover:   rgba(239, 68, 68, 0.2);
     --danger-fg:         #ffffff;
     --focus-ring-color:  #efefef;
@@ -107,6 +120,11 @@
     --timeline-accent:   #60a5fa;
     --topbar-bg:         rgba(29, 29, 32, 0.72);
     --topbar-border:     rgba(255, 255, 255, 0.08);
+    --scrim:             rgba(0, 0, 0, 0.6);
+    --badge-green-fg:    #30d158;
+    --badge-orange-fg:   #ff9f0a;
+    --badge-red-fg:      #ff7b72;
+    --badge-blue-fg:     #409cff;
 }
 
 html {

@@ -1267,30 +1267,10 @@
                                 <i data-lucide="check-circle" class="w-4 h-4 shrink-0 mt-0.5"></i>
                                 <span class="line-clamp-2" x-text="saveMessage"></span>
                             </div>
-                            <!-- Save error -->
-                            <div x-show="saveError" x-cloak
-                                 x-transition:enter="transition ease-out duration-200"
-                                 x-transition:leave="transition ease-in duration-150"
-                                 class="flex items-start gap-2 text-sm text-red-600 min-w-0"
-                                 :title="saveError">
-                                <i data-lucide="alert-circle" class="w-4 h-4 shrink-0 mt-0.5"></i>
-                                <span class="line-clamp-2" x-text="saveError"></span>
-                            </div>
-                            <!-- Restart status (any non-empty message) -->
-                            <div x-show="restartServer.message" x-cloak
-                                 class="flex items-start gap-2 text-sm min-w-0"
-                                 :class="restartServer.status === 'error' ? 'text-red-600'
-                                       : restartServer.status === 'unsupported' ? 'text-amber-600'
-                                       : 'text-neutral-700'"
-                                 :title="restartServer.message">
-                                <i x-show="restartServer.status === 'restarting' || restartServer.status === 'waiting'"
-                                   data-lucide="loader-2" class="w-4 h-4 animate-spin shrink-0 mt-0.5"></i>
-                                <i x-show="restartServer.status === 'error' || restartServer.status === 'unsupported'"
-                                   data-lucide="alert-circle" class="w-4 h-4 shrink-0 mt-0.5"></i>
-                                <i x-show="restartServer.status === 'idle'"
-                                   data-lucide="check-circle" class="w-4 h-4 shrink-0 mt-0.5"></i>
-                                <span class="line-clamp-2" x-text="restartServer.message"></span>
-                            </div>
+                            <!-- Save failures and restart progress are toasts
+                                 (dashboard.js watches saveError and
+                                 restartServer.status); the success line stays
+                                 next to the button that produced it. -->
                         </div>
                         <div class="flex items-center gap-3 shrink-0">
                             <button type="button"

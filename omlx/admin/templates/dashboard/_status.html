@@ -40,18 +40,9 @@
                                              disabled="!stats.active_models || !stats.active_models.models || stats.active_models.models.length === 0") }}
                             </div>
                         </div>
-                        <div x-show="restartServer.status !== 'idle' && restartServer.message" x-cloak
-                             class="px-6 py-3 border-t border-neutral-100 text-body"
-                             :class="restartServer.status === 'error' ? 'text-red-600'
-                                   : restartServer.status === 'unsupported' ? 'text-amber-600'
-                                   : 'text-neutral-500'">
-                            <span class="inline-flex items-center gap-2">
-                                <i x-show="restartServer.status === 'restarting' || restartServer.status === 'waiting'"
-                                   data-lucide="loader-2" class="w-4 h-4 animate-spin shrink-0"></i>
-                                <span x-text="restartServer.message"></span>
-                            </span>
-                        </div>
                     </div>
+                    <!-- Restart progress and failures are a toast now (see the
+                         restartServer.status watcher in dashboard.js). -->
 
                     <!-- Layout toolbar (edit mode). The entry button lives in the navbar. -->
                     <div x-show="dashEditing" x-cloak class="flex flex-wrap items-center justify-end gap-2 mb-4">

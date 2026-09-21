@@ -91,8 +91,15 @@
                                 </button>
                             </div>
 
+                            <!-- First paint: the table's rows until the model
+                                 list lands; the empty state must not claim the
+                                 disk is empty while the request is in flight. -->
+                            <div x-show="loadingModels && hfModels.length === 0">
+                                {{ ui.skeleton_rows(5, variant='table') }}
+                            </div>
+
                             <!-- Empty (no models on disk) -->
-                            <template x-if="hfModels.length === 0">
+                            <template x-if="hfModels.length === 0 && !loadingModels">
                                 {{ ui.empty_state('inbox', t('models.manager.no_models'), t('models.manager.empty_hint')) }}
                             </template>
 

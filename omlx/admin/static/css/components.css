@@ -116,7 +116,7 @@
 }
 
 .btn--destructive {
-    background-color: var(--sys-red);
+    background-color: var(--btn-danger);
     color: var(--danger-fg);
 }
 
@@ -157,22 +157,22 @@
 }
 
 .badge--green {
-    color: var(--sys-green);
+    color: var(--badge-green-fg);
     background-color: color-mix(in srgb, var(--sys-green) 14%, transparent);
 }
 
 .badge--orange {
-    color: var(--sys-orange);
+    color: var(--badge-orange-fg);
     background-color: color-mix(in srgb, var(--sys-orange) 14%, transparent);
 }
 
 .badge--red {
-    color: var(--sys-red);
+    color: var(--badge-red-fg);
     background-color: color-mix(in srgb, var(--sys-red) 14%, transparent);
 }
 
 .badge--blue {
-    color: var(--sys-blue);
+    color: var(--badge-blue-fg);
     background-color: color-mix(in srgb, var(--sys-blue) 14%, transparent);
 }
 
@@ -471,27 +471,6 @@
     color: var(--text-tertiary);
 }
 
-.kpi__spark {
-    display: block;
-    width: 100%;
-    height: var(--space-5);
-    margin-top: var(--space-2);
-    color: var(--sys-blue);
-}
-
-.kpi__spark path {
-    fill: none;
-    stroke: currentColor;
-    stroke-width: 1.5;
-    stroke-linecap: round;
-    stroke-linejoin: round;
-    vector-effect: non-scaling-stroke;
-}
-
-/* No sample yet: keep the slot so the grid does not reflow on first poll. */
-.kpi__spark--empty {
-    opacity: 0;
-}
 
 /* === Server status header card === */
 
@@ -781,10 +760,6 @@
     color: var(--text-tertiary);
 }
 
-.log-module {
-    color: var(--text-secondary);
-}
-
 .log-message {
     display: flex;
     align-items: center;
@@ -923,15 +898,317 @@
     font-size: var(--fs-aux);
     color: var(--text-tertiary);
 }
+.toast-stack {
+    position: fixed;
+    inset-block-start: var(--space-4);
+    inset-inline-end: var(--space-4);
+    z-index: 90;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    inline-size: min(calc(100% - var(--space-6)), var(--toast-max-width));
+    pointer-events: none;
+}
 
-/* A section the console just jumped to, marked long enough to be found. */
-.anchor-flash {
-    outline: 1px solid var(--sys-blue);
-    outline-offset: var(--space-1);
+.toast {
+    position: relative;
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-3);
+    padding: var(--space-3) var(--space-4);
+    padding-inline-start: var(--space-5);
+    overflow: hidden;
+    pointer-events: auto;
+    background-color: var(--bg-primary);
+    border: 1px solid var(--border-faint);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-popover);
+    transition: opacity var(--duration-fast) ease, transform var(--duration-fast) ease;
+    animation: toast-in var(--duration-normal) ease-out;
+}
+
+.toast::before {
+    content: "";
+    position: absolute;
+    inset-block: 0;
+    inset-inline-start: 0;
+    inline-size: var(--space-1);
+    background-color: var(--toast-accent);
+}
+
+.toast--leaving {
+    opacity: 0;
+    transform: translateY(calc(var(--space-2) * -1));
+}
+
+.toast__body {
+    flex: 1;
+    min-inline-size: 0;
+}
+
+.toast__title {
+    font-size: var(--fs-body);
+    line-height: var(--lh-body);
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.toast__message {
+    margin-block-start: var(--space-1);
+    font-size: var(--fs-aux);
+    line-height: var(--lh-aux);
+    color: var(--text-secondary);
+    overflow-wrap: anywhere;
+}
+
+.toast__close,
+.overlay-close {
+    flex-shrink: 0;
+    padding: var(--space-1);
+    background-color: transparent;
+    border: 0;
+    border-radius: var(--radius-sm);
+    color: var(--text-tertiary);
+    cursor: pointer;
+}
+
+.toast__close:hover,
+.overlay-close:hover {
+    color: var(--text-primary);
+    background-color: var(--bg-tertiary);
+}
+
+.toast--green {
+    --toast-accent: var(--sys-green);
+}
+
+.toast--orange {
+    --toast-accent: var(--sys-orange);
+}
+
+.toast--red {
+    --toast-accent: var(--sys-red);
+}
+
+.toast--blue {
+    --toast-accent: var(--sys-blue);
+}
+
+.toast--neutral {
+    --toast-accent: var(--border-normal);
+}
+
+@keyframes toast-in {
+    from {
+        opacity: 0;
+        transform: translateY(calc(var(--space-2) * -1));
+    }
+    to {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+/* === Skeleton ===
+   First-paint placeholders. They shimmer, they hold the layout, and they never
+   invent a number: the real payload replaces them. */
+
+.skeleton {
+    position: relative;
+    display: block;
+    overflow: hidden;
+    background-color: var(--bg-tertiary);
     border-radius: var(--radius-sm);
 }
 
-/* Narrow screens: the message is the point, the module column gives way. */
+.skeleton::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image: linear-gradient(
+        90deg,
+        transparent,
+        color-mix(in srgb, var(--text-primary) 8%, transparent),
+        transparent
+    );
+    transform: translateX(-100%);
+    animation: skeleton-sheen var(--duration-shimmer) linear infinite;
+}
+
+@keyframes skeleton-sheen {
+    to {
+        transform: translateX(100%);
+    }
+}
+
+.skeleton--line {
+    block-size: var(--space-2);
+}
+
+.skeleton--label {
+    block-size: var(--space-2);
+    inline-size: 40%;
+}
+
+.skeleton--figure {
+    block-size: var(--space-5);
+    inline-size: 60%;
+}
+
+.skeleton--spark {
+    block-size: var(--space-4);
+    inline-size: 100%;
+}
+
+.skeleton--cell {
+    block-size: var(--space-2);
+    inline-size: 15%;
+}
+
+.skeleton-stack {
+    display: flex;
+    flex-direction: column;
+}
+
+.skeleton-row,
+.skeleton-table__row {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+    padding: var(--space-3) var(--space-4);
+}
+
+.skeleton-row + .skeleton-row,
+.skeleton-table__row + .skeleton-table__row {
+    border-top: 1px solid var(--border-faint);
+}
+
+.skeleton-table__head {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+    padding: var(--space-2) var(--space-4);
+    background-color: var(--bg-secondary);
+}
+
+.skeleton-row__cell {
+    flex: 1;
+}
+
+.skeleton-row__cell--short {
+    flex: 0 0 auto;
+}
+
+/* === Overlay dialogs (command palette, shortcut overview) ===
+   Native <dialog> in the top layer, so nothing on the page can sit above them
+   and the browser keeps focus inside them. Only the panel is patterned here;
+   everything else comes from the card spec. */
+
+.overlay-dialog {
+    margin: 0;
+    padding: 0;
+    border: 0;
+    max-inline-size: none;
+    max-block-size: none;
+    background-color: transparent;
+    color: var(--text-primary);
+}
+
+.overlay-dialog[open] {
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    inline-size: 100%;
+    block-size: 100%;
+}
+
+.overlay-dialog::backdrop {
+    background-color: var(--scrim);
+}
+
+.overlay-panel {
+    inline-size: 100%;
+    max-inline-size: var(--palette-max-width);
+    margin-block-start: var(--space-8);
+    margin-inline: var(--space-4);
+    overflow: hidden;
+    background-color: var(--bg-primary);
+    border: 1px solid var(--border-faint);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-popover);
+}
+
+/* === Command palette === */
+
+.palette__search {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-3) var(--space-4);
+    border-bottom: 1px solid var(--border-faint);
+}
+
+.palette__input {
+    flex: 1;
+    min-inline-size: 0;
+    padding: var(--space-1) 0;
+    background-color: transparent;
+    border: 0;
+    color: var(--text-primary);
+    font-size: var(--fs-emphasis);
+    line-height: var(--lh-emphasis);
+}
+
+.palette__input:focus-visible {
+    outline-offset: 0;
+}
+
+.palette__list {
+    max-block-size: calc(var(--space-8) * 7);
+    padding: var(--space-2);
+    overflow-y: auto;
+}
+
+.palette__item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    inline-size: 100%;
+    padding: var(--space-2) var(--space-3);
+    background-color: transparent;
+    border: 0;
+    border-radius: var(--radius-md);
+    color: var(--text-primary);
+    font-size: var(--fs-body);
+    line-height: var(--lh-body);
+    text-align: start;
+    cursor: pointer;
+}
+
+.palette__item--active {
+    background-color: var(--bg-tertiary);
+}
+
+.palette__item-label {
+    flex: 1;
+    min-inline-size: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.palette__item-hint {
+    flex-shrink: 0;
+    font-size: var(--fs-aux);
+    color: var(--text-tertiary);
+}
+
+/* A section the console just jumped to, marked long enough to be found. */
+.anchor-flash {
+    outline: 1px solid var(--text-primary);
+    outline-offset: var(--space-1);
+    border-radius: var(--radius-sm);
+}
 @media (max-width: 48em) {
     .log-grid {
         grid-template-columns:
@@ -961,7 +1238,6 @@
     gap: var(--space-5);
     align-items: start;
 }
-
 @media (max-width: 900px) {
     .settings-layout {
         grid-template-columns: minmax(0, 1fr);
@@ -990,8 +1266,16 @@
     border: 1px solid var(--border-faint);
     border-radius: var(--radius-lg);
 }
-
 .settings-rail__title {
+    font-size: var(--fs-aux);
+    line-height: var(--lh-aux);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-tertiary);
+}
+.palette__group {
+    padding: var(--space-2) var(--space-3) var(--space-1);
     font-size: var(--fs-aux);
     line-height: var(--lh-aux);
     font-weight: 600;
@@ -1004,7 +1288,6 @@
     position: relative;
     margin-top: var(--space-3);
 }
-
 .settings-rail__input {
     width: 100%;
     padding: var(--space-2) var(--space-2) var(--space-2) var(--space-8);
@@ -1015,7 +1298,6 @@
     border: 1px solid var(--border-normal);
     border-radius: var(--radius-md);
 }
-
 .settings-rail__search-icon {
     position: absolute;
     top: 50%;
@@ -1024,21 +1306,18 @@
     color: var(--text-tertiary);
     pointer-events: none;
 }
-
 .settings-rail__clear {
     position: absolute;
     top: 50%;
     right: var(--space-1);
     transform: translateY(-50%);
 }
-
 .settings-rail__list {
     display: flex;
     flex-direction: column;
     gap: var(--space-1);
     margin-top: var(--space-3);
 }
-
 .settings-rail__item {
     display: flex;
     align-items: center;
@@ -1051,13 +1330,10 @@
     border-left: 1px solid transparent;
     border-radius: var(--radius-sm);
 }
-
 .settings-rail__item:hover {
     color: var(--text-primary);
     background-color: var(--bg-tertiary);
 }
-
-/* The active section while scrolling, and the anchor a deep link selected. */
 .settings-rail__item--active {
     color: var(--text-primary);
     font-weight: 600;
@@ -1065,9 +1341,36 @@
     border-left-color: var(--btn-primary);
     box-shadow: var(--shadow-card);
 }
-
 .settings-rail__empty {
     margin-top: var(--space-3);
+    font-size: var(--fs-aux);
+    line-height: var(--lh-aux);
+    color: var(--text-tertiary);
+}
+.palette__empty {
+    padding: var(--space-5) var(--space-4);
+    font-size: var(--fs-body);
+    color: var(--text-tertiary);
+    text-align: center;
+}
+
+.palette__hint {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-4);
+    padding: var(--space-2) var(--space-4);
+    background-color: var(--bg-secondary);
+    border-top: 1px solid var(--border-faint);
+    font-size: var(--fs-aux);
+    color: var(--text-tertiary);
+}
+
+/* The element a palette "jump to this block" landed on. */
+.jump-hit {
+    box-shadow: var(--shadow-glow);
+}
+
+.overlay-note {
     font-size: var(--fs-aux);
     line-height: var(--lh-aux);
     color: var(--text-tertiary);
@@ -1077,15 +1380,63 @@
 .settings-section {
     scroll-margin-top: var(--space-10);
 }
-
 .settings-anchor {
     color: var(--text-tertiary);
 }
-
 .settings-anchor:hover {
     color: var(--text-primary);
 }
-
 .settings-anchor--done {
     color: var(--sys-green);
+}
+.shortcut-list__row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-4);
+    font-size: var(--fs-body);
+    line-height: var(--lh-body);
+    color: var(--text-primary);
+}
+
+.shortcut-list__keys {
+    display: flex;
+    flex-shrink: 0;
+    gap: var(--space-1);
+}
+
+.kbd {
+    display: inline-block;
+    min-inline-size: var(--space-5);
+    padding: 0 var(--space-1);
+    background-color: var(--bg-tertiary);
+    border: 1px solid var(--border-normal);
+    border-radius: var(--radius-sm);
+    color: var(--text-secondary);
+    font-family: var(--font-mono);
+    font-size: var(--fs-aux);
+    line-height: var(--lh-aux);
+    text-align: center;
+}
+
+/* === Reduced motion ===
+   base.html already collapses every animation for people who ask for less
+   motion; these rules remove the moving parts entirely instead of running them
+   once in a millisecond. */
+
+@media (prefers-reduced-motion: reduce) {
+    .skeleton::after {
+        animation: none;
+        opacity: 0;
+    }
+
+    .toast {
+        animation: none;
+        transition: none;
+    }
+
+    .toast--leaving {
+        opacity: 0;
+        transform: none;
+    }
 }

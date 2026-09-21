@@ -67,8 +67,11 @@
         </div>
     </div>
     <div class="divide-y divide-neutral-100">
+        <!-- First paint: three placeholder rows until /api/stats lands, so the
+             block never claims "no models" before the server has answered. -->
+        <div x-show="!statsLoaded">{{ ui.skeleton_rows(3) }}</div>
         <!-- Empty state -->
-        <div x-show="!stats.active_models.models || stats.active_models.models.length === 0">
+        <div x-show="statsLoaded && (!stats.active_models.models || stats.active_models.models.length === 0)" x-cloak>
             {{ ui.empty_state('hard-drive', t('status.active_models.no_models')) }}
         </div>
         <!-- Model rows -->

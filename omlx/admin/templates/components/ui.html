@@ -7,6 +7,10 @@
   Macros take already-localized text (call them with `t('…')`), and the Alpine
   expressions the caller needs (`click`, `show`, `disabled`). Anything else can
   be passed through `attrs`.
+
+  The six component specs are Button, Badge, Card, FormRow, Segmented and
+  EmptyState; the console-wide pieces (Skeleton, CommandPalette, ToastHost,
+  ShortcutOverview) are here as well so a page cannot hand-roll a second one.
 -#}
 
 {#- Button: primary = the screen's one committed action, secondary = neutral,
@@ -130,4 +134,99 @@
     {%- if description %}<p class="empty-state__desc">{{ description }}</p>{% endif %}
     {%- if caller %}<div class="empty-state__action">{{ caller() }}</div>{% endif %}
 </div>
+{%- endmacro %}
+
+{#- Skeleton: the first-paint placeholder for a KPI row or a list of rows. It
+    holds the layout, shimmers, and is hidden from assistive tech; the payload
+    replaces it. It never shows a number of its own. -#}
+{% macro skeleton_kpis(count=4) -%}
+<div class="kpi-grid" aria-hidden="true">
+    {%- for _ in range(count) %}
+    <div class="kpi">
+        <span class="skeleton skeleton--label"></span>
+        <span class="skeleton skeleton--figure"></span>
+        <span class="skeleton skeleton--spark"></span>
+    </div>
+    {%- endfor %}
+</div>
+{%- endmacro %}
+
+{#- `variant` is 'row' (a list row) or 'table' (one more cell). -#}
+{% macro skeleton_rows(count=3, variant='row') -%}
+<div class="skeleton-stack" aria-hidden="true">
+    {%- for _ in range(count) %}
+    <div class="{{ 'skeleton-table__row' if variant == 'table' else 'skeleton-row' }}">
+        <span class="skeleton skeleton--line skeleton-row__cell"></span>
+        <span class="skeleton skeleton--cell skeleton-row__cell--short"></span>
+        <span class="skeleton skeleton--cell skeleton-row__cell--short"></span>
+        {%- if variant == 'table' %}
+        <span class="skeleton skeleton--cell skeleton-row__cell--short"></span>
+        {%- endif %}
+    </div>
+    {%- endfor %}
+</div>
+{%- endmacro %}
+
+{#- The global ⌘K palette. static/js/ui.js fills the list from the commands the
+    page registers, so the markup here is only the dialog itself. -#}
+{% macro command_palette() -%}
+<dialog id="omlx-palette" class="overlay-dialog" role="dialog" aria-modal="true"
+        aria-label="{{ t('palette.label') }}">
+    <div class="overlay-panel">
+        <div class="palette__search">
+            <i data-lucide="search" class="w-4 h-4" aria-hidden="true"></i>
+            <input id="omlx-palette-input" class="palette__input" type="text"
+                   role="combobox" aria-expanded="true" aria-controls="omlx-palette-list"
+                   aria-autocomplete="list" autocomplete="off" spellcheck="false"
+                   aria-label="{{ t('palette.label') }}"
+                   placeholder="{{ t('palette.placeholder') }}">
+            <kbd class="kbd">{{ t('chat.shortcut_key_esc') }}</kbd>
+        </div>
+        <div id="omlx-palette-list" class="palette__list" role="listbox"
+             aria-label="{{ t('palette.label') }}"></div>
+        <p id="omlx-palette-empty" class="palette__empty" hidden>{{ t('palette.empty') }}</p>
+        <div class="palette__hint">
+            <span><span aria-hidden="true">↑ ↓</span> {{ t('palette.hint_move') }}</span>
+            <span><span aria-hidden="true">↵</span> {{ t('palette.hint_run') }}</span>
+            <span><span aria-hidden="true">⌘K</span> {{ t('palette.hint_open') }}</span>
+        </div>
+    </div>
+</dialog>
+{%- endmacro %}
+
+{#- The toast stack. Each toast carries its own role/aria-live (static/js/ui.js
+    decides between status and alert), so the container must not be a live
+    region as well or every message would be announced twice. -#}
+{% macro toast_host() -%}
+<div id="omlx-toast-stack" class="toast-stack" data-omlx-toasts></div>
+{%- endmacro %}
+
+{#- Keyboard-shortcut overview. `rows` is a list of (label, [keys]) pairs and
+    must list exactly the bindings the console handles. -#}
+{% macro shortcut_overview(rows, title=None) -%}
+<dialog id="omlx-shortcuts" class="overlay-dialog" role="dialog" aria-modal="true"
+        aria-labelledby="omlx-shortcuts-title">
+    <div class="overlay-panel">
+        <header class="card__header">
+            <h2 id="omlx-shortcuts-title" class="card__title">{{ title or t('shortcuts.title') }}</h2>
+            <button type="button" class="overlay-close" data-shortcuts-close
+                    aria-label="{{ t('shortcuts.dismiss') }}">
+                <i data-lucide="x" class="w-4 h-4"></i>
+            </button>
+        </header>
+        <div class="card__body">
+            <ul class="shortcut-list">
+                {%- for label, keys in rows %}
+                <li class="shortcut-list__row">
+                    <span>{{ label }}</span>
+                    <span class="shortcut-list__keys">
+                        {%- for key in keys %}<kbd class="kbd">{{ key }}</kbd>{% endfor %}
+                    </span>
+                </li>
+                {%- endfor %}
+            </ul>
+            <p class="overlay-note">{{ t('shortcuts.note') }}</p>
+        </div>
+    </div>
+</dialog>
 {%- endmacro %}

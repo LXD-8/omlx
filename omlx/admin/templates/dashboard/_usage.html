@@ -18,12 +18,18 @@
         </div>
     </div>
     <p class="text-xs text-neutral-500 mb-4">{{ t('usage.note') }}</p>
-    <p x-show="error" x-text="error" role="status" class="text-sm text-amber-700 mb-3"></p>
+    <!-- A failed or delayed read is a toast now (usage.js watches `error`);
+         the line used to sit here. -->
     <div x-show="disabled" role="status" class="flex flex-wrap items-center gap-3 bg-neutral-50 rounded-xl border border-neutral-200 p-4 mb-3 text-sm text-neutral-600">
         <span>{{ t('usage.disabled') }}</span>
         {{ ui.button(t('usage.open_settings'), variant='secondary', size='sm', click="setSettingsTab('global')") }}
     </div>
-    <div x-show="loading && !data && !disabled" class="text-sm text-neutral-500">{{ t('usage.loading') }}</div>
+    <!-- First paint: the table's rows until the payload lands. The state is
+         announced by the one line of text above the placeholders. -->
+    <div x-show="loading && !data && !disabled" role="status">
+        <p class="text-sm text-neutral-500 mb-3">{{ t('usage.loading') }}</p>
+        {{ ui.skeleton_rows(5, variant='table') }}
+    </div>
     <template x-if="data">
         <div :aria-busy="loading">
             <div class="grid grid-cols-2 lg:grid-cols-5 gap-3 mb-5">

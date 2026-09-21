@@ -172,7 +172,7 @@
                             <span class="flex items-center gap-3">
                                 <span x-show="logLoading">{{ t('logs.loading') }}</span>
                                 <span x-show="logLastUpdated" x-text="window.t('logs.last_updated').replace('{time}', logLastUpdated)"></span>
-                                <span x-show="logError" class="text-red-500" x-text="logError"></span>
+                                <!-- Log-read failures surface as a toast (dashboard.js watches logError). -->
                             </span>
                         </div>
                     {% endcall %}

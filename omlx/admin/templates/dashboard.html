@@ -47,6 +47,18 @@
     <!-- Model settings snapshot apply (optimal / recipe) -->
     {% include "dashboard/_modal_settings_apply.html" %}
 
+    <!-- Keyboard-shortcut overview. Chat ships its own list (chat.html), so
+         this one is the dashboard's and lists only what this page handles. -->
+    {% set shortcuts = [
+        (t('shortcuts.palette'), ['⌘K', '/']),
+        (t('shortcuts.overview'), ['?', '⌘/']),
+        (t('shortcuts.move'), ['↑', '↓']),
+        (t('shortcuts.run'), ['↵']),
+        (t('shortcuts.close'), [t('chat.shortcut_key_esc')]),
+        (t('shortcuts.tabs'), ['←', '→']),
+    ] %}
+    {{ ui.shortcut_overview(shortcuts) }}
+
     <!-- HF Mirror Settings Modal -->
     <dialog x-effect="showHfMirrorModal ? $el.showModal() : $el.close()" x-cloak
          class="dashboard-dialog fixed inset-0 z-50 overflow-y-auto"

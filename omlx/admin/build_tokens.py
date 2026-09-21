@@ -44,7 +44,8 @@ def _theme_vars(tokens: dict, appearance: str) -> list[tuple[str, str]]:
     control = tokens["control"][appearance]
     semantic = tokens["semantic"][appearance]
     material = tokens["material"][appearance]
-    return [
+    badge = tokens["badge"][appearance]
+    pairs = [
         ("--bg-primary", surface["bgPrimary"]),
         ("--bg-secondary", surface["bgSecondary"]),
         ("--bg-tertiary", surface["bgTertiary"]),
@@ -59,6 +60,7 @@ def _theme_vars(tokens: dict, appearance: str) -> list[tuple[str, str]]:
         ("--btn-primary", control["primary"]),
         ("--btn-primary-hover", control["primaryHover"]),
         ("--btn-primary-text", control["primaryText"]),
+        ("--btn-danger", control["danger"]),
         ("--bg-danger-hover", control["dangerHover"]),
         ("--danger-fg", control["dangerText"]),
         ("--focus-ring-color", control["focusRing"]),
@@ -70,7 +72,10 @@ def _theme_vars(tokens: dict, appearance: str) -> list[tuple[str, str]]:
         ("--timeline-accent", semantic["accent"]),
         ("--topbar-bg", material["topBarBg"]),
         ("--topbar-border", material["topBarBorder"]),
+        ("--scrim", material["scrim"]),
     ]
+    pairs += [(f"--badge-{tone}-fg", value) for tone, value in badge.items()]
+    return pairs
 
 
 def _scale_vars(tokens: dict) -> list[tuple[str, str]]:
@@ -108,6 +113,12 @@ def _geometry_vars(tokens: dict) -> list[tuple[str, str]]:
     pairs += [
         ("--topbar-blur", f"{material['topBarBlur']}px"),
         ("--topbar-saturate", f"{material['topBarSaturate']}"),
+    ]
+    console = tokens["console"]
+    pairs += [(f"--duration-{name}", f"{value}ms") for name, value in console["duration"].items()]
+    pairs += [
+        ("--toast-max-width", f"{console['toastMaxWidth']}px"),
+        ("--palette-max-width", f"{console['paletteMaxWidth']}px"),
     ]
     elevation = tokens["elevation"]
     pairs += [

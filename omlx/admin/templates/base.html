@@ -26,6 +26,11 @@
     <!-- Number formatting (one implementation for every count in the console) -->
     <script src="{{ static('js/format.js') }}"></script>
 
+    <!-- Toasts, the ⌘K palette and the animated number transition. Alpine-free
+         on purpose: these have to work on every page the console renders, not
+         only inside the dashboard's Alpine root. -->
+    <script src="{{ static('js/ui.js') }}"></script>
+
     <script>
         // Apply theme immediately to prevent flash of wrong theme
         (function() {
@@ -229,6 +234,9 @@
 </head>
 <body class="font-sans bg-white text-neutral-900 antialiased selection:bg-neutral-900 selection:text-white">
     {% block content %}{% endblock %}
+
+    {#- Toast stack + command palette: one implementation for the console. -#}
+    {% include "components/overlays.html" %}
 
     <script>
         // Lucide icon processor — bypasses createIcons() which has Safari issues.
