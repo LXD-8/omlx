@@ -54,6 +54,13 @@
     gap: var(--space-2);
 }
 
+/* A resident model in a table: a token tint and the shared glow ring, never a
+   hard border — a border would read as a selection, which this is not. */
+.model-row--loaded {
+    background-color: color-mix(in srgb, var(--sys-blue) 6%, transparent);
+    box-shadow: var(--shadow-glow);
+}
+
 /* === Button ===
    Primary = the screen's single committed action; secondary = neutral;
    ghost = toolbar/row actions; destructive = system red. */
@@ -169,6 +176,33 @@
     background-color: color-mix(in srgb, var(--sys-blue) 14%, transparent);
 }
 
+/* === Dual-value metric ===
+   The measured figure is the one that matters; the estimate, limit or budget it
+   is to be read against sits under it at the auxiliary size, never competing
+   with it for weight. */
+
+.metric-dual {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: var(--space-1);
+}
+
+.metric-dual__value {
+    font-size: var(--fs-body);
+    line-height: var(--lh-body);
+    font-weight: 600;
+    color: var(--text-primary);
+    font-variant-numeric: tabular-nums;
+}
+
+.metric-dual__secondary {
+    font-size: var(--fs-aux);
+    line-height: var(--lh-aux);
+    color: var(--text-tertiary);
+    font-variant-numeric: tabular-nums;
+}
+
 /* === Card === */
 
 .card {
@@ -246,6 +280,70 @@
     align-items: center;
     gap: var(--space-2);
     flex-shrink: 0;
+}
+
+/* === Filter slider ===
+   A range filter reads its own value back: the live magnitude sits beside the
+   track, so "at least 7B" is legible without a second field to compare. */
+
+.filter-slider {
+    width: 100%;
+    accent-color: var(--sys-blue);
+    cursor: pointer;
+}
+
+.filter-slider__value {
+    min-width: var(--space-8);
+    font-size: var(--fs-aux);
+    line-height: var(--lh-aux);
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+
+/* === Sheet ===
+   A macOS sheet: a title bar, one fixed measure, a scrolling body and a footer
+   whose actions stay pinned while the body moves under them. */
+
+.sheet {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-width: var(--container-form);
+    max-height: calc(100vh - var(--space-8));
+    background-color: var(--bg-primary);
+    border: 1px solid var(--border-faint);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-popover);
+    overflow: hidden;
+}
+
+.sheet__titlebar {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--space-4);
+    padding: var(--space-5);
+    background-color: var(--bg-secondary);
+    border-bottom: 1px solid var(--border-faint);
+}
+
+.sheet__body {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    padding: var(--space-5);
+}
+
+.sheet__footer {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: var(--space-3);
+    padding: var(--space-4) var(--space-5);
+    background-color: var(--bg-secondary);
+    border-top: 1px solid var(--border-faint);
 }
 
 /* === Segmented control (macOS NSSegmentedControl) === */

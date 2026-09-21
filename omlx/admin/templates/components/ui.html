@@ -24,13 +24,32 @@
 </button>
 {%- endmacro %}
 
-{#- Status badge. `dot` adds the round leading dot macOS uses for live state. -#}
-{% macro badge(label, tone='neutral', dot=False, icon=None, attrs='') -%}
-<span class="badge badge--{{ tone }}" {{ attrs | safe }}>
+{#- Status badge. `dot` adds the round leading dot macOS uses for live state.
+    When the tone depends on runtime state, pass `tone=None` with `tone_expr`
+    (an Alpine expression resolving to a tone name) and `label_expr`; the class
+    is then bound instead of written, so the two cannot both apply. -#}
+{% macro badge(label, tone='neutral', dot=False, icon=None, show=None,
+               tone_expr=None, label_expr=None, attrs='') -%}
+<span class="badge{% if tone %} badge--{{ tone }}{% endif %}"
+      {%- if tone_expr %} :class="'badge--' + {{ tone_expr }}"{% endif %}
+      {%- if show %} x-show="{{ show }}" x-cloak{% endif %}
+      {%- if label_expr %} x-text="{{ label_expr }}"{% endif %} {{ attrs | safe }}>
     {%- if dot %}<span class="badge__dot"></span>{% endif %}
     {%- if icon %}<i data-lucide="{{ icon }}" class="w-3 h-3"></i>{% endif %}
     {{- label -}}
 </span>
+{%- endmacro %}
+
+{#- Dual-value metric: the measured figure large, the figure it is to be read
+    against as a smaller line below (an estimate behind a measurement, a limit
+    behind a usage). Both are Alpine expressions so a row updates in place. -#}
+{% macro metric_dual(value_expr, secondary_expr=None, title=None, attrs='') -%}
+<div class="metric-dual {{ attrs }}"{% if title %} :title="{{ title }}"{% endif %}>
+    <span class="metric-dual__value" x-text="{{ value_expr }}"></span>
+    {%- if secondary_expr %}
+    <span class="metric-dual__secondary" x-show="{{ secondary_expr }}" x-cloak x-text="{{ secondary_expr }}"></span>
+    {%- endif %}
+</div>
 {%- endmacro %}
 
 {#- Card: a content surface with an optional header. Body is the caller block.

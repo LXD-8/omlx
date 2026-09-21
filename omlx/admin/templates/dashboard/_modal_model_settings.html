@@ -7,13 +7,13 @@
         <!-- Backdrop -->
         <div class="fixed inset-0 bg-black/50" @click="showModelSettingsModal = false"></div>
 
-        <!-- Modal -->
+        <!-- Modal: a macOS sheet — title bar, one measure, a scrolling body and a
+             footer whose actions stay pinned. -->
         <div class="flex min-h-full items-center justify-center p-4">
-            <div class="relative bg-white rounded-2xl sm:rounded-3xl shadow-2xl w-full max-w-4xl p-4 sm:p-8"
-                 @click.stop>
+            <div class="relative sheet" @click.stop>
 
-                <!-- Header -->
-                <div class="flex items-start justify-between gap-4 mb-6">
+                <!-- Title bar -->
+                <header class="sheet__titlebar">
                     <div class="min-w-0">
                         <h3 class="text-xs font-bold uppercase tracking-widest text-neutral-400 mb-1">{{ t('modal.model_settings.section_label') }}</h3>
                         <h4 id="model-settings-modal-title" tabindex="-1" autofocus class="text-xl font-bold tracking-tight text-neutral-900 break-words" x-text="selectedModel?.display_name || selectedModel?.name || selectedModel?.id"></h4>
@@ -36,7 +36,10 @@
                             <i data-lucide="x" class="w-5 h-5"></i>
                         </button>
                     </div>
-                </div>
+                </header>
+
+                <!-- Body: the form scrolls under the title bar and the footer -->
+                <div class="sheet__body">
 
                 <!-- Profiles / Templates / Presets section -->
                 <div class="mb-6 p-4 bg-neutral-50 rounded-xl border border-neutral-200"
@@ -356,17 +359,17 @@
                                          x-show="!modelSettings.is_diffusion_model" x-cloak>
                                         <div>
                                             <label class="block text-xs font-bold uppercase tracking-wider text-neutral-500 mb-2">{{ t('modal.model_settings.max_context_window') }}</label>
-                                            <input type="number" x-model.number="modelSettings.max_context_window" placeholder="{{ t('modal.model_settings.placeholder_default') }}" min="1"
+                                            <input type="number" x-model.number="modelSettings.max_context_window" :placeholder="samplingInherited('max_context_window')" min="1"
                                                    class="w-full px-4 py-2.5 border border-neutral-200 rounded-xl text-sm focus:ring-2 focus:ring-neutral-900 focus:border-transparent transition-all">
                                         </div>
                                         <div>
                                             <label class="block text-xs font-bold uppercase tracking-wider text-neutral-500 mb-2">{{ t('modal.model_settings.max_tokens') }}</label>
-                                            <input type="number" x-model.number="modelSettings.max_tokens" placeholder="{{ t('modal.model_settings.placeholder_default') }}"
+                                            <input type="number" x-model.number="modelSettings.max_tokens" :placeholder="samplingInherited('max_tokens')"
                                                    class="w-full px-4 py-2.5 border border-neutral-200 rounded-xl text-sm focus:ring-2 focus:ring-neutral-900 focus:border-transparent transition-all">
                                         </div>
                                         <div>
                                             <label class="block text-xs font-bold uppercase tracking-wider text-neutral-500 mb-2">{{ t('modal.model_settings.temperature') }}</label>
-                                            <input type="number" x-model.number="modelSettings.temperature" step="0.1" min="0" max="2" placeholder="{{ t('modal.model_settings.placeholder_default') }}"
+                                            <input type="number" x-model.number="modelSettings.temperature" step="0.1" min="0" max="2" :placeholder="samplingInherited('temperature')"
                                                    class="w-full px-4 py-2.5 border border-neutral-200 rounded-xl text-sm focus:ring-2 focus:ring-neutral-900 focus:border-transparent transition-all">
                                         </div>
                                     </div>
@@ -375,17 +378,17 @@
                                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                                         <div>
                                             <label class="block text-xs font-bold uppercase tracking-wider text-neutral-500 mb-2">{{ t('modal.model_settings.top_p') }}</label>
-                                            <input type="number" x-model.number="modelSettings.top_p" step="0.05" min="0" max="1" placeholder="{{ t('modal.model_settings.placeholder_default') }}"
+                                            <input type="number" x-model.number="modelSettings.top_p" step="0.05" min="0" max="1" :placeholder="samplingInherited('top_p')"
                                                    class="w-full px-4 py-2.5 border border-neutral-200 rounded-xl text-sm focus:ring-2 focus:ring-neutral-900 focus:border-transparent transition-all">
                                         </div>
                                         <div>
                                             <label class="block text-xs font-bold uppercase tracking-wider text-neutral-500 mb-2">{{ t('modal.model_settings.top_k') }}</label>
-                                            <input type="number" x-model.number="modelSettings.top_k" min="0" placeholder="{{ t('modal.model_settings.placeholder_default') }}"
+                                            <input type="number" x-model.number="modelSettings.top_k" min="0" :placeholder="samplingInherited('top_k')"
                                                    class="w-full px-4 py-2.5 border border-neutral-200 rounded-xl text-sm focus:ring-2 focus:ring-neutral-900 focus:border-transparent transition-all">
                                         </div>
                                         <div>
                                             <label class="block text-xs font-bold uppercase tracking-wider text-neutral-500 mb-2">{{ t('modal.model_settings.min_p') }}</label>
-                                            <input type="number" x-model.number="modelSettings.min_p" step="0.01" min="0" max="1" placeholder="{{ t('modal.model_settings.placeholder_default') }}"
+                                            <input type="number" x-model.number="modelSettings.min_p" step="0.01" min="0" max="1" :placeholder="samplingInherited('min_p')"
                                                    class="w-full px-4 py-2.5 border border-neutral-200 rounded-xl text-sm focus:ring-2 focus:ring-neutral-900 focus:border-transparent transition-all">
                                         </div>
                                     </div>
@@ -395,14 +398,14 @@
                                          x-show="!modelSettings.is_diffusion_model" x-cloak>
                                         <div>
                                             <label class="block text-xs font-bold uppercase tracking-wider text-neutral-500 mb-2">{{ t('modal.model_settings.repetition_penalty') }}</label>
-                                            <input type="number" x-model.number="modelSettings.repetition_penalty" step="0.05" min="0" placeholder="{{ t('modal.model_settings.placeholder_default') }}"
+                                            <input type="number" x-model.number="modelSettings.repetition_penalty" step="0.05" min="0" :placeholder="samplingInherited('repetition_penalty')"
                                                    :disabled="modelSettings.vlm_mtp_enabled"
                                                    :class="modelSettings.vlm_mtp_enabled ? 'opacity-40 cursor-not-allowed' : ''"
                                                    class="w-full px-4 py-2.5 border border-neutral-200 rounded-xl text-sm focus:ring-2 focus:ring-neutral-900 focus:border-transparent transition-all">
                                         </div>
                                         <div>
                                             <label class="block text-xs font-bold uppercase tracking-wider text-neutral-500 mb-2">{{ t('modal.model_settings.presence_penalty') }}</label>
-                                            <input type="number" x-model.number="modelSettings.presence_penalty" step="0.05" min="-2" max="2" placeholder="{{ t('modal.model_settings.placeholder_default') }}"
+                                            <input type="number" x-model.number="modelSettings.presence_penalty" step="0.05" min="-2" max="2" :placeholder="samplingInherited('presence_penalty')"
                                                    :disabled="modelSettings.vlm_mtp_enabled"
                                                    :class="modelSettings.vlm_mtp_enabled ? 'opacity-40 cursor-not-allowed' : ''"
                                                    class="w-full px-4 py-2.5 border border-neutral-200 rounded-xl text-sm focus:ring-2 focus:ring-neutral-900 focus:border-transparent transition-all">
@@ -410,6 +413,8 @@
                                         <p x-show="modelSettings.vlm_mtp_enabled"
                                            class="sm:col-span-2 text-xs text-amber-600">{{ t('modal.model_settings.vlm_mtp_processor_locked') }}</p>
                                     </div>
+                                    <!-- What an empty sampling field means -->
+                                    <p class="text-xs text-neutral-400">{{ t('modal.model_settings.sampling_inherit_hint') }}</p>
                                 </div>
                             </template>
 
@@ -1505,8 +1510,10 @@
                     </div>
                 </div>
 
-                <!-- Actions -->
-                <div class="flex items-center justify-end gap-3 mt-8">
+                </div><!-- end sheet body -->
+
+                <!-- Actions: pinned, so Save is reachable however long the form is -->
+                <footer class="sheet__footer">
                     <button @click="showModelSettingsModal = false"
                             class="px-5 py-2.5 text-sm font-medium text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100 rounded-full transition-all">
                         {{ t('modal.model_settings.cancel') }}
@@ -1519,7 +1526,7 @@
                         <span x-show="!savingModelSettings">{{ t('modal.model_settings.save') }}</span>
                         <span x-show="savingModelSettings">{{ t('modal.model_settings.saving') }}</span>
                     </button>
-                </div>
+                </footer>
             </div>
         </div>
     </dialog>

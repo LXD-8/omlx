@@ -1,3 +1,4 @@
+{% import "components/ui.html" as ui %}
             <div x-show="mainTab === 'models'" x-cloak role="tabpanel" id="panel-models" aria-labelledby="tab-models">
                 <div class="animate-fade-in-up page-wide">
                     <!-- Sub-tab navigation (Manager / Downloader) -->
@@ -92,10 +93,7 @@
 
                             <!-- Empty (no models on disk) -->
                             <template x-if="hfModels.length === 0">
-                                <div class="px-6 py-12 text-center">
-                                    <i data-lucide="inbox" class="w-8 h-8 text-neutral-300 mx-auto mb-3"></i>
-                                    <p class="text-sm text-neutral-500">{{ t('models.manager.no_models') }}</p>
-                                </div>
+                                {{ ui.empty_state('inbox', t('models.manager.no_models'), t('models.manager.empty_hint')) }}
                             </template>
 
                             <!-- Table -->
@@ -110,6 +108,7 @@
                                         {{ t('models.manager.table.type') }}
                                         <span x-show="managerSortBy === 'type'" x-text="managerSortOrder === 'asc' ? '▲' : '▼'" class="text-[10px]"></span>
                                     </div>
+                                    <div class="hidden sm:flex w-32 justify-end">{{ t('models.manager.table.memory') }}</div>
                                     <div class="hidden sm:flex w-24 text-center items-center justify-center gap-1 cursor-pointer hover:text-neutral-700 select-none" @click="toggleManagerSort('size')">
                                         {{ t('models.manager.table.size') }}
                                         <span x-show="managerSortBy === 'size'" x-text="managerSortOrder === 'asc' ? '▲' : '▼'" class="text-[10px]"></span>
@@ -122,7 +121,8 @@
                                     <div x-show="sortedManagerModels.length === 0" class="px-6 py-10 text-center text-sm text-neutral-500"
                                          x-text="window.t('models.manager.no_match')"></div>
                                     <template x-for="model in sortedManagerModels" :key="model.name">
-                                        <div class="flex items-center gap-4 px-4 sm:px-6 py-3 hover:bg-neutral-50 transition-colors">
+                                        <div class="flex items-center gap-4 px-4 sm:px-6 py-3 hover:bg-neutral-50 transition-colors"
+                                             :class="isModelLoaded(model.name) ? 'model-row--loaded' : ''">
                                             <!-- Name -->
                                             <div class="min-w-0 flex-1 flex items-center gap-2">
                                                 <template x-if="managerModelInfo(model.name)">
@@ -152,11 +152,20 @@
                                                     <svg x-show="!copied" class="w-3.5 h-3.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
                                                     <svg x-show="copied" x-cloak class="w-3.5 h-3.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
                                                 </button>
+                                                {{ ui.badge('', tone=None,
+                                                            tone_expr='statusTone(managerModelStatus(model.name))',
+                                                            label_expr='statusLabel(managerModelStatus(model.name))') }}
                                             </div>
                                             <!-- Type -->
                                             <div class="hidden sm:flex w-24 justify-center">
                                                 <span class="px-1.5 py-0.5 text-[10px] font-medium rounded bg-neutral-100 text-neutral-500 border border-neutral-200 uppercase tracking-wide"
                                                       x-text="managerModelInfo(model.name)?.model_type || 'llm'"></span>
+                                            </div>
+                                            <!-- Memory: the measured footprint, with the estimate under it -->
+                                            <div class="hidden sm:flex w-32 justify-end">
+                                                {{ ui.metric_dual('modelMemoryCell(model.name).footprint',
+                                                                  secondary_expr='modelMemoryCell(model.name).estimate',
+                                                                  title='modelSizeLabel(managerModelInfo(model.name))') }}
                                             </div>
                                             <!-- Size -->
                                             <div class="hidden sm:block w-24 text-center text-xs text-neutral-500 tabular-nums" x-text="model.size_formatted"></div>
@@ -377,50 +386,46 @@
                                 </div>
                                 <!-- Filter panel -->
                                 <div x-show="hfSearchFiltersOpen" x-cloak class="mt-3 p-4 bg-neutral-50 rounded-xl border border-neutral-200">
-                                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
                                         <!-- Min Params -->
                                         <div>
                                             <label class="block text-xs font-medium text-neutral-500 uppercase tracking-wider mb-1.5">{{ t('models.search.filter.min_params') }}</label>
-                                            <div class="flex items-center gap-1">
-                                                <input type="number" x-model="hfSearchMinParams"
-                                                       @input="debounceSearch()"
-                                                       placeholder="0"
-                                                       class="w-full px-3 py-2 border border-neutral-200 rounded-lg text-sm bg-white focus:ring-2 focus:ring-neutral-900 focus:border-transparent">
-                                                <span class="text-xs text-neutral-400">B</span>
-                                            </div>
+                                            <input type="range" min="0" max="1000" step="1"
+                                                   x-model.number="hfSearchMinParams"
+                                                   @input="debounceSearch()"
+                                                   class="filter-slider">
+                                            <span class="block mt-1 filter-slider__value"
+                                                  x-text="filterSliderLabel('min_params', hfSearchMinParams)"></span>
                                         </div>
                                         <!-- Max Params -->
                                         <div>
                                             <label class="block text-xs font-medium text-neutral-500 uppercase tracking-wider mb-1.5">{{ t('models.search.filter.max_params') }}</label>
-                                            <div class="flex items-center gap-1">
-                                                <input type="number" x-model="hfSearchMaxParams"
-                                                       @input="debounceSearch()"
-                                                       placeholder="∞"
-                                                       class="w-full px-3 py-2 border border-neutral-200 rounded-lg text-sm bg-white focus:ring-2 focus:ring-neutral-900 focus:border-transparent">
-                                                <span class="text-xs text-neutral-400">B</span>
-                                            </div>
+                                            <input type="range" min="0" max="1000" step="1"
+                                                   x-model.number="hfSearchMaxParams"
+                                                   @input="debounceSearch()"
+                                                   class="filter-slider">
+                                            <span class="block mt-1 filter-slider__value"
+                                                  x-text="filterSliderLabel('max_params', hfSearchMaxParams)"></span>
                                         </div>
                                         <!-- Min Size -->
                                         <div>
                                             <label class="block text-xs font-medium text-neutral-500 uppercase tracking-wider mb-1.5">{{ t('models.search.filter.min_size') }}</label>
-                                            <div class="flex items-center gap-1">
-                                                <input type="number" x-model="hfSearchMinSize"
-                                                       @input="debounceSearch()"
-                                                       placeholder="0"
-                                                       class="w-full px-3 py-2 border border-neutral-200 rounded-lg text-sm bg-white focus:ring-2 focus:ring-neutral-900 focus:border-transparent">
-                                                <span class="text-xs text-neutral-400">GB</span>
-                                            </div>
+                                            <input type="range" min="0" max="512" step="1"
+                                                   x-model.number="hfSearchMinSize"
+                                                   @input="debounceSearch()"
+                                                   class="filter-slider">
+                                            <span class="block mt-1 filter-slider__value"
+                                                  x-text="filterSliderLabel('min_size', hfSearchMinSize)"></span>
                                         </div>
                                         <!-- Max Size -->
                                         <div>
                                             <label class="block text-xs font-medium text-neutral-500 uppercase tracking-wider mb-1.5">{{ t('models.search.filter.max_size') }}</label>
-                                            <div class="flex items-center gap-1">
-                                                <input type="number" x-model="hfSearchMaxSize"
-                                                       @input="debounceSearch()"
-                                                       placeholder="∞"
-                                                       class="w-full px-3 py-2 border border-neutral-200 rounded-lg text-sm bg-white focus:ring-2 focus:ring-neutral-900 focus:border-transparent">
-                                                <span class="text-xs text-neutral-400">GB</span>
-                                            </div>
+                                            <input type="range" min="0" max="512" step="1"
+                                                   x-model.number="hfSearchMaxSize"
+                                                   @input="debounceSearch()"
+                                                   class="filter-slider">
+                                            <span class="block mt-1 filter-slider__value"
+                                                  x-text="filterSliderLabel('max_size', hfSearchMaxSize)"></span>
                                         </div>
                                     </div>
                                     <!-- Clear filters -->
@@ -484,15 +489,12 @@
                                 <p class="text-sm text-neutral-500">{{ t('models.browse.loading') }}</p>
                             </div>
 
-                            <!-- Not loaded state for recommended -->
-                            <div x-show="!hfRecommendedLoading && !hfRecommendedLoaded && (hfRecommendedTab === 'trending' || hfRecommendedTab === 'popular')" x-cloak class="px-6 py-12 text-center">
-                                <i data-lucide="star" class="w-8 h-8 text-neutral-300 mx-auto mb-3"></i>
-                                <p class="text-sm text-neutral-500">{{ t('models.browse.load_prompt') }}</p>
-                                <button @click="loadRecommendedModels()"
-                                        class="mt-3 px-4 py-2 text-xs font-medium text-neutral-600 hover:text-neutral-800
-                                               bg-neutral-100 hover:bg-neutral-200 rounded-lg transition-all">
-                                    {{ t('models.browse.load_button') }}
-                                </button>
+                            <!-- Not loaded state for recommended: nothing to browse yet -->
+                            <div x-show="!hfRecommendedLoading && !hfRecommendedLoaded && (hfRecommendedTab === 'trending' || hfRecommendedTab === 'popular')" x-cloak>
+                                {% call ui.empty_state('star', t('models.browse.empty_title'), t('models.browse.load_prompt')) %}
+                                    {{ ui.button(t('models.browse.load_button'), variant='primary', icon='star',
+                                                 click='loadRecommendedModels()') }}
+                                {% endcall %}
                             </div>
 
                             <!-- Model Table (for trending/popular tabs) -->
@@ -584,14 +586,10 @@
                                                             </div>
                                                             <!-- Mobile: badge + download button on their own row -->
                                                             <div class="md:hidden flex items-center gap-2 mt-2">
-                                                                <span x-show="getMemoryFitStatus(model.size) === 'warning'" x-cloak
-                                                                      class="inline-flex items-center px-2 py-0.5 text-[10px] font-medium rounded bg-amber-50 text-amber-600 border border-amber-200 shrink-0">
-                                                                    {{ t('models.browse.tight_fit') }}
-                                                                </span>
-                                                                <span x-show="getMemoryFitStatus(model.size) === 'danger'" x-cloak
-                                                                      class="inline-flex items-center px-2 py-0.5 text-[10px] font-medium rounded bg-red-50 text-red-700 border border-red-200 shrink-0">
-                                                                    {{ t('models.browse.high_oom_risk') }}
-                                                                </span>
+                                                                {{ ui.badge(t('models.browse.tight_fit'), tone='orange',
+                                                                            show="getMemoryFitStatus(model.size) === 'warning'") }}
+                                                                {{ ui.badge(t('models.browse.high_oom_risk'), tone='red',
+                                                                            show="getMemoryFitStatus(model.size) === 'danger'") }}
                                                                 <button @click="downloadRecommended(model.repo_id)"
                                                                         :disabled="hfDownloading"
                                                                         class="px-3 py-1.5 text-xs font-medium text-neutral-600 bg-neutral-100 hover:bg-neutral-900 hover:text-white rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-1.5">
@@ -605,14 +603,10 @@
                                                         <td class="max-md:hidden px-4 py-3 text-xs text-neutral-500 whitespace-nowrap" x-text="model.likes"></td>
                                                         <td class="max-md:hidden px-4 py-3">
                                                             <div class="flex justify-end items-center gap-2">
-                                                                <span x-show="getMemoryFitStatus(model.size) === 'warning'" x-cloak
-                                                                      class="inline-flex items-center px-2 py-0.5 text-[10px] font-medium rounded bg-amber-50 text-amber-600 border border-amber-200 shrink-0">
-                                                                    {{ t('models.browse.tight_fit') }}
-                                                                </span>
-                                                                <span x-show="getMemoryFitStatus(model.size) === 'danger'" x-cloak
-                                                                      class="inline-flex items-center px-2 py-0.5 text-[10px] font-medium rounded bg-red-50 text-red-700 border border-red-200 shrink-0">
-                                                                    {{ t('models.browse.high_oom_risk') }}
-                                                                </span>
+                                                                {{ ui.badge(t('models.browse.tight_fit'), tone='orange',
+                                                                            show="getMemoryFitStatus(model.size) === 'warning'") }}
+                                                                {{ ui.badge(t('models.browse.high_oom_risk'), tone='red',
+                                                                            show="getMemoryFitStatus(model.size) === 'danger'") }}
                                                                 <button @click="downloadRecommended(model.repo_id)"
                                                                         :disabled="hfDownloading"
                                                                         class="px-3 py-1.5 text-xs font-medium text-neutral-600 bg-neutral-100 hover:bg-neutral-900 hover:text-white rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-1.5">
@@ -721,14 +715,10 @@
                                                                 </div>
                                                                 <!-- Mobile: badge + download button on their own row -->
                                                                 <div class="md:hidden flex items-center gap-2 mt-2">
-                                                                    <span x-show="getMemoryFitStatus(model.size) === 'warning'" x-cloak
-                                                                          class="inline-flex items-center px-2 py-0.5 text-[10px] font-medium rounded bg-amber-50 text-amber-600 border border-amber-200 shrink-0">
-                                                                        {{ t('models.browse.tight_fit') }}
-                                                                    </span>
-                                                                    <span x-show="getMemoryFitStatus(model.size) === 'danger'" x-cloak
-                                                                          class="inline-flex items-center px-2 py-0.5 text-[10px] font-medium rounded bg-red-50 text-red-700 border border-red-200 shrink-0">
-                                                                        {{ t('models.browse.high_oom_risk') }}
-                                                                    </span>
+                                                                    {{ ui.badge(t('models.browse.tight_fit'), tone='orange',
+                                                                                show="getMemoryFitStatus(model.size) === 'warning'") }}
+                                                                    {{ ui.badge(t('models.browse.high_oom_risk'), tone='red',
+                                                                                show="getMemoryFitStatus(model.size) === 'danger'") }}
                                                                     <button @click="downloadRecommended(model.repo_id)"
                                                                             :disabled="hfDownloading"
                                                                             class="px-3 py-1.5 text-xs font-medium text-neutral-600 bg-neutral-100 hover:bg-neutral-900 hover:text-white rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-1.5">
@@ -742,14 +732,10 @@
                                                             <td class="max-md:hidden px-4 py-3 text-xs text-neutral-500 whitespace-nowrap" x-text="model.likes"></td>
                                                             <td class="max-md:hidden px-4 py-3">
                                                                 <div class="flex justify-end items-center gap-2">
-                                                                    <span x-show="getMemoryFitStatus(model.size) === 'warning'" x-cloak
-                                                                          class="inline-flex items-center px-2 py-0.5 text-[10px] font-medium rounded bg-amber-50 text-amber-600 border border-amber-200 shrink-0">
-                                                                        {{ t('models.browse.tight_fit') }}
-                                                                    </span>
-                                                                    <span x-show="getMemoryFitStatus(model.size) === 'danger'" x-cloak
-                                                                          class="inline-flex items-center px-2 py-0.5 text-[10px] font-medium rounded bg-red-50 text-red-700 border border-red-200 shrink-0">
-                                                                        {{ t('models.browse.high_oom_risk') }}
-                                                                    </span>
+                                                                    {{ ui.badge(t('models.browse.tight_fit'), tone='orange',
+                                                                                show="getMemoryFitStatus(model.size) === 'warning'") }}
+                                                                    {{ ui.badge(t('models.browse.high_oom_risk'), tone='red',
+                                                                                show="getMemoryFitStatus(model.size) === 'danger'") }}
                                                                     <button @click="downloadRecommended(model.repo_id)"
                                                                             :disabled="hfDownloading"
                                                                             class="px-3 py-1.5 text-xs font-medium text-neutral-600 bg-neutral-100 hover:bg-neutral-900 hover:text-white rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-1.5">
@@ -797,15 +783,9 @@
                                                 <div class="flex-1 min-w-0">
                                                     <div class="flex items-center gap-2 flex-wrap">
                                                         <span class="text-sm font-medium text-neutral-900 truncate" x-text="task.repo_id"></span>
-                                                        <span class="px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider rounded-full shrink-0"
-                                                              :class="{
-                                                                  'bg-blue-50 text-blue-700 border border-blue-200': task.status === 'downloading',
-                                                                  'bg-green-50 text-green-700 border border-green-200': task.status === 'completed',
-                                                                  'bg-red-50 text-red-700 border border-red-200': task.status === 'failed',
-                                                                  'bg-neutral-100 text-neutral-600 border border-neutral-200': task.status === 'pending',
-                                                                  'bg-orange-50 text-orange-700 border border-orange-200': task.status === 'cancelled',
-                                                              }"
-                                                              x-text="task.status"></span>
+                                                        {{ ui.badge('', tone=None,
+                                                                    tone_expr='statusTone(task.status)',
+                                                                    label_expr='statusLabel(task.status)') }}
                                                     </div>
                                                     <p x-show="task.error" x-cloak class="text-xs text-red-500 mt-1.5 truncate" x-text="task.error"></p>
                                                     <template x-if="task.status === 'downloading'">
@@ -1026,15 +1006,12 @@
                                             <p class="text-sm text-neutral-500">{{ t('models.browse.loading') }}</p>
                                         </div>
 
-                                        <!-- Not loaded state for recommended -->
-                                        <div x-show="!msRecommendedLoading && !msRecommendedLoaded && (msRecommendedTab === 'trending' || msRecommendedTab === 'popular')" x-cloak class="px-6 py-12 text-center">
-                                            <i data-lucide="star" class="w-8 h-8 text-neutral-300 mx-auto mb-3"></i>
-                                            <p class="text-sm text-neutral-500">{{ t('models.browse.load_prompt') }}</p>
-                                            <button @click="loadMsRecommendedModels()"
-                                                    class="mt-3 px-4 py-2 text-xs font-medium text-neutral-600 hover:text-neutral-800
-                                                           bg-neutral-100 hover:bg-neutral-200 rounded-lg transition-all">
-                                                {{ t('models.browse.load_button') }}
-                                            </button>
+                                        <!-- Not loaded state for recommended: nothing to browse yet -->
+                                        <div x-show="!msRecommendedLoading && !msRecommendedLoaded && (msRecommendedTab === 'trending' || msRecommendedTab === 'popular')" x-cloak>
+                                            {% call ui.empty_state('star', t('models.browse.empty_title'), t('models.browse.load_prompt')) %}
+                                                {{ ui.button(t('models.browse.load_button'), variant='primary', icon='star',
+                                                             click='loadMsRecommendedModels()') }}
+                                            {% endcall %}
                                         </div>
 
                                         <!-- Trending tab -->
@@ -1059,10 +1036,8 @@
                                                                 </div>
                                                             </div>
                                                             <div class="flex items-center gap-2 shrink-0 ml-4">
-                                                                <span x-show="getMemoryFitStatus(model.size) === 'warning'" x-cloak
-                                                                      class="inline-flex items-center px-2 py-0.5 text-[10px] font-medium rounded bg-amber-50 text-amber-600 border border-amber-200">
-                                                                    {{ t('models.browse.tight_fit') }}
-                                                                </span>
+                                                                {{ ui.badge(t('models.browse.tight_fit'), tone='orange',
+                                                                            show="getMemoryFitStatus(model.size) === 'warning'") }}
                                                                 <button @click="downloadMsModel(model.repo_id)"
                                                                         :disabled="msDownloading"
                                                                         class="px-3.5 py-1.5 text-xs font-medium text-neutral-600 bg-neutral-100
@@ -1113,10 +1088,8 @@
                                                                 </div>
                                                             </div>
                                                             <div class="flex items-center gap-2 shrink-0 ml-4">
-                                                                <span x-show="getMemoryFitStatus(model.size) === 'warning'" x-cloak
-                                                                      class="inline-flex items-center px-2 py-0.5 text-[10px] font-medium rounded bg-amber-50 text-amber-600 border border-amber-200">
-                                                                    {{ t('models.browse.tight_fit') }}
-                                                                </span>
+                                                                {{ ui.badge(t('models.browse.tight_fit'), tone='orange',
+                                                                            show="getMemoryFitStatus(model.size) === 'warning'") }}
                                                                 <button @click="downloadMsModel(model.repo_id)"
                                                                         :disabled="msDownloading"
                                                                         class="px-3.5 py-1.5 text-xs font-medium text-neutral-600 bg-neutral-100
@@ -1221,15 +1194,9 @@
                                                             <div class="flex-1 min-w-0">
                                                                 <div class="flex items-center gap-2 flex-wrap">
                                                                     <span class="text-sm font-medium text-neutral-900 truncate" x-text="task.repo_id"></span>
-                                                                    <span class="px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider rounded-full shrink-0"
-                                                                          :class="{
-                                                                              'bg-blue-50 text-blue-700 border border-blue-200': task.status === 'downloading',
-                                                                              'bg-green-50 text-green-700 border border-green-200': task.status === 'completed',
-                                                                              'bg-red-50 text-red-700 border border-red-200': task.status === 'failed',
-                                                                              'bg-neutral-100 text-neutral-600 border border-neutral-200': task.status === 'pending',
-                                                                              'bg-orange-50 text-orange-700 border border-orange-200': task.status === 'cancelled',
-                                                                          }"
-                                                                          x-text="task.status"></span>
+                                                                    {{ ui.badge('', tone=None,
+                                                                                tone_expr='statusTone(task.status)',
+                                                                                label_expr='statusLabel(task.status)') }}
                                                                 </div>
                                                                 <p x-show="task.error" x-cloak class="text-xs text-red-500 mt-1.5 truncate" x-text="task.error"></p>
                                                                 <template x-if="task.status === 'downloading'">
@@ -1528,15 +1495,9 @@
                                                 <div class="flex-1 min-w-0">
                                                     <div class="flex items-center gap-2 flex-wrap">
                                                         <span class="text-sm font-medium text-neutral-900 truncate" x-text="task.output_name"></span>
-                                                        <span class="px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider rounded-full shrink-0"
-                                                              :class="{
-                                                                  'bg-blue-100 text-blue-700': ['loading','quantizing','saving'].includes(task.status),
-                                                                  'bg-green-100 text-green-700': task.status === 'completed',
-                                                                  'bg-red-100 text-red-700': task.status === 'failed',
-                                                                  'bg-neutral-100 text-neutral-600': task.status === 'pending',
-                                                                  'bg-orange-100 text-orange-700': task.status === 'cancelled',
-                                                              }"
-                                                              x-text="task.status"></span>
+                                                        {{ ui.badge('', tone=None,
+                                                                    tone_expr='statusTone(task.status)',
+                                                                    label_expr='statusLabel(task.status)') }}
                                                         <span class="text-xs text-neutral-400" x-text="formatOQElapsed(task)"></span>
                                                     </div>
                                                     <p x-show="task.phase && !['completed','failed','cancelled'].includes(task.status)"
@@ -1837,15 +1798,9 @@
                                             </div>
                                             <div class="flex items-center gap-2 ml-4">
                                                 <!-- Status badge -->
-                                                <span class="px-2 py-0.5 text-[10px] font-semibold rounded-full uppercase tracking-wider"
-                                                      :class="{
-                                                          'bg-amber-50 text-amber-600': task.status === 'pending',
-                                                          'bg-blue-50 text-blue-600': task.status === 'uploading',
-                                                          'bg-green-50 text-green-600': task.status === 'completed',
-                                                          'bg-red-50 text-red-600': task.status === 'failed',
-                                                          'bg-neutral-100 text-neutral-500': task.status === 'cancelled',
-                                                      }"
-                                                      x-text="task.status"></span>
+                                                {{ ui.badge('', tone=None,
+                                                            tone_expr='statusTone(task.status)',
+                                                            label_expr='statusLabel(task.status)') }}
                                                 <!-- Elapsed time -->
                                                 <span x-show="task.started_at" class="text-[10px] text-neutral-400 font-mono"
                                                       x-text="formatUploadElapsed(task)"></span>

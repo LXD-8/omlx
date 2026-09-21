@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // Runtime behaviour of the Status tab: the KPI sparkline math, the memory
-// watermark percentages and the "unload all" loop. Run with:
+// watermark percentages and the "unload all" loop; and of the Models page's
+// shared status tone map, memory cell and filter-slider read-out. Run with:
 // node --test tests/admin_dashboard.test.cjs
 const assert = require('assert/strict');
 const fs = require('fs');
@@ -9,9 +10,14 @@ const vm = require('vm');
 const { test } = require('node:test');
 
 const root = path.resolve(__dirname, '..');
+// base.html loads the shared formatter before the dashboard, so the component
+// can reach window.formatCount / window.formatParams.
+const { formatCount, formatParams } = require(
+    path.join(root, 'omlx/admin/static/js/format.js')
+);
 const context = {
     localStorage: { getItem: () => null },
-    window: { t: key => key },
+    window: { t: key => key, formatCount, formatParams },
     console,
     alert: message => { throw Error(message); },
 };
@@ -105,4 +111,100 @@ test('unload all asks first and stops when declined', async () => {
     context.window.confirm = () => false;
     await app.unloadAllModels();
     assert.deepEqual(unloaded, []);
+});
+
+// --- Models page: one status vocabulary, one memory cell -------------------
+
+test('one tone map answers for every model table', () => {
+    assert.equal(app.statusTone('loaded'), 'green');
+    assert.equal(app.statusTone('Completed'), 'green', 'case does not matter');
+    assert.equal(app.statusTone('failed'), 'red');
+    assert.equal(app.statusTone('error'), 'red');
+    assert.equal(app.statusTone('cancelled'), 'orange');
+    assert.equal(app.statusTone('partial'), 'orange');
+    assert.equal(app.statusTone('downloading'), 'blue');
+    assert.equal(app.statusTone('pending'), 'blue');
+    assert.equal(app.statusTone('quantizing'), 'blue');
+    assert.equal(app.statusTone(''), 'neutral');
+    assert.equal(app.statusTone(undefined), 'neutral');
+    assert.equal(app.statusTone('something-new'), 'neutral');
+    assert.equal(app.statusTone('constructor'), 'neutral', 'inherited keys are not statuses');
+});
+
+test('a status label comes from the catalogue, an unknown one verbatim', () => {
+    const catalogue = JSON.parse(
+        fs.readFileSync(path.join(root, 'omlx/admin/i18n/en.json'), 'utf8')
+    );
+    const previous = context.window.t;
+    context.window.t = key => (catalogue[key] !== undefined ? catalogue[key] : key);
+    try {
+        assert.equal(app.statusLabel('downloading'), 'Downloading');
+        assert.equal(app.statusLabel('LOADED'), 'Loaded');
+        assert.equal(app.statusLabel('mystery'), 'mystery');
+    } finally {
+        context.window.t = previous;
+    }
+});
+
+test('a manager row knows whether it is resident', () => {
+    app.models = [
+        { id: 'resident', loaded: true },
+        { id: 'starting', loaded: true, is_loading: true },
+        { id: 'idle', loaded: false },
+    ];
+    assert.equal(app.managerModelStatus('resident'), 'loaded');
+    assert.equal(app.isModelLoaded('resident'), true);
+    assert.equal(app.managerModelStatus('starting'), 'loading');
+    assert.equal(app.isModelLoaded('starting'), false, 'still loading is not resident');
+    assert.equal(app.managerModelStatus('idle'), 'unloaded');
+    assert.equal(app.managerModelStatus('gone'), 'unknown');
+});
+
+test('the memory cell leads with the measurement', () => {
+    app.models = [
+        { id: 'a', loaded: true, actual_size_formatted: '5.2 GB', estimated_size_formatted: '6.1 GB' },
+        { id: 'b', loaded: false, estimated_size_formatted: '6.1 GB' },
+        { id: 'c', is_loading: true, actual_size_formatted: '5.2 GB', estimated_size_formatted: '6.1 GB' },
+        { id: 'd', loaded: false },
+    ];
+    const measured = app.modelMemoryCell('a');
+    assert.equal(measured.footprint, '~5.2 GB', 'the measured footprint is a rough delta');
+    assert.equal(measured.observed, true);
+    assert.match(measured.estimate, /6\.1 GB$/, 'the estimate is the secondary line');
+    const estimated = app.modelMemoryCell('b');
+    assert.equal(estimated.footprint, '6.1 GB', 'nothing measured: the estimate is the value');
+    assert.equal(estimated.estimate, '', 'and there is no second line to show');
+    const loading = app.modelMemoryCell('c');
+    assert.equal(loading.observed, false, 'a model still loading has measured nothing');
+    assert.equal(loading.footprint, '6.1 GB');
+    assert.equal(app.modelMemoryCell('d').footprint, '—');
+    assert.equal(app.modelMemoryCell('missing').footprint, '—');
+});
+
+test('a filter slider reads its own magnitude back', () => {
+    assert.equal(app.filterSliderLabel('min_params', 7), '≥ ' + formatParams(7e9));
+    assert.equal(app.filterSliderLabel('min_params', 7), '≥ 7B');
+    assert.equal(app.filterSliderLabel('max_params', 32), '≤ 32B');
+    assert.equal(app.filterSliderLabel('min_size', 12), '≥ 12GB');
+    assert.equal(app.filterSliderLabel('max_size', 512), '≤ 512GB');
+    // Zero is the off position, not "at least nothing".
+    for (const kind of ['min_params', 'max_params', 'min_size', 'max_size']) {
+        assert.equal(app.filterSliderLabel(kind, 0), 'models.search.filter.any', kind);
+    }
+    assert.equal(app.filterSliderLabel('min_size', ''), 'models.search.filter.any');
+});
+
+test('an empty sampling field shows what it inherits', () => {
+    const previous = context.window.t;
+    context.window.t = key => key;
+    try {
+        assert.equal(app.samplingInherited('temperature'), '1');
+        assert.equal(app.samplingInherited('top_p'), '0.95');
+        assert.equal(app.samplingInherited('max_context_window'), '32768');
+        // min_p and presence_penalty have no global value to show.
+        assert.equal(app.samplingInherited('min_p'), 'modal.model_settings.inherit_global_value');
+        assert.equal(app.samplingInherited('presence_penalty'), 'modal.model_settings.inherit_global_value');
+    } finally {
+        context.window.t = previous;
+    }
 });

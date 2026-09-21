@@ -127,6 +127,46 @@
         }
     }
 
+    // One status vocabulary for every model table (manager, the two download
+    // queues, the quantizer and the uploader): the status string the API reports
+    // maps to the tone the shared Badge spec paints. A table cannot invent its
+    // own colour for "failed" any more, and anything unlisted is unknown ->
+    // neutral.
+    const STATUS_TONES = {
+        // ready / resident
+        loaded: 'green', ready: 'green', resident: 'green',
+        // finished cleanly
+        completed: 'green', complete: 'green', success: 'green',
+        succeeded: 'green', done: 'green',
+        // usable but not clean
+        warning: 'orange', partial: 'orange', stalled: 'orange',
+        cancelled: 'orange', canceled: 'orange', paused: 'orange',
+        interrupted: 'orange',
+        // broken
+        failed: 'red', failure: 'red', error: 'red', crashed: 'red',
+        // in flight or queued
+        pending: 'blue', queued: 'blue', starting: 'blue',
+        downloading: 'blue', uploading: 'blue', loading: 'blue',
+        quantizing: 'blue', saving: 'blue',
+    };
+
+    // Localized labels for the statuses the console renders, including the two
+    // states a manager row can be in. A status with no key is shown verbatim.
+    const STATUS_LABELS = {
+        loaded: 'models.status.loaded',
+        loading: 'models.status.loading',
+        unloaded: 'models.status.unloaded',
+        unknown: 'models.status.unknown',
+        pending: 'models.status.pending',
+        downloading: 'models.status.downloading',
+        uploading: 'models.status.uploading',
+        quantizing: 'models.status.quantizing',
+        saving: 'models.status.saving',
+        completed: 'models.status.completed',
+        failed: 'models.status.failed',
+        cancelled: 'models.status.cancelled',
+    };
+
     function dashboard() {
         // GridStack instance and helpers stay outside the reactive Alpine state.
         let dashGrid = null;
@@ -487,12 +527,14 @@
             hfSearchLoading: false,
             hfSearchLoaded: false,
             hfSearchDebounceTimer: null,
-            // Search filters
+            // Search filters. The two parameter and two size filters are range
+            // sliders, so their state is a number whose 0 position means "off"
+            // (a slider has no empty value the way a text field does).
             hfSearchFiltersOpen: false,
-            hfSearchMinParams: '',
-            hfSearchMaxParams: '',
-            hfSearchMaxSize: '',
-            hfSearchMinSize: '',
+            hfSearchMinParams: 0,
+            hfSearchMaxParams: 0,
+            hfSearchMaxSize: 0,
+            hfSearchMinSize: 0,
             // Table sort state for Browse Models
             hfTableSort: 'downloads',
             hfTableSortDir: 'desc',
@@ -3565,6 +3607,18 @@
                 return window.t('modal.model_settings.ttl_no_ttl');
             },
 
+            // A sampling field left empty inherits the global value, so the
+            // placeholder is that value — not the word "default" and not a
+            // number baked into the template. min_p and presence_penalty have no
+            // global counterpart in the settings payload and say so instead.
+            samplingInherited(key) {
+                const value = this.globalSettings.sampling?.[key];
+                if (value === null || value === undefined || value === '') {
+                    return window.t('modal.model_settings.inherit_global_value');
+                }
+                return String(value);
+            },
+
             async loadServerInfo() {
                 try {
                     const response = await fetch('/admin/api/server-info');
@@ -6619,6 +6673,67 @@
                 if (model) this.openModelSettings(model);
             },
 
+            // ---- Models page: one status vocabulary, one memory cell ----
+
+            // The tone the shared Badge spec paints for a status string. Every
+            // table asks this one question, so green cannot mean two things.
+            statusTone(status) {
+                const key = String(status == null ? '' : status).toLowerCase();
+                return Object.prototype.hasOwnProperty.call(STATUS_TONES, key)
+                    ? STATUS_TONES[key]
+                    : 'neutral';
+            },
+
+            // The same status in the console's language; an unknown status is
+            // shown verbatim rather than guessed at.
+            statusLabel(status) {
+                const key = STATUS_LABELS[String(status == null ? '' : status).toLowerCase()];
+                return key ? window.t(key) : String(status == null ? '' : status);
+            },
+
+            // The manager table iterates the disk listing; the resident state
+            // only exists on the richer /api/models entry it cross-references.
+            managerModelStatus(name) {
+                const info = this.managerModelInfo(name);
+                if (!info) return 'unknown';
+                if (info.is_loading) return 'loading';
+                return info.loaded ? 'loaded' : 'unloaded';
+            },
+
+            isModelLoaded(name) {
+                return this.managerModelStatus(name) === 'loaded';
+            },
+
+            // A manager row's memory cell: the measured footprint large, the
+            // estimate it is to be read against small. actual_size is a rough
+            // phys_footprint delta captured at load time (see modelSizeLabel),
+            // so it carries the same "~" the Status tab uses and never reads as
+            // exact; a model that is not resident shows its estimate alone.
+            modelMemoryCell(name) {
+                const info = this.managerModelInfo(name) || {};
+                const measured = (!info.is_loading && info.actual_size_formatted) || '';
+                const estimate = info.estimated_size_formatted || '';
+                return {
+                    footprint: measured ? '~' + measured : (estimate || '—'),
+                    estimate: measured && estimate && estimate !== measured
+                        ? window.t('status.memory.estimated') + ' ' + estimate
+                        : '',
+                    observed: !!measured,
+                };
+            },
+
+            // A filter slider's live read-out: the magnitude under the thumb,
+            // through the shared formatter (parameters keep the SI ladder).
+            // Zero is the slider's off position, not ">= 0".
+            filterSliderLabel(kind, value) {
+                const magnitude = Number(value) || 0;
+                if (magnitude <= 0) return window.t('models.search.filter.any');
+                const measure = String(kind).endsWith('_params')
+                    ? window.formatParams(magnitude * 1e9)
+                    : magnitude + 'GB';
+                return (String(kind).startsWith('min') ? '≥ ' : '≤ ') + measure;
+            },
+
             // Theme select
             setTheme(theme) {
                 this.theme = theme;
@@ -7477,10 +7592,10 @@
             },
 
             clearHFSearchFilters() {
-                this.hfSearchMinParams = '';
-                this.hfSearchMaxParams = '';
-                this.hfSearchMaxSize = '';
-                this.hfSearchMinSize = '';
+                this.hfSearchMinParams = 0;
+                this.hfSearchMaxParams = 0;
+                this.hfSearchMaxSize = 0;
+                this.hfSearchMinSize = 0;
                 if (this.hfSearchQuery.trim()) this.immediateSearch();
             },
 
