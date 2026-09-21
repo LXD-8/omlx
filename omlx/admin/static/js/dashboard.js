@@ -217,10 +217,8 @@
 
             // Settings rail: the section list is rendered into the document by
             // the template (so its titles come from the catalogue) and read
-            // back here; `settingsSections` is the rail's current contents.
+            // back here; `settingsSections` is the rail's contents.
             settingsSections: [],
-            settingsAllSections: [],
-            settingsSearch: '',
             settingsActiveSection: null,
             settingsCopiedAnchor: null,
             _settingsScrollHandler: null,
@@ -838,10 +836,8 @@
                     this.measureLogRowHeight();
                 });
 
-                // The rail's section list comes from the template; load it once
-                // and keep the search in sync with it.
+                // The rail's section list comes from the template; load it once.
                 this.settingsInitSections();
-                this.$watch('settingsSearch', () => this.settingsApplySearch());
 
                 // Every modal in the console is a flag plus a <dialog>: keep the
                 // two in step here instead of relying on each template.
@@ -850,10 +846,7 @@
                     this.$watch(flag, () => this.$nextTick(() => this.syncAllDialogs()));
                 });
                 this.$watch('settingsApply.open', () => this.$nextTick(() => this.syncAllDialogs()));
-                this.$watch('activeTab', () => {
-                    this.settingsSearch = '';
-                    this.settingsInitSections();
-                });
+                this.$watch('activeTab', () => this.settingsInitSections());
 
                 this.$watch('globalSettings.server.host', (value) => {
                     if (!this.isLoopbackBindHost(value)) {
@@ -957,26 +950,9 @@
             /** Read the template's section list into the rail's own state. */
             settingsInitSections() {
                 const byTab = settingsSectionsByTab();
-                this.settingsAllSections = byTab[this.activeTab] || [];
-                this.settingsSections = this.settingsAllSections.slice();
-                const first = this.settingsAllSections[0];
+                this.settingsSections = byTab[this.activeTab] || [];
+                const first = this.settingsSections[0];
                 this.settingsActiveSection = first ? first.id : null;
-            },
-
-            /** The first section a search term matches, or null. */
-            settingsFirstMatch() {
-                return this.settingsSections.length ? this.settingsSections[0].id : null;
-            },
-
-            settingsApplySearch() {
-                const query = this.settingsSearch;
-                this.settingsSections = window.OMLXSettingsNav.filterSections(
-                    this.settingsAllSections, query
-                );
-                const match = this.settingsFirstMatch();
-                if (!match) return;
-                this.settingsActiveSection = match;
-                if (String(query).trim()) this.settingsScrollToSection(match);
             },
 
             settingsScrollToSection(sectionId) {
@@ -1013,7 +989,6 @@
                 }
                 this.mainTab = 'settings';
                 this.activeTab = tab;
-                this.settingsSearch = '';
                 this.settingsInitSections();
                 this.settingsActiveSection = sectionId;
                 this.$nextTick(() => this.settingsScrollToSection(sectionId));
@@ -1035,7 +1010,7 @@
                         if (!panel.getClientRects().length) return;
                         const offsets = [];
                         const sections = [];
-                        for (const section of this.settingsAllSections) {
+                        for (const section of this.settingsSections) {
                             const el = document.getElementById(section.id);
                             if (!el || !el.getClientRects().length) continue;
                             // Viewport-relative tops, compared against a zero
@@ -6287,6 +6262,15 @@
                     ceiling: window.t('logs.memory.ceiling'),
                     peak: window.t('logs.memory.peak'),
                 };
+            },
+
+            // The occurrences behind the selected row's ×N badge, windowed: a
+            // group can hold tens of thousands of them (see logs.js).
+            get logOccurrences() {
+                return window.OmlxLogs.occurrenceWindow(
+                    this.logSelectedRow ? this.logSelectedRow.occurrences : [],
+                    window.OmlxLogs.OCCURRENCE_WINDOW
+                );
             },
 
             logMemoryChips(row) {

@@ -1,6 +1,6 @@
-{#- Section data for the in-page rail. The rail, its search box and the
-    deep-link anchors all read this one list, so a section cannot appear in
-    the rail without a matching id in the document. `badge` records what the
+{#- Section data for the in-page rail. The rail and the deep-link anchors
+    both read this one list, so a section cannot appear in the rail without
+    a matching id in the document. `badge` records what the
     backend actually does with the section's values: `restart` = only the
     next server start picks it up, `live` = the save request applies it
     immediately, `none` = the section mixes both, so it carries no section
@@ -12,25 +12,25 @@
                ("integrations", t("settings.tab.integrations"))] %}
 {% set settings_sections = {
   "global": [
-  {'id': 'settings-language', 'title': t('settings.sections.language'), 'description': t('settings.language.label'), 'keywords': ["Language", "language", "locale", "i18n", "语言", "語言", "言語", "언어", "язык", "langue", "idioma"], 'badge': 'live'},
-  {'id': 'settings-appearance', 'title': t('settings.sections.appearance'), 'description': t('settings.sections.appearance_desc'), 'keywords': ["Appearance", "theme", "dark", "light", "contrast", "readability", "外观", "外觀", "外観", "모양", "apariencia", "apparence"], 'badge': 'live'},
-  {'id': 'settings-auth', 'title': t('settings.sections.auth'), 'description': t('settings.auth.sub_keys_hint'), 'keywords': ["Auth", "API", "key", "token", "authentication", "认证", "驗證", "認証", "인증", "autenticación"], 'badge': 'live'},
-  {'id': 'settings-server', 'title': t('settings.sections.server'), 'description': t('settings.server.host'), 'keywords': ["Server", "host", "port", "bind", "log", "level", "服务器", "伺服器", "サーバー", "서버", "servidor"], 'badge': 'none'},
-  {'id': 'settings-model', 'title': t('settings.sections.model'), 'description': t('settings.model.model_fallback_desc'), 'keywords': ["Model", "directory", "fallback", "huggingface", "cache", "模型", "モデル", "모델", "modelo"], 'badge': 'live'},
-  {'id': 'settings-resource', 'title': t('settings.sections.resource'), 'description': t('settings.resource.max_concurrent_requests_hint'), 'keywords': ["Resource", "memory", "guard", "concurrency", "batch", "prefill", "decode", "资源", "資源", "リソース", "리소스"], 'badge': 'live'},
-  {'id': 'settings-cache', 'title': t('settings.sections.cache'), 'description': t('settings.cache.hot_cache_only_hint'), 'keywords': ["Cache", "SSD", "disk", "KV", "缓存", "快取", "キャッシュ", "캐시", "caché"], 'badge': 'live'},
-  {'id': 'settings-generation', 'title': t('settings.sections.generation'), 'description': t('settings.generation.temperature_hint'), 'keywords': ["Generation", "sampling", "temperature", "top-p", "top-k", "context", "生成", "默认值", "既定値", "생성"], 'badge': 'live'},
-  {'id': 'settings-mcp', 'title': t('settings.sections.mcp'), 'description': t('settings.sections.mcp_desc'), 'keywords': ["MCP", "tools", "config", "path", "工具", "ツール", "도구", "herramientas"], 'badge': 'none'},
-  {'id': 'settings-usage', 'title': t('settings.sections.usage'), 'description': t('settings.usage.history_hint'), 'keywords': ["Usage", "history", "statistics", "sqlite", "历史", "歷史", "履歴", "사용", "기록", "historial"], 'badge': 'live'},
-  {'id': 'settings-network', 'title': t('settings.sections.network'), 'description': t('settings.network.no_proxy_hint'), 'keywords': ["Network", "proxy", "SSL", "certificate", "CA", "网络", "網路", "ネットワーク", "네트워크", "red", "réseau"], 'badge': 'live'},
-  {'id': 'settings-advanced', 'title': t('settings.sections.advanced'), 'description': t('settings.sections.advanced_desc'), 'keywords': ["Advanced", "burst", "ANE", "GDN", "upload", "SSE", "distributed", "高级", "進階", "подробнее"], 'badge': 'none'},
+  {'id': 'settings-language', 'title': t('settings.sections.language'), 'badge': 'live'},
+  {'id': 'settings-appearance', 'title': t('settings.sections.appearance'), 'badge': 'live'},
+  {'id': 'settings-auth', 'title': t('settings.sections.auth'), 'badge': 'live'},
+  {'id': 'settings-server', 'title': t('settings.sections.server'), 'badge': 'none'},
+  {'id': 'settings-model', 'title': t('settings.sections.model'), 'badge': 'live'},
+  {'id': 'settings-resource', 'title': t('settings.sections.resource'), 'badge': 'live'},
+  {'id': 'settings-cache', 'title': t('settings.sections.cache'), 'badge': 'live'},
+  {'id': 'settings-generation', 'title': t('settings.sections.generation'), 'badge': 'live'},
+  {'id': 'settings-mcp', 'title': t('settings.sections.mcp'), 'badge': 'none'},
+  {'id': 'settings-usage', 'title': t('settings.sections.usage'), 'badge': 'live'},
+  {'id': 'settings-network', 'title': t('settings.sections.network'), 'badge': 'live'},
+  {'id': 'settings-advanced', 'title': t('settings.sections.advanced'), 'badge': 'none'},
   ],
   "integrations": [
-  {'id': 'settings-int-markitdown', 'title': t('settings.integrations.markitdown.section_label'), 'description': t('settings.sections.integrations_desc'), 'keywords': ["MarkItDown", "PDF", "OCR", "document", "文档", "文件", "ドキュメント"], 'badge': 'live'},
-  {'id': 'settings-int-websearch', 'title': t('settings.integrations.websearch.section_label'), 'description': t('settings.sections.integrations_desc'), 'keywords': ["Web", "Search", "DDGS", "Brave", "SearXNG", "搜索", "搜尋", "検索", "검색", "búsqueda"], 'badge': 'live'},
+  {'id': 'settings-int-markitdown', 'title': t('settings.integrations.markitdown.section_label'), 'badge': 'live'},
+  {'id': 'settings-int-websearch', 'title': t('settings.integrations.websearch.section_label'), 'badge': 'live'},
   ],
   "models": [
-  {'id': 'settings-models', 'title': t('settings.sections.models'), 'description': t('settings.sections.models_desc'), 'keywords': ["Model", "Settings", "sort", "pin", "visible", "default", "模型设置", "模型設定", "モデル設定"], 'badge': 'live'},
+  {'id': 'settings-models', 'title': t('settings.sections.models'), 'badge': 'live'},
   ],
 } %}
 {% set settings_badges = {
@@ -118,23 +118,11 @@
                     </div>
 
                     <h2 class="sr-only">{{ t('settings.sections.label') }}</h2>
-                    <!-- Settings Sections -->
+                    {#- The rail is the section list and nothing else: a heading over
+                        it and a box to filter it both competed with the list, and
+                        the browser's own find already searches the page. -#}
                     <div class="settings-layout" x-init="settingsWatchScroll()">
                         <nav class="settings-rail" aria-label="{{ t('settings.sections.label') }}">
-                            <p class="settings-rail__title">{{ t('settings.sections.label') }}</p>
-                            <div class="settings-rail__search">
-                                <i data-lucide="search" class="settings-rail__search-icon w-4 h-4" aria-hidden="true"></i>
-                                <input type="search" x-model="settingsSearch"
-                                       class="settings-rail__input"
-                                       aria-label="{{ t('settings.sections.search_placeholder') }}"
-                                       placeholder="{{ t('settings.sections.search_placeholder') }}">
-                                <button type="button" x-show="settingsSearch" x-cloak
-                                        @click="settingsSearch = ''"
-                                        class="settings-rail__clear p-1 rounded"
-                                        aria-label="{{ t('settings.sections.search_placeholder') }}">
-                                    <i data-lucide="x" class="w-3.5 h-3.5"></i>
-                                </button>
-                            </div>
                             <div class="settings-rail__list">
                                 <template x-for="section in settingsSections" :key="section.id">
                                     <a :href="'#' + section.id"
@@ -146,8 +134,6 @@
                                     </a>
                                 </template>
                             </div>
-                            <p class="settings-rail__empty" x-show="settingsSections.length === 0" x-cloak
-                               x-text="window.t('settings.sections.no_match')"></p>
                         </nav>
                         <div class="section-stack">
 

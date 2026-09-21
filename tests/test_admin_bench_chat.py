@@ -287,6 +287,17 @@ def test_the_drawer_carries_the_profile_picker_and_model_settings():
     assert "trapDialogFocus(event) {" in CHAT
 
 
+def test_the_settings_sheet_covers_the_right_drawer():
+    """The sheet dims the whole window, and the right drawer is part of it: at
+    z-50 the sheet sat *under* the drawer (z-60), which stayed lit behind the
+    scrim — a second layer the sheet appeared not to cover."""
+    sheet = _section(CHAT, "<!-- Chat Settings Modal", "<!-- Keyboard Shortcuts Help")
+    assert "z-[70]" in sheet
+    assert "bg-black/50" in sheet, "the scrim is the sheet's own"
+    drawer_z = int(re.search(r"\.chat-drawer \{[^}]*?z-index: (\d+)", CHAT).group(1))
+    assert drawer_z < 70, "the sheet has to sit above the drawer"
+
+
 def test_the_header_keeps_the_summary():
     header = _section(CHAT, "<!-- Header summary (top-centre)", "<!-- Messages Container -->")
     assert "availableModels.find(m => m.id === currentModel)?.name" in header, (

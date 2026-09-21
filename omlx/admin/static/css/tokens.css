@@ -90,6 +90,7 @@
     --log-level-column:          84px;
     --log-module-column:         190px;
     --log-row-height:            30px;
+    --log-occurrences-height:    200px;
     --settings-rail-width:       160px;
     --settings-rail-stack-below: 900px;
     --topbar-blur:               20px;

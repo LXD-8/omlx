@@ -965,6 +965,19 @@
     gap: var(--space-3);
     font-family: var(--font-mono);
 }
+/* The list of occurrences scrolls in a box of its own: a group can repeat
+   thousands of times, and the panel is a header over the viewer, not a page. */
+.log-occurrences__list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+    max-height: var(--log-occurrences-height);
+    overflow-y: auto;
+}
+/* The occurrences past the window the panel lists (see logs.js). */
+.log-occurrences__more {
+    color: var(--text-tertiary);
+}
 
 .log-foot {
     display: flex;
@@ -1346,14 +1359,6 @@
     border: 1px solid var(--border-faint);
     border-radius: var(--radius-lg);
 }
-.settings-rail__title {
-    font-size: var(--fs-aux);
-    line-height: var(--lh-aux);
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    color: var(--text-tertiary);
-}
 .palette__group {
     padding: var(--space-2) var(--space-3) var(--space-1);
     font-size: var(--fs-aux);
@@ -1364,44 +1369,11 @@
     color: var(--text-tertiary);
 }
 
-.settings-rail__search {
-    position: relative;
-    margin-top: var(--space-3);
-}
-.settings-rail__input {
-    width: 100%;
-    /* One space of padding, then the square icon box, then one more space:
-       the text starts one space after the icon box ends. */
-    padding: var(--space-2);
-    padding-inline-start: calc(var(--space-2) * 2 + var(--space-4));
-    font-size: var(--fs-body);
-    line-height: var(--lh-body);
-    color: var(--text-primary);
-    background-color: var(--bg-primary);
-    border: 1px solid var(--border-normal);
-    border-radius: var(--radius-md);
-}
-.settings-rail__search-icon {
-    position: absolute;
-    top: 50%;
-    left: var(--space-2);
-    transform: translateY(-50%);
-    width: var(--space-4);
-    height: var(--space-4);
-    color: var(--text-tertiary);
-    pointer-events: none;
-}
-.settings-rail__clear {
-    position: absolute;
-    top: 50%;
-    right: var(--space-1);
-    transform: translateY(-50%);
-}
+/* The rail is the list and nothing else: it starts at the rail's own padding. */
 .settings-rail__list {
     display: flex;
     flex-direction: column;
     gap: var(--space-1);
-    margin-top: var(--space-3);
 }
 .settings-rail__item {
     display: flex;
@@ -1433,12 +1405,6 @@
 .settings-rail__item--active:hover {
     color: var(--text-primary);
     background-color: color-mix(in srgb, var(--text-primary) 14%, transparent);
-}
-.settings-rail__empty {
-    margin-top: var(--space-3);
-    font-size: var(--fs-aux);
-    line-height: var(--lh-aux);
-    color: var(--text-tertiary);
 }
 .palette__empty {
     padding: var(--space-5) var(--space-4);
@@ -1539,9 +1505,12 @@
 /* Card header: the icon sits with its title, the badges and controls go right.
    (Before this, callers passed the title through `header_actions`, which pushed
    it to the far edge and left the icon alone on the left.) */
+/* A heading with a subtitle is two lines tall. The icon belongs to the title's
+   line, so it is centred on that line rather than on the block: centred on the
+   block it hangs between the title and the subtitle, belonging to neither. */
 .card__heading {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     gap: var(--space-2);
     min-width: 0;
 }
@@ -1553,6 +1522,8 @@
 .card__icon {
     flex-shrink: 0;
     color: var(--text-tertiary);
+    /* Half of the title's line box minus half the 1rem icon box. */
+    margin-top: calc((var(--lh-emphasis) * var(--fs-emphasis) - 1rem) / 2);
 }
 
 .card__actions {
