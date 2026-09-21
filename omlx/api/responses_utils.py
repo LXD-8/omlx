@@ -15,7 +15,6 @@ from .responses_models import (
     OutputContent,
     OutputItem,
     OutputTokensDetails,
-    ReasoningSummaryPart,
     ResponseObject,
     ResponsesRequest,
     ResponsesTool,
@@ -239,6 +238,11 @@ def convert_responses_input_to_messages(
     # Process input items
     # Track pending tool calls for grouping into a single assistant message
     pending_tool_calls: List[Dict[str, Any]] = []
+    # Call ids already grouped into a message but not yet answered by a
+    # function_call_output, oldest first. An output that omits `call_id` (and
+    # `id`) is paired with the oldest of these: a fresh random id could never
+    # match the call it answers, which is what left the pair unpaired.
+    unanswered_call_ids: List[str] = []
     # Track reasoning content to attach to the next assistant message
     pending_reasoning: str = ""
     # Track images extracted from function_call_output lists; flushed as a
@@ -337,6 +341,7 @@ def convert_responses_input_to_messages(
         elif item.type == "function_call":
             # Assistant's tool call — accumulate for grouping
             call_id = item.call_id or item.id or f"call_{uuid.uuid4().hex[:8]}"
+            unanswered_call_ids.append(call_id)
             namespace = getattr(item, "namespace", None)
             pending_tool_calls.append(
                 {
@@ -369,9 +374,18 @@ def convert_responses_input_to_messages(
                 output_content = (
                     extracted if extracted is not None else json.dumps(item.output)
                 )
-            # Same fallback the function_call side uses, so an omitted
-            # call_id never reaches the template as an empty tool_call_id.
-            call_id = item.call_id or item.id or f"call_{uuid.uuid4().hex[:8]}"
+            # Pair the output with the call it answers. An explicit call_id is
+            # taken as-is (and stops being a candidate); otherwise the oldest
+            # unanswered call is the only id that can pair, and a random one is
+            # only for an output with nothing to pair with at all.
+            call_id = item.call_id or item.id
+            if call_id:
+                if call_id in unanswered_call_ids:
+                    unanswered_call_ids.remove(call_id)
+            elif unanswered_call_ids:
+                call_id = unanswered_call_ids.pop(0)
+            else:
+                call_id = f"call_{uuid.uuid4().hex[:8]}"
             messages.append(
                 {
                     "role": "tool",
@@ -562,13 +576,18 @@ def build_reasoning_output_item(
 ) -> OutputItem:
     """Build a reasoning-type OutputItem carrying the full CoT.
 
-    The text is published in both shapes the ecosystem reads: ``summary``, which
-    OpenAI's own hosts emit, and a ``reasoning_text`` content part, which is what
-    Responses-dialect clients look at (``@ai-sdk/open-responses`` reads
-    ``item.content[].text`` and would otherwise drop the reasoning entirely).
-    Emitting both is additive — a client that knows one shape ignores the other.
+    The CoT is published on the raw-reasoning channel only (``content[]`` with a
+    ``reasoning_text`` part). ``summary[]`` is a *condensation* in the Responses
+    dialect, and oMLX has no summarizer, so putting a copy of the raw text there
+    would be both semantically wrong and — measured against the clients that
+    matter — destructive:
+
+    - ``@ai-sdk/open-responses@1.0.34`` (the version Cherry Studio pins) reads
+      ``response.reasoning_text.delta`` and nothing else, so a summary-only
+      server shows no reasoning at all;
+    - ``@ai-sdk/open-responses@2.0.49`` and ``@ai-sdk/openai@3.0.109`` read both
+      channels, so the same text on both arrives twice.
     """
-    summary = [ReasoningSummaryPart(text=reasoning_text)] if reasoning_text else []
     content = (
         [OutputContent(type="reasoning_text", text=reasoning_text)]
         if reasoning_text
@@ -578,7 +597,7 @@ def build_reasoning_output_item(
         type="reasoning",
         id=item_id or generate_id(IDPrefix.REASONING),
         status=status,
-        summary=summary,
+        summary=[],
         content=content,
     )
 

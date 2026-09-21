@@ -81,6 +81,34 @@ class TestConvertResponsesInput:
         assert messages[0] == {"role": "system", "content": "You are helpful"}
         assert messages[1] == {"role": "user", "content": "Hi"}
 
+    def test_unlabelled_call_output_pairs_with_the_call_it_answers(self):
+        """An output with no `call_id` must reuse the call's id, not a fresh one.
+
+        The two sides used to mint independent random ids, so the pair never
+        matched and the template saw a tool result for a call that did not exist.
+        """
+        items = [
+            InputItem(type="function_call", call_id="", name="get_weather", arguments="{}"),
+            InputItem(type="function_call_output", call_id="", output="sunny"),
+        ]
+        messages = convert_responses_input_to_messages(items)
+        call = messages[0]["tool_calls"][0]["id"]
+        assert call.startswith("call_")
+        assert messages[-1]["role"] == "tool"
+        assert messages[-1]["tool_call_id"] == call
+
+    def test_labelled_call_output_keeps_its_id_and_does_not_shift_the_queue(self):
+        """An explicit id is used as-is, and only unlabelled outputs consume the queue."""
+        items = [
+            InputItem(type="function_call", call_id="call_a", name="a", arguments="{}"),
+            InputItem(type="function_call", call_id="call_b", name="b", arguments="{}"),
+            InputItem(type="function_call_output", call_id="call_a", output="A"),
+            InputItem(type="function_call_output", call_id="", output="B"),
+        ]
+        messages = convert_responses_input_to_messages(items)
+        tool_messages = [m for m in messages if m["role"] == "tool"]
+        assert [m["tool_call_id"] for m in tool_messages] == ["call_a", "call_b"]
+
     def test_message_items(self):
         items = [
             InputItem(type="message", role="user", content="Hello"),
@@ -908,20 +936,24 @@ class TestBuildOutputItems:
         assert item.type == "reasoning"
         assert item.status == "completed"
         assert item.id.startswith("rs_")
-        assert len(item.summary) == 1
-        assert item.summary[0].type == "summary_text"
-        assert item.summary[0].text == "Step 1: foo. Step 2: bar."
-
-    def test_build_reasoning_output_item_publishes_both_shapes(self):
-        """Clients disagree on where the CoT lives, so it goes in both places.
-
-        OpenAI's hosts publish ``summary``; Responses-dialect clients read
-        ``content[]`` with a ``reasoning_text`` part and show nothing without it.
-        """
-        text = "Step 1: foo. Step 2: bar."
-        item = build_reasoning_output_item(text)
-        assert [part.text for part in item.content] == [text]
+        # The CoT is on the raw channel; `summary` is a condensation in this
+        # dialect and this server has no summarizer.
+        assert [part.text for part in item.content] == ["Step 1: foo. Step 2: bar."]
         assert item.content[0].type == "reasoning_text"
+        assert item.summary == []
+
+    def test_build_reasoning_output_item_does_not_publish_a_summary(self):
+        """One channel only, because two break the clients that read both.
+
+        Measured against the SDKs that matter: ``@ai-sdk/open-responses@1.0.34``
+        (the version Cherry Studio pins) reads ``response.reasoning_text.delta``
+        and no other reasoning event, so a summary-only server shows it nothing;
+        ``@ai-sdk/open-responses@2.0.49`` and ``@ai-sdk/openai@3.0.109`` read both
+        channels, so the same text on both arrives twice.
+        """
+        item = build_reasoning_output_item("Step 1: foo.")
+        assert item.summary == []
+        assert [part.type for part in item.content] == ["reasoning_text"]
 
     def test_build_reasoning_output_item_empty_text(self):
         item = build_reasoning_output_item("")

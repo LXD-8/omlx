@@ -7347,11 +7347,13 @@ async def create_response(
             # Store response
             if _should_store_response(request.store):
                 _store_response_state(
-                    response_obj.model_dump(exclude_none=True),
+                    response_obj.model_dump(exclude_none=True, by_alias=True),
                     input_messages=current_input_messages,
                 )
 
-            return response_obj.model_dump_json()
+            # by_alias: `TextFormatConfig.schema_` is spelled `schema` on the
+            # wire, and it is the only aliased field in the envelope.
+            return response_obj.model_dump_json(by_alias=True)
 
         json_headers = (
             {"Warning": response_format_warning} if response_format_warning else None
@@ -7433,7 +7435,7 @@ async def stream_responses_api(
         top_p=kwargs.get("top_p"),
         status="in_progress",
     )
-    initial_data = initial_response.model_dump(exclude_none=True)
+    initial_data = initial_response.model_dump(exclude_none=True, by_alias=True)
 
     # 1. response.created
     seq += 1
@@ -7483,20 +7485,9 @@ async def stream_responses_api(
                 },
             )
         )
-        seq += 1
-        events.append(
-            format_sse_event(
-                "response.reasoning_summary_part.added",
-                {
-                    "type": "response.reasoning_summary_part.added",
-                    "item_id": reasoning_id,
-                    "output_index": reasoning_output_index,
-                    "summary_index": 0,
-                    "part": {"type": "summary_text", "text": ""},
-                    "sequence_number": seq,
-                },
-            )
-        )
+        # No `reasoning_summary_part.added`: this server publishes the CoT on
+        # the raw-reasoning channel, not as a summary (see
+        # `build_reasoning_output_item`).
         return events
 
     def _close_reasoning():
@@ -7506,20 +7497,6 @@ async def stream_responses_api(
         reasoning_closed = True
         reasoning_text = accumulated_reasoning
         events = []
-        seq += 1
-        events.append(
-            format_sse_event(
-                "response.reasoning_summary_text.done",
-                {
-                    "type": "response.reasoning_summary_text.done",
-                    "item_id": reasoning_id,
-                    "output_index": reasoning_output_index,
-                    "summary_index": 0,
-                    "text": reasoning_text,
-                    "sequence_number": seq,
-                },
-            )
-        )
         # Close the raw-reasoning channel opened by reasoning_text.delta so a
         # client listening to that channel sees a complete part.
         seq += 1
@@ -7539,20 +7516,6 @@ async def stream_responses_api(
         seq += 1
         events.append(
             format_sse_event(
-                "response.reasoning_summary_part.done",
-                {
-                    "type": "response.reasoning_summary_part.done",
-                    "item_id": reasoning_id,
-                    "output_index": reasoning_output_index,
-                    "summary_index": 0,
-                    "part": {"type": "summary_text", "text": reasoning_text},
-                    "sequence_number": seq,
-                },
-            )
-        )
-        seq += 1
-        events.append(
-            format_sse_event(
                 "response.output_item.done",
                 {
                     "type": "response.output_item.done",
@@ -7561,10 +7524,11 @@ async def stream_responses_api(
                         "type": "reasoning",
                         "id": reasoning_id,
                         "status": "completed",
-                        "summary": [{"type": "summary_text", "text": reasoning_text}],
-                        # Same dual shape as build_reasoning_output_item, so the
-                        # item a streamed response ends on matches the one a
-                        # non-streamed response returns.
+                        # Same shape as build_reasoning_output_item, so the item a
+                        # streamed response ends on matches the one a
+                        # non-streamed response returns: the CoT on the raw
+                        # channel, `summary` left empty.
+                        "summary": [],
                         "content": (
                             [{"type": "reasoning_text", "text": reasoning_text}]
                             if reasoning_text
@@ -7627,24 +7591,11 @@ async def stream_responses_api(
         events = []
         events.extend(_open_reasoning())
         seq += 1
-        events.append(
-            format_sse_event(
-                "response.reasoning_summary_text.delta",
-                {
-                    "type": "response.reasoning_summary_text.delta",
-                    "item_id": reasoning_id,
-                    "output_index": reasoning_output_index,
-                    "summary_index": 0,
-                    "delta": delta,
-                    "sequence_number": seq,
-                },
-            )
-        )
-        # The same text on the raw-reasoning channel. Clients differ in which
-        # one they listen to: OpenAI's hosts publish summaries, while
-        # Responses-dialect clients such as @ai-sdk/open-responses read
-        # response.reasoning_text.delta and show nothing without it.
-        seq += 1
+        # The raw-reasoning channel, and only this one. `@ai-sdk/open-responses`
+        # (1.0.34, which Cherry Studio pins) listens to this event and to no
+        # other reasoning event, while 2.0.49 and `@ai-sdk/openai` read the
+        # summary channel too — publishing the same text on both makes those
+        # clients render the reasoning twice.
         events.append(
             format_sse_event(
                 "response.reasoning_text.delta",
@@ -7972,7 +7923,8 @@ async def stream_responses_api(
                 "type": "reasoning",
                 "id": reasoning_id,
                 "status": "completed",
-                "summary": [{"type": "summary_text", "text": reasoning_text}],
+                # Same shape as build_reasoning_output_item: raw channel only.
+                "summary": [],
                 "content": [{"type": "reasoning_text", "text": reasoning_text}],
             }
         )
@@ -8149,7 +8101,7 @@ async def stream_responses_api(
         # Resolved sampling values, matching the non-streaming body.
         temperature=kwargs.get("temperature"),
         top_p=kwargs.get("top_p"),
-    ).model_dump(exclude_none=True)
+    ).model_dump(exclude_none=True, by_alias=True)
 
     seq += 1
     yield format_sse_event(

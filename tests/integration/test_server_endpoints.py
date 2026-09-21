@@ -466,9 +466,45 @@ class TestResponsesEndpoint:
         assert response.status_code == 200
         data = response.json()
         assert [item["type"] for item in data["output"]] == ["reasoning", "message"]
-        assert data["output"][0]["summary"][0]["text"] == "Need to reason."
+        # The CoT is on the raw channel; no summary is published.
+        assert data["output"][0]["summary"] == []
+        assert data["output"][0]["content"][0]["text"] == "Need to reason."
         assert data["output"][1]["content"][0]["text"] == "Hello!"
         assert data["usage"]["output_tokens_details"]["reasoning_tokens"] == 3
+
+    def test_response_endpoint_echoes_text_format_on_the_wire(self, client, mock_llm_engine):
+        """`schema_` is a Python-side name; the client must see `schema`.
+
+        The envelope echoes the request's `text`, and the alias only survives a
+        dump that asks for it — the field name leaks into the JSON otherwise.
+        """
+        mock_llm_engine.chat = AsyncMock(
+            return_value=MockGenerationOutput(
+                text="{}",
+                prompt_tokens=1,
+                completion_tokens=1,
+                finish_reason="stop",
+                finished=True,
+            )
+        )
+        response = client.post(
+            "/v1/responses",
+            json={
+                "model": "test-model",
+                "input": "Hello",
+                "text": {
+                    "format": {
+                        "type": "json_schema",
+                        "name": "answer",
+                        "schema": {"type": "object"},
+                    }
+                },
+            },
+        )
+        assert response.status_code == 200, response.text
+        body = response.json()
+        assert body["text"]["format"]["schema"] == {"type": "object"}
+        assert "schema_" not in response.text
 
     def test_response_endpoint_marks_length_as_incomplete(
         self, client, mock_llm_engine
@@ -557,7 +593,12 @@ class TestResponsesEndpoint:
         reasoning_deltas = [
             event["delta"]
             for event in events
-            if event.get("type") == "response.reasoning_summary_text.delta"
+            if event.get("type") == "response.reasoning_text.delta"
+        ]
+        assert not [
+            event
+            for event in events
+            if "reasoning_summary_text" in str(event.get("type", ""))
         ]
         assert "".join(reasoning_deltas) == "Need to reason."
 
@@ -576,7 +617,8 @@ class TestResponsesEndpoint:
         )
         output = completed["response"]["output"]
         assert [item["type"] for item in output] == ["reasoning", "message"]
-        assert output[0]["summary"][0]["text"] == "Need to reason."
+        assert output[0]["summary"] == []
+        assert output[0]["content"][0]["text"] == "Need to reason."
         assert output[1]["content"][0]["text"] == "Hello!"
         usage = completed["response"]["usage"]
         assert usage["output_tokens_details"]["reasoning_tokens"] == 3
@@ -694,10 +736,10 @@ class TestResponsesEndpoint:
             ]
 
             assert len(reasoning_items) == 1
-            assert reasoning_items[0]["summary"][0]["text"] == (
+            assert reasoning_items[0]["content"][0]["text"] == (
                 "Need to inspect first.Then continue."
             )
-            assert "<tool_call>" not in reasoning_items[0]["summary"][0]["text"]
+            assert "<tool_call>" not in reasoning_items[0]["content"][0]["text"]
             assert len(message_items) == 1
             assert message_items[0]["content"][0]["text"] == ""
             assert "<tool_call>" not in message_items[0]["content"][0]["text"]
