@@ -1,5 +1,5 @@
             <div x-show="mainTab === 'logs'" x-cloak role="tabpanel" id="panel-logs" aria-labelledby="tab-logs">
-                <div class="animate-fade-in-up page-wide">
+                <div class="animate-fade-in-up">
                     <!-- Header -->
                     <div class="mb-8">
                         <h3 class="text-2xl font-bold tracking-tight text-neutral-900">{{ t('logs.heading') }}</h3>
@@ -41,10 +41,8 @@
                             <div class="log-field">
                                 <button type="button" role="switch" :aria-checked="logAutoScroll ? 'true' : 'false'"
                                         @click="logAutoScroll = !logAutoScroll"
-                                        :class="logAutoScroll ? 'bg-black' : 'bg-neutral-200'"
-                                        class="relative w-9 h-5 rounded-full transition-colors duration-300 focus:outline-none">
-                                    <span :class="logAutoScroll ? 'translate-x-4' : 'translate-x-0'"
-                                          class="block w-4 h-4 bg-white rounded-full shadow-sm transform transition-transform duration-300 absolute top-0.5 left-0.5"></span>
+                                        class="switch switch--sm" :class="logAutoScroll ? 'switch--on' : ''">
+                                    <span class="switch__knob"></span>
                                 </button>
                                 <span class="text-body text-neutral-600">{{ t('logs.auto_scroll') }}</span>
                             </div>

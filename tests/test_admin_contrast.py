@@ -15,6 +15,10 @@ What is asserted:
   and is not used to excuse anything.
 * **UI edges** — the focus ring against the two surfaces it can land on, and the
   destructive button's fill against the page behind it, at 3:1.
+* **The tinted action and the tinted selection** — the accent fill's label, and
+  the settings rail's selected item both as a label (``badge.blue`` at 4.5:1 on
+  its own 12% tint) and as a mark (3:1). The system blue is the one tint the
+  console uses for interaction; the four system colours stay status marks.
 
 Not asserted, deliberately:
 
@@ -50,6 +54,9 @@ NON_TEXT_MIN = 3.0
 # What `color-mix(in srgb, <tone> 14%, transparent)` resolves to over a solid
 # surface: the tone at 14% alpha, composited in sRGB.
 BADGE_TINT_ALPHA = 0.14
+# What `color-mix(in srgb, var(--accent) 12%, transparent)` resolves to over a
+# solid surface: how the settings rail paints a selected section.
+SELECTION_TINT_ALPHA = 0.12
 TONES = ("green", "orange", "red", "blue")
 APPEARANCES = ("light", "dark")
 
@@ -105,6 +112,14 @@ def _badge_tint(appearance: str, tone: str) -> str:
     )
 
 
+def _selection_tint(appearance: str) -> str:
+    return _composite(
+        TOKENS["semantic"][appearance]["accent"],
+        _surface(appearance, "bgPrimary"),
+        SELECTION_TINT_ALPHA,
+    )
+
+
 def _text_pairs() -> list[tuple[str, str, str]]:
     """(label, foreground, background) for every pair the console renders."""
     pairs: list[tuple[str, str, str]] = []
@@ -138,6 +153,27 @@ def _text_pairs() -> list[tuple[str, str, str]]:
                 f"{appearance} control.dangerText on control.danger",
                 _control(appearance, "dangerText"),
                 _control(appearance, "danger"),
+            )
+        )
+        pairs.append(
+            (
+                f"{appearance} accent label on the accent fill",
+                _control(appearance, "accentText"),
+                _control(appearance, "accent"),
+            )
+        )
+        pairs.append(
+            (
+                f"{appearance} accent label on its hover fill",
+                _control(appearance, "accentText"),
+                _control(appearance, "accentHover"),
+            )
+        )
+        pairs.append(
+            (
+                f"{appearance} badge.blue label on the selected rail row",
+                TOKENS["badge"][appearance]["blue"],
+                _selection_tint(appearance),
             )
         )
         for tone in TONES:
@@ -174,6 +210,27 @@ def _non_text_pairs() -> list[tuple[str, str, str]]:
                 f"{appearance} destructive fill on bgPrimary",
                 _control(appearance, "danger"),
                 _surface(appearance, "bgPrimary"),
+            )
+        )
+        pairs.append(
+            (
+                f"{appearance} accent fill on bgPrimary",
+                _control(appearance, "accent"),
+                _surface(appearance, "bgPrimary"),
+            )
+        )
+        pairs.append(
+            (
+                f"{appearance} switch fill on bgPrimary",
+                _control(appearance, "switchOn"),
+                _surface(appearance, "bgPrimary"),
+            )
+        )
+        pairs.append(
+            (
+                f"{appearance} selected rail row on bgPrimary",
+                TOKENS["badge"][appearance]["blue"],
+                _selection_tint(appearance),
             )
         )
     return pairs
@@ -248,8 +305,8 @@ FIXED_IDS = [pair[0] for pair in FIXED_PAIRS]
 def test_the_pairing_table_covers_the_palette():
     # 6 text tokens x 3 surfaces x 2 themes, plus code (3), the two control
     # fills, the four tones and the neutral badge, per theme.
-    assert len(TEXT_PAIRS) == len(APPEARANCES) * (6 * 3 + 3 + 2 + 4 + 1)
-    assert len(NON_TEXT_PAIRS) == len(APPEARANCES) * 3
+    assert len(TEXT_PAIRS) == len(APPEARANCES) * (6 * 3 + 3 + 2 + 4 + 1 + 3)
+    assert len(NON_TEXT_PAIRS) == len(APPEARANCES) * 6
     assert len(FIXED_PAIRS) == 2 + 2 + 1 + 4 + 2 + 2
 
 

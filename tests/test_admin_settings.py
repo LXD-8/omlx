@@ -92,10 +92,12 @@ def _registry(html: str) -> dict:
 
 
 def test_settings_tab_uses_the_shared_measure():
-    # The review asked every page to use the window's width up to the dashboard
-    # measure, so the settings tab no longer caps itself at the form width.
-    assert "page-wide" in SETTINGS
+    # Every page is measured by the wrapper in dashboard.html, which reads the
+    # dashboard layout's width, so the settings tab carries no measure of its
+    # own -- not the console's and not the form's.
     assert "page-narrow" not in SETTINGS
+    assert "page-wide" not in SETTINGS
+    assert "page-gutter" not in SETTINGS
 
 
 def test_the_rail_lists_the_active_sub_tab():

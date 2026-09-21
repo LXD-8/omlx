@@ -106,8 +106,8 @@
            contrast boost). Visible on :focus-visible only, so mouse users see
            no extra chrome while keyboard users always see where focus is. */
         :focus-visible {
-            outline: 2px solid var(--focus-ring-color) !important;
-            outline-offset: 2px;
+            outline: var(--focus-ring-width) solid var(--focus-ring-color) !important;
+            outline-offset: var(--focus-ring-width);
         }
 
         dialog.dashboard-dialog {

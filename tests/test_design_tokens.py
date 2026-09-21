@@ -208,29 +208,43 @@ def test_base_uses_the_system_font_stack():
 # === Layout skeleton ===
 
 
-def test_one_gutter_and_two_content_measures():
+def test_one_gutter_and_one_shared_measure():
     layout = TOKENS["layout"]
     assert _declares("--gutter", f"{layout['gutter']}px")
     assert _declares("--container-form", f"{layout['formMaxWidth']}px")
-    assert _declares("--container-wide", f"{layout['wideMaxWidth']}px")
+    # The console's measure is the dashboard's, so --container-wide starts at
+    # the default width and dashboard.js repoints it at the chosen one.
+    assert _declares("--container-wide", "var(--measure-default)")
+    for name, value in layout["widths"].items():
+        expected = "none" if value == 0 else f"{value}px"
+        assert _declares(f"--measure-{name}", expected), name
     assert ".page-gutter {" in CSS
     assert ".page-wide {" in CSS
     assert ".page-narrow {" in CSS
+    assert ".page-frame {" in CSS
+    assert _declares("padding-block", "var(--space-6) var(--space-10)")
     assert f"scrollbar-gutter: {layout['scrollbarGutter']};" in CSS
 
 
-def test_dashboard_pages_use_the_layout_classes():
-    assert "page-gutter" in DASHBOARD, "one gutter for every tab"
-    # Every tab reads the same centered measure; the Status tab may widen it
-    # with the layout control it ships.
-    assert "'page-wide'" in DASHBOARD
+def test_every_page_uses_the_one_measure():
+    """The width control lives on the Status tab but measures every page."""
+    assert "page-frame" in DASHBOARD, "one page frame for every tab"
+    assert "page-wide" in DASHBOARD, "one shared measure for every tab"
     for name in ("_models.html", "_logs.html", "_cluster_v2.html",
                  "_settings.html", "_bench.html"):
         text = (ADMIN / "templates" / "dashboard" / name).read_text(encoding="utf-8")
-        assert "page-wide" in text, f"{name} must use the shared measure"
-        assert "page-narrow" not in text, f"{name} must not cap itself below it"
+        assert "page-narrow" not in text, f"{name} must not cap itself below the measure"
+        # The frame and the measure live on the wrapper in dashboard.html; a
+        # second measure inside it is how a page grows its own limit again.
+        assert "page-wide" not in text, f"{name} must not carry its own measure"
     status = (ADMIN / "templates" / "dashboard" / "_status.html").read_text(encoding="utf-8")
     assert "page-wide" not in status, "the dashboard width control owns this tab"
+
+    layout = (ADMIN / "static" / "js" / "dashboard_layout.js").read_text(encoding="utf-8")
+    assert "WIDTH_MEASURES" in layout, "the width ids are the token measures"
+    assert "max-w-7xl" not in layout, "no page measure through a Tailwind class"
+    dashboard_js = (ADMIN / "static" / "js" / "dashboard.js").read_text(encoding="utf-8")
+    assert "setProperty('--container-wide'" in dashboard_js, "the measure is applied on :root"
 
 
 def test_topbar_is_the_only_translucent_layer():

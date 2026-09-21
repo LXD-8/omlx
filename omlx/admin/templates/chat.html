@@ -134,8 +134,8 @@
     }
 
     .response-tab-group:hover {
-        background: color-mix(in srgb, var(--timeline-accent) 10%, var(--bg-secondary));
-        border-color: color-mix(in srgb, var(--timeline-accent) 40%, var(--border-normal));
+        background: color-mix(in srgb, var(--accent) 10%, var(--bg-secondary));
+        border-color: color-mix(in srgb, var(--accent) 40%, var(--border-normal));
     }
 
     .response-tab-group .response-tab {
@@ -157,11 +157,11 @@
     }
 
     .response-tab-group.response-tab-group--active {
-        border: 1.5px solid var(--timeline-accent);
+        border: 1.5px solid var(--accent);
     }
 
     .response-tab-group.response-tab-group--active:hover {
-        background: color-mix(in srgb, var(--timeline-accent) 12%, var(--bg-secondary));
+        background: color-mix(in srgb, var(--accent) 12%, var(--bg-secondary));
     }
 
     .response-tab-group.response-tab-group--active-missing {
@@ -178,7 +178,7 @@
         height: 6px;
         border-radius: 50%;
         flex-shrink: 0;
-        background: var(--timeline-accent);
+        background: var(--accent);
         animation: pulse 1.5s ease-in-out infinite;
     }
 
@@ -504,41 +504,6 @@
         gap: 0.375rem;
         min-width: 0;
         flex: 1;
-    }
-
-    .svg-allow-switch {
-        position: relative;
-        display: inline-flex;
-        align-items: center;
-        width: 2rem;
-        height: 1.125rem;
-        flex-shrink: 0;
-        border: none;
-        border-radius: 9999px;
-        padding: 0;
-        cursor: pointer;
-        background: var(--border-normal);
-        transition: background-color 0.2s ease;
-    }
-
-    .svg-allow-switch.is-on {
-        background: var(--timeline-accent);
-    }
-
-    .svg-allow-switch-knob {
-        position: absolute;
-        top: 2px;
-        left: 2px;
-        width: 0.875rem;
-        height: 0.875rem;
-        border-radius: 50%;
-        background: #fff;
-        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
-        transition: transform 0.2s ease;
-    }
-
-    .svg-allow-switch.is-on .svg-allow-switch-knob {
-        transform: translateX(0.875rem);
     }
 
     .svg-allow-warning {
@@ -906,13 +871,13 @@
     }
 
     .timeline-dot:hover {
-        border-color: var(--timeline-accent) !important;
-        background: var(--timeline-accent) !important;
+        border-color: var(--accent) !important;
+        background: var(--accent) !important;
     }
 
     .timeline-dot-active {
-        background: var(--timeline-accent) !important;
-        border: 1.5px solid var(--timeline-accent) !important;
+        background: var(--accent) !important;
+        border: 1.5px solid var(--accent) !important;
         transform: scale(1.2);
     }
 
@@ -1043,7 +1008,7 @@
                     <i data-lucide="message-square" class="w-4 h-4 flex-shrink-0" style="color: var(--text-muted);"></i>
                     <button type="button" x-show="isChatStreaming(chat.id)" @click.stop="stopChatStreaming(chat.id)"
                         class="w-2 h-2 rounded-full flex-shrink-0 animate-pulse p-0 border-0 cursor-pointer"
-                        style="background: var(--timeline-accent);" title="{{ t('chat.stop_generating_tooltip') }}"></button>
+                        style="background: var(--accent);" title="{{ t('chat.stop_generating_tooltip') }}"></button>
                     <template x-if="renamingChatId === chat.id">
                         <div class="flex items-center gap-1 flex-1 min-w-0">
                             <input x-model="renameDraft" x-ref="renameInput" @click.stop
@@ -1067,7 +1032,7 @@
                     <template x-if="renamingChatId !== chat.id">
                         <div class="flex items-center gap-0 flex-1 min-w-0">
                             <i x-show="chat.pinned" data-lucide="pin" class="w-3 h-3 flex-shrink-0 mr-1"
-                                style="color: var(--timeline-accent);"></i>
+                                style="color: var(--accent);"></i>
                             <span class="text-sm truncate flex-1" style="color: var(--text-primary);"
                                 :title="displayChatTitle(chat)"
                                 x-text="displayChatTitle(chat)"></span>
@@ -1151,10 +1116,10 @@
                             :class="model.id === currentModel ? 'font-semibold' : ''"
                             style="color: var(--text-primary);">
                             <i data-lucide="check" class="w-3 h-3 flex-shrink-0"
-                                :style="'color: var(--timeline-accent); visibility:' + (model.id === currentModel ? 'visible' : 'hidden')"></i>
+                                :style="'color: var(--accent); visibility:' + (model.id === currentModel ? 'visible' : 'hidden')"></i>
                             <span class="flex-1 min-w-0 truncate" x-text="model.name"></span>
                             <i data-lucide="star" class="w-3 h-3 flex-shrink-0" x-show="model.is_favorite"
-                                style="color: var(--timeline-accent);"></i>
+                                style="color: var(--accent);"></i>
                         </button>
                     </template>
                 </div>
@@ -1700,8 +1665,10 @@
             <div class="timeline-tooltip-content" x-html="timelineTooltip.content"></div>
         </div>
 
-        <!-- Input Area -->
-        <div class="p-4 bg-surface flex-shrink-0 relative">
+        <!-- Input Area. The frame keeps the same gutter as every other page and
+             two spaces of air under the composer, so the send button is never on
+             the window's bottom edge. -->
+        <div class="px-6 pt-4 pb-6 bg-surface flex-shrink-0 relative">
             <!-- Jump to latest (shows when auto-scroll paused mid-stream) -->
             <!-- Wrapper handles centering (flex) so the button's own transform is free for x-transition -->
             <div class="absolute left-0 right-0 z-20 flex justify-center pointer-events-none" style="top: -2.75rem;">
@@ -1871,7 +1838,7 @@
                                 <circle cx="18" cy="18" r="15.5" fill="none" stroke="var(--border-normal)" stroke-width="5"></circle>
                                 <!-- progress arc -->
                                 <circle cx="18" cy="18" r="15.5" fill="none" stroke-width="5" stroke-linecap="round"
-                                    :stroke="contextUsagePercent() >= 85 ? 'var(--text-danger)' : 'var(--timeline-accent)'"
+                                    :stroke="contextUsagePercent() >= 85 ? 'var(--text-danger)' : 'var(--accent)'"
                                     stroke-dasharray="97.39"
                                     :stroke-dashoffset="(97.39 * (1 - Math.min(100, contextUsagePercent()) / 100)).toFixed(2)"
                                     style="transition: stroke-dashoffset 0.3s ease;"></circle>
@@ -2243,12 +2210,12 @@
                                 <span class="text-xs font-medium truncate" style="color: var(--text-primary);"
                                     x-text="window.t('chat.allow_svg')"></span>
                             </div>
-                            <button type="button" role="switch" class="svg-allow-switch"
-                                :class="{ 'is-on': allowSvg }"
+                            <button type="button" role="switch" class="switch switch--sm"
+                                :class="{ 'switch--on': allowSvg }"
                                 :aria-checked="allowSvg ? 'true' : 'false'"
                                 :aria-label="window.t('chat.allow_svg')"
                                 @click="setAllowSvg(!allowSvg)">
-                                <span class="svg-allow-switch-knob" aria-hidden="true"></span>
+                                <span class="switch__knob" aria-hidden="true"></span>
                             </button>
                         </div>
                         <p class="svg-allow-warning" x-text="window.t('chat.allow_svg_warning')"></p>
@@ -2265,12 +2232,12 @@
                                 <i data-lucide="arrow-down-to-line" class="w-4 h-4 shrink-0" style="color: var(--text-tertiary);"></i>
                                 <span class="text-xs font-medium truncate" style="color: var(--text-primary);" x-text="window.t('chat.show_jump_button')"></span>
                             </div>
-                            <button type="button" role="switch" class="svg-allow-switch"
-                                :class="{ 'is-on': chatSettings.showScrollButton }"
+                            <button type="button" role="switch" class="switch switch--sm"
+                                :class="{ 'switch--on': chatSettings.showScrollButton }"
                                 :aria-checked="chatSettings.showScrollButton ? 'true' : 'false'"
                                 :aria-label="window.t('chat.show_jump_button')"
                                 @click="chatSettings.showScrollButton = !chatSettings.showScrollButton; saveChatSettings()">
-                                <span class="svg-allow-switch-knob" aria-hidden="true"></span>
+                                <span class="switch__knob" aria-hidden="true"></span>
                             </button>
                         </div>
                         <p class="svg-allow-warning" x-text="window.t('chat.scroll_behavior_hint')"></p>
@@ -2392,12 +2359,12 @@
                                 <i data-lucide="eye" class="w-4 h-4 shrink-0" style="color: var(--text-tertiary);"></i>
                                 <span class="text-xs font-medium truncate" style="color: var(--text-primary);">{{ t('chat.enhanced_readability') }}</span>
                             </div>
-                            <button type="button" role="switch" class="svg-allow-switch"
-                                :class="{ 'is-on': enhancedReadability }"
+                            <button type="button" role="switch" class="switch switch--sm"
+                                :class="{ 'switch--on': enhancedReadability }"
                                 :aria-checked="enhancedReadability ? 'true' : 'false'"
                                 :aria-label="window.t('chat.enhanced_readability')"
                                 @click="setEnhancedReadability(!enhancedReadability)">
-                                <span class="svg-allow-switch-knob" aria-hidden="true"></span>
+                                <span class="switch__knob" aria-hidden="true"></span>
                             </button>
                         </div>
                         <p class="svg-allow-warning mt-2" x-text="window.t('chat.enhanced_readability_desc')"></p>

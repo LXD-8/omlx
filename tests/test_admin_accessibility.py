@@ -39,9 +39,13 @@ def _contrast_ratio(first: str, second: str) -> float:
 def test_focus_ring_uses_theme_aware_two_pixel_outline():
     focus_rule = re.search(r":focus-visible\s*\{([^}]*)\}", BASE, re.DOTALL)
     assert focus_rule is not None
-    assert "outline: 2px solid var(--focus-ring-color) !important" in focus_rule.group(
-        1
+    # Both the colour and the width are tokens: one focus ring for the console,
+    # and the app reads the same two numbers.
+    assert (
+        "outline: var(--focus-ring-width) solid var(--focus-ring-color) !important"
+        in focus_rule.group(1)
     )
+    assert "outline-offset: var(--focus-ring-width)" in focus_rule.group(1)
     assert "var(--text-primary" not in focus_rule.group(1)
 
 

@@ -1443,6 +1443,7 @@
                         this.dashLayout = layoutLib
                             ? layoutLib.normalizeLayout(this.globalSettings.ui.dashboard_layout)
                             : null;
+                        this.applyPageMeasure(this.dashLayout?.width);
                         if (dashGrid && !this.dashEditing) this.applyDashboardLayout(this.dashLayout);
                         if (
                             !this.globalSettings.server.distributed_inference_active
@@ -4018,10 +4019,17 @@
             _dashLayoutLib() {
                 return typeof DashboardLayout !== 'undefined' ? DashboardLayout : null;
             },
-            get dashboardWidthClass() {
+            // One measure for the whole console. Every page's frame reads
+            // --container-wide from :root, so the width chosen in the layout
+            // toolbar is the width Settings, Logs, Models and Bench get too, and
+            // it survives switching tabs.
+            applyPageMeasure(width) {
                 const lib = this._dashLayoutLib();
-                const width = this.dashEditing && this.dashDraft ? this.dashDraft.width : this.dashLayout?.width;
-                return lib ? lib.widthClass(width) : 'max-w-7xl';
+                if (!lib || typeof document === 'undefined') return;
+                document.documentElement.style.setProperty('--container-wide', lib.widthMeasure(width));
+            },
+            get dashboardWidth() {
+                return this.dashEditing && this.dashDraft ? this.dashDraft.width : this.dashLayout?.width;
             },
             get dashWidthOptions() {
                 const lib = this._dashLayoutLib();
@@ -4120,6 +4128,7 @@
                 const lib = this._dashLayoutLib();
                 if (!dashGrid || !lib) return;
                 layout = lib.normalizeLayout(layout);
+                this.applyPageMeasure(layout.width);
                 // No transition while rebuilding: the first content measurement of a
                 // freshly placed item must see its final box, not an animating one.
                 dashGrid.setAnimation(false);
@@ -4199,6 +4208,9 @@
                 const lib = this._dashLayoutLib();
                 if (!this.dashEditing || !lib || !lib.WIDTH_IDS.includes(width)) return;
                 this.dashDraft.width = width;
+                // The frame is wider before the layout is saved, so the preview
+                // shows the width the console will actually use.
+                this.applyPageMeasure(width);
                 this._dashAfterLayoutChange();
             },
             async saveDashboardLayout() {
