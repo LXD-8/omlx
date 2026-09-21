@@ -65,7 +65,7 @@ module.exports = {
     // the legacy Tailwind names stay as aliases so existing markup keeps
     // working while snapping onto the scale.
     fontSize: {
-      xs: ['var(--fs-body)', { lineHeight: 'var(--lh-body)' }],
+      xs: ['var(--fs-aux)', { lineHeight: 'var(--lh-aux)' }],
       sm: ['var(--fs-body)', { lineHeight: 'var(--lh-body)' }],
       base: ['var(--fs-emphasis)', { lineHeight: 'var(--lh-emphasis)' }],
       lg: ['var(--fs-emphasis)', { lineHeight: 'var(--lh-emphasis)' }],

@@ -109,16 +109,16 @@
                                 <div class="flex items-center gap-4 px-4 sm:px-6 py-3 bg-neutral-50 border-b border-neutral-200 text-xs font-bold uppercase tracking-wider text-neutral-500">
                                     <div class="flex-1 min-w-0 flex items-center gap-1 cursor-pointer hover:text-neutral-700 select-none" @click="toggleManagerSort('name')">
                                         {{ t('models.manager.table.model') }}
-                                        <span x-show="managerSortBy === 'name'" x-text="managerSortOrder === 'asc' ? '▲' : '▼'" class="text-[10px]"></span>
+                                        <span x-show="managerSortBy === 'name'" x-text="managerSortOrder === 'asc' ? '▲' : '▼'" class="text-[12px]"></span>
                                     </div>
                                     <div class="hidden sm:flex w-24 text-center items-center justify-center gap-1 cursor-pointer hover:text-neutral-700 select-none" @click="toggleManagerSort('type')">
                                         {{ t('models.manager.table.type') }}
-                                        <span x-show="managerSortBy === 'type'" x-text="managerSortOrder === 'asc' ? '▲' : '▼'" class="text-[10px]"></span>
+                                        <span x-show="managerSortBy === 'type'" x-text="managerSortOrder === 'asc' ? '▲' : '▼'" class="text-[12px]"></span>
                                     </div>
                                     <div class="hidden sm:flex w-32 justify-end">{{ t('models.manager.table.memory') }}</div>
                                     <div class="hidden sm:flex w-24 text-center items-center justify-center gap-1 cursor-pointer hover:text-neutral-700 select-none" @click="toggleManagerSort('size')">
                                         {{ t('models.manager.table.size') }}
-                                        <span x-show="managerSortBy === 'size'" x-text="managerSortOrder === 'asc' ? '▲' : '▼'" class="text-[10px]"></span>
+                                        <span x-show="managerSortBy === 'size'" x-text="managerSortOrder === 'asc' ? '▲' : '▼'" class="text-[12px]"></span>
                                     </div>
                                     <div class="w-20 text-center"></div>
                                 </div>
@@ -148,7 +148,7 @@
                                                       :title="model.display_name || model.name"
                                                       x-text="model.display_name || model.name"></span>
                                                 <template x-if="managerModelInfo(model.name)?.settings?.model_alias">
-                                                    <span class="px-1.5 py-0.5 text-[10px] font-medium rounded bg-neutral-100 text-neutral-500 border border-neutral-200 truncate max-w-[120px]"
+                                                    <span class="px-1.5 py-0.5 text-[12px] font-medium rounded bg-neutral-100 text-neutral-500 border border-neutral-200 truncate max-w-[120px]"
                                                           x-text="managerModelInfo(model.name)?.settings?.model_alias"></span>
                                                 </template>
                                                 <button x-data="{ copied: false }"
@@ -165,7 +165,7 @@
                                             </div>
                                             <!-- Type -->
                                             <div class="hidden sm:flex w-24 justify-center">
-                                                <span class="px-1.5 py-0.5 text-[10px] font-medium rounded bg-neutral-100 text-neutral-500 border border-neutral-200 uppercase tracking-wide"
+                                                <span class="px-1.5 py-0.5 text-[12px] font-medium rounded bg-neutral-100 text-neutral-500 border border-neutral-200 uppercase tracking-wide"
                                                       x-text="managerModelInfo(model.name)?.model_type || 'llm'"></span>
                                             </div>
                                             <!-- Memory: the measured footprint, with the estimate under it -->
@@ -338,7 +338,7 @@
                                         <div x-show="hfSearchHistoryOpen && hfSearchHistory.length > 0 && !hfSearchQuery.trim()"
                                              x-cloak
                                              class="absolute top-full left-0 right-0 mt-1 bg-white rounded-xl shadow-lg border border-neutral-200 py-1 z-50">
-                                            <div class="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-neutral-400">{{ t('models.search.recent_searches') }}</div>
+                                            <div class="px-3 py-1.5 text-[12px] font-bold uppercase tracking-wider text-neutral-400">{{ t('models.search.recent_searches') }}</div>
                                             <template x-for="(item, idx) in hfSearchHistory" :key="idx">
                                                 <button @mousedown.prevent="selectSearchHistory(item)"
                                                         class="w-full px-3 py-2 text-left text-sm text-neutral-700 hover:bg-neutral-50 flex items-center gap-2 transition-colors">
@@ -484,7 +484,7 @@
                                             class="px-3 py-1 text-xs font-medium rounded-md transition-all">
                                         {{ t('models.browse.tab.search_results') }}
                                         <span x-show="hfSearchResults.length > 0" x-cloak
-                                              class="ml-1 text-[10px] text-neutral-400"
+                                              class="ml-1 text-[12px] text-neutral-400"
                                               x-text="'(' + hfSearchResults.length + ')'"></span>
                                     </button>
                                 </div>
@@ -576,12 +576,12 @@
                                                                 <span class="text-xs text-neutral-400 tabular-nums" x-text="'#' + model.rank"></span>
                                                                 <button @click="openModelDetail(model.repo_id)"
                                                                         :title="model.name"
-                                                                        class="text-sm font-medium text-neutral-900 hover:text-blue-600 truncate block transition-colors text-left cursor-pointer flex-1 min-w-0" x-text="model.name"></button>
+                                                                        class="text-sm font-medium text-neutral-900 hover:text-neutral-700 truncate block transition-colors text-left cursor-pointer flex-1 min-w-0" x-text="model.name"></button>
                                                             </div>
                                                             <!-- Desktop: name -->
                                                             <button @click="openModelDetail(model.repo_id)"
                                                                     :title="model.name"
-                                                                    class="max-md:hidden block text-sm font-medium text-neutral-900 hover:text-blue-600 truncate transition-colors text-left cursor-pointer max-w-[280px] lg:max-w-[480px] xl:max-w-[600px]" x-text="model.name"></button>
+                                                                    class="max-md:hidden block text-sm font-medium text-neutral-900 hover:text-neutral-700 truncate transition-colors text-left cursor-pointer max-w-[280px] lg:max-w-[480px] xl:max-w-[600px]" x-text="model.name"></button>
                                                             <!-- Desktop: only params shown below name -->
                                                             <span x-show="model.params" x-cloak class="max-md:hidden text-xs text-neutral-400" x-text="model.params_formatted + ' ' + window.t('models.browse.params_suffix')"></span>
                                                             <!-- Mobile: inline params + size + downloads + likes -->
@@ -710,7 +710,7 @@
                                                             <td class="px-4 py-3">
                                                                 <button @click="openModelDetail(model.repo_id)"
                                                                         :title="model.repo_id"
-                                                                        class="text-sm font-medium text-neutral-900 hover:text-blue-600 truncate block transition-colors text-left cursor-pointer font-mono text-xs max-w-[280px] lg:max-w-[480px] xl:max-w-[600px]" x-text="model.repo_id"></button>
+                                                                        class="text-sm font-medium text-neutral-900 hover:text-neutral-700 truncate block transition-colors text-left cursor-pointer font-mono text-xs max-w-[280px] lg:max-w-[480px] xl:max-w-[600px]" x-text="model.repo_id"></button>
                                                                 <!-- Desktop: only params shown below name -->
                                                                 <span x-show="model.params" x-cloak class="max-md:hidden text-xs text-neutral-400" x-text="model.params_formatted + ' ' + window.t('models.browse.params_suffix')"></span>
                                                                 <!-- Mobile: inline params + size + downloads + likes -->
@@ -822,7 +822,7 @@
                                                     </button>
                                                     <button x-show="task.status === 'failed' || task.status === 'cancelled'" x-cloak
                                                             @click="retryHFDownload(task.task_id)"
-                                                            class="p-1.5 text-neutral-400 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition-all"
+                                                            class="p-1.5 text-neutral-400 hover:text-neutral-600 hover:bg-neutral-100 rounded-lg transition-all"
                                                             :title="window.t('models.queue.retry_tooltip') || 'Retry download'">
                                                         <i data-lucide="refresh-cw" class="w-4 h-4"></i>
                                                     </button>
@@ -929,7 +929,7 @@
                                                     <div x-show="msSearchHistoryOpen && msSearchHistory.length > 0 && !msSearchQuery.trim()"
                                                          x-cloak
                                                          class="absolute top-full left-0 right-0 mt-1 bg-white rounded-xl shadow-lg border border-neutral-200 py-1 z-50">
-                                                        <div class="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-neutral-400">{{ t('models.search.recent_searches') }}</div>
+                                                        <div class="px-3 py-1.5 text-[12px] font-bold uppercase tracking-wider text-neutral-400">{{ t('models.search.recent_searches') }}</div>
                                                         <template x-for="(item, idx) in msSearchHistory" :key="idx">
                                                             <button @mousedown.prevent="selectMsSearchHistory(item)"
                                                                     class="w-full px-3 py-2 text-left text-sm text-neutral-700 hover:bg-neutral-50 flex items-center gap-2 transition-colors">
@@ -1001,7 +1001,7 @@
                                                         class="px-3 py-1 text-xs font-medium rounded-md transition-all">
                                                     {{ t('models.browse.tab.search_results') }}
                                                     <span x-show="msSearchResults.length > 0" x-cloak
-                                                          class="ml-1 text-[10px] text-neutral-400"
+                                                          class="ml-1 text-[12px] text-neutral-400"
                                                           x-text="'(' + msSearchResults.length + ')'"></span>
                                                 </button>
                                             </div>
@@ -1034,7 +1034,7 @@
                                                         <div class="px-6 py-3.5 flex items-center justify-between hover:bg-neutral-50 transition-colors">
                                                             <div class="min-w-0 flex-1">
                                                                 <button @click="openMsModelDetail(model.repo_id)"
-                                                                   class="text-sm font-medium text-neutral-900 hover:text-blue-600 truncate block transition-colors text-left cursor-pointer" x-text="model.name || model.repo_id"></button>
+                                                                   class="text-sm font-medium text-neutral-900 hover:text-neutral-700 truncate block transition-colors text-left cursor-pointer" x-text="model.name || model.repo_id"></button>
                                                                 <div class="flex items-center gap-3 mt-0.5">
                                                                     <span x-show="model.size_formatted" x-cloak class="text-xs text-neutral-400" x-text="model.size_formatted"></span>
                                                                     <span x-show="model.params" x-cloak class="text-xs text-neutral-400" x-text="model.params_formatted + ' ' + window.t('models.browse.params_suffix')"></span>
@@ -1086,7 +1086,7 @@
                                                         <div class="px-6 py-3.5 flex items-center justify-between hover:bg-neutral-50 transition-colors">
                                                             <div class="min-w-0 flex-1">
                                                                 <button @click="openMsModelDetail(model.repo_id)"
-                                                                   class="text-sm font-medium text-neutral-900 hover:text-blue-600 truncate block transition-colors text-left cursor-pointer" x-text="model.name || model.repo_id"></button>
+                                                                   class="text-sm font-medium text-neutral-900 hover:text-neutral-700 truncate block transition-colors text-left cursor-pointer" x-text="model.name || model.repo_id"></button>
                                                                 <div class="flex items-center gap-3 mt-0.5">
                                                                     <span x-show="model.size_formatted" x-cloak class="text-xs text-neutral-400" x-text="model.size_formatted"></span>
                                                                     <span x-show="model.params" x-cloak class="text-xs text-neutral-400" x-text="model.params_formatted + ' ' + window.t('models.browse.params_suffix')"></span>
@@ -1147,7 +1147,7 @@
                                                             <div class="px-6 py-3.5 flex items-center justify-between hover:bg-neutral-50 transition-colors">
                                                                 <div class="min-w-0 flex-1">
                                                                     <button @click="openMsModelDetail(model.repo_id)"
-                                                                       class="text-sm font-medium text-neutral-900 hover:text-blue-600 truncate block transition-colors text-left cursor-pointer font-mono text-xs" x-text="model.repo_id"></button>
+                                                                       class="text-sm font-medium text-neutral-900 hover:text-neutral-700 truncate block transition-colors text-left cursor-pointer font-mono text-xs" x-text="model.repo_id"></button>
                                                                     <div class="flex items-center gap-3 mt-0.5 flex-wrap">
                                                                         <span x-show="model.size_formatted" x-cloak class="text-xs text-neutral-400" x-text="model.size_formatted"></span>
                                                                         <span x-show="model.params" x-cloak class="text-xs text-neutral-400" x-text="model.params_formatted + ' ' + window.t('models.browse.params_suffix')"></span>
@@ -1233,7 +1233,7 @@
                                                                 </button>
                                                                 <button x-show="task.status === 'failed' || task.status === 'cancelled'" x-cloak
                                                                         @click="retryMSDownload(task.task_id)"
-                                                                        class="p-1.5 text-neutral-400 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition-all"
+                                                                        class="p-1.5 text-neutral-400 hover:text-neutral-600 hover:bg-neutral-100 rounded-lg transition-all"
                                                                         title="{{ t('models.queue.retry_tooltip') }}">
                                                                     <i data-lucide="refresh-cw" class="w-4 h-4"></i>
                                                                 </button>
@@ -1809,7 +1809,7 @@
                                                             tone_expr='statusTone(task.status)',
                                                             label_expr='statusLabel(task.status)') }}
                                                 <!-- Elapsed time -->
-                                                <span x-show="task.started_at" class="text-[10px] text-neutral-400 font-mono"
+                                                <span x-show="task.started_at" class="text-[12px] text-neutral-400 font-mono"
                                                       x-text="formatUploadElapsed(task)"></span>
                                                 <!-- Cancel button -->
                                                 <button x-show="task.status === 'pending' || task.status === 'uploading'"
@@ -1831,7 +1831,7 @@
                                         <div x-show="task.status === 'uploading' || task.status === 'pending'" class="mt-2">
                                             <div class="w-full bg-neutral-100 rounded-full h-1.5 overflow-hidden">
                                                 <div class="h-full rounded-full transition-all duration-500"
-                                                     :class="task.status === 'pending' ? 'bg-amber-400 animate-pulse' : 'bg-blue-500'"
+                                                     :class="task.status === 'pending' ? 'bg-amber-400 animate-pulse' : 'bg-neutral-1000'"
                                                      :style="'width: ' + (task.status === 'pending' ? 100 : Math.max(task.progress, 5)) + '%'"></div>
                                             </div>
                                         </div>
@@ -1841,7 +1841,7 @@
                                         <!-- Completed: HF repo link -->
                                         <div x-show="task.status === 'completed' && task.repo_url" x-cloak class="mt-2">
                                             <a :href="task.repo_url" target="_blank" rel="noopener noreferrer"
-                                               class="text-xs text-blue-600 hover:text-blue-800 flex items-center gap-1 transition-colors">
+                                               class="text-xs text-neutral-700 hover:text-neutral-900 flex items-center gap-1 transition-colors">
                                                 <i data-lucide="external-link" class="w-3 h-3"></i>
                                                 <span x-text="task.repo_url"></span>
                                             </a>
@@ -1893,7 +1893,7 @@
                                             <div class="flex items-center justify-between">
                                                 <div>
                                                     <label class="text-xs font-medium text-neutral-500" x-text="window.t('models.uploader.modal_redownload_label')"></label>
-                                                    <p class="text-[10px] text-neutral-400 mt-0.5" x-text="window.t('models.uploader.modal_redownload_hint')"></p>
+                                                    <p class="text-[12px] text-neutral-400 mt-0.5" x-text="window.t('models.uploader.modal_redownload_hint')"></p>
                                                 </div>
                                                 <button @click="uploadRedownloadNotice = !uploadRedownloadNotice"
                                                         class="relative w-10 h-5 rounded-full transition-colors duration-200 shrink-0 ml-3"
@@ -1969,7 +1969,7 @@
                                                 <span class="text-xs text-neutral-500" x-text="'&#9829; ' + hfModelDetail.likes"></span>
                                                 <span x-show="hfModelDetail.params" x-cloak class="text-xs text-neutral-500" x-text="hfModelDetail.params_formatted + ' ' + window.t('models.browse.params_suffix')"></span>
                                                 <span x-show="hfModelDetail.pipeline_tag" x-cloak
-                                                      class="px-2 py-0.5 text-[10px] font-medium rounded bg-blue-50 text-blue-700 border border-blue-200"
+                                                      class="px-2 py-0.5 text-[12px] font-medium rounded bg-neutral-100 text-neutral-800 border border-neutral-200"
                                                       x-text="hfModelDetail.pipeline_tag"></span>
                                             </div>
                                         </div>
@@ -1993,7 +1993,7 @@
                                                     class="px-3 py-1 text-xs font-medium rounded-md transition-all">
                                                 {{ t('models.detail.tab.files') }}
                                                 <span x-show="hfModelDetail.files && hfModelDetail.files.length > 0" x-cloak
-                                                      class="ml-1 text-[10px] text-neutral-400"
+                                                      class="ml-1 text-[12px] text-neutral-400"
                                                       x-text="'(' + hfModelDetail.files.length + ')'"></span>
                                             </button>
                                             <button @click="detailTab = 'tags'"
@@ -2037,7 +2037,7 @@
                                             <div x-show="hfModelDetail.tags && hfModelDetail.tags.length > 0" x-cloak>
                                                 <div class="flex flex-wrap gap-1.5">
                                                     <template x-for="tag in hfModelDetail.tags" :key="tag">
-                                                        <span class="px-2 py-0.5 text-[10px] font-medium rounded bg-neutral-100 text-neutral-600 border border-neutral-200"
+                                                        <span class="px-2 py-0.5 text-[12px] font-medium rounded bg-neutral-100 text-neutral-600 border border-neutral-200"
                                                               x-text="tag"></span>
                                                     </template>
                                                 </div>
@@ -2051,7 +2051,7 @@
                                 <!-- Footer -->
                                 <div class="px-6 py-4 border-t border-neutral-200 flex items-center justify-between shrink-0 bg-neutral-50">
                                     <a :href="'https://huggingface.co/' + hfModelDetail.repo_id" target="_blank" rel="noopener noreferrer"
-                                       class="text-xs text-blue-600 hover:text-blue-800 flex items-center gap-1.5 transition-colors">
+                                       class="text-xs text-neutral-700 hover:text-neutral-900 flex items-center gap-1.5 transition-colors">
                                         <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
                                         {{ t('models.detail.view_on_hf') }}
                                     </a>
@@ -2128,7 +2128,7 @@
                                             <div x-show="msModelDetail.tags && msModelDetail.tags.length > 0" x-cloak>
                                                 <div class="flex flex-wrap gap-1.5">
                                                     <template x-for="tag in msModelDetail.tags" :key="tag">
-                                                        <span class="px-2 py-0.5 text-[10px] font-medium rounded bg-neutral-100 text-neutral-600 border border-neutral-200"
+                                                        <span class="px-2 py-0.5 text-[12px] font-medium rounded bg-neutral-100 text-neutral-600 border border-neutral-200"
                                                               x-text="tag"></span>
                                                     </template>
                                                 </div>
@@ -2142,7 +2142,7 @@
                                 <!-- Footer -->
                                 <div class="px-6 py-4 border-t border-neutral-200 flex items-center justify-between shrink-0 bg-neutral-50">
                                     <a :href="'https://modelscope.cn/models/' + msModelDetail.repo_id" target="_blank" rel="noopener noreferrer"
-                                       class="text-xs text-blue-600 hover:text-blue-800 flex items-center gap-1.5 transition-colors">
+                                       class="text-xs text-neutral-700 hover:text-neutral-900 flex items-center gap-1.5 transition-colors">
                                         <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
                                         <span x-text="window.t('models.detail.view_on_ms')"></span>
                                     </a>

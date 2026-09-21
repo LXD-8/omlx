@@ -97,7 +97,7 @@
                                 <button type="button" @click="applyPresetToForm(p)"
                                         @mouseenter="showTip($event.currentTarget, p.description)"
                                         @mouseleave="hideTip()"
-                                        class="px-2.5 py-1 text-xs rounded-full border border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 transition-all"
+                                        class="px-2.5 py-1 text-xs rounded-full border border-neutral-200 bg-neutral-100 text-neutral-800 hover:bg-neutral-200 transition-all"
                                         x-text="p.display_name || p.name"></button>
                             </template>
                             <span x-show="presets.length === 0" x-cloak class="text-xs text-neutral-400 italic">{{ t('modal.model_settings.profiles.no_presets') }}</span>
@@ -112,7 +112,7 @@
                             <template x-for="tmpl in templates" :key="tmpl.name">
                                 <div class="inline-flex items-center gap-1">
                                     <button type="button" @click="applyTemplateToForm(tmpl)"
-                                            :class="activeTemplateName === tmpl.name ? 'bg-blue-500 text-white border-blue-500' : 'border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100'"
+                                            :class="activeTemplateName === tmpl.name ? 'bg-neutral-1000 text-white border-blue-500' : 'border-neutral-200 bg-neutral-100 text-neutral-800 hover:bg-neutral-200'"
                                             class="px-2.5 py-1 text-xs rounded-full border transition-all"
                                             x-text="tmpl.display_name || tmpl.name"></button>
                                     <button type="button" @click="editingTemplate = tmpl.name"
@@ -127,9 +127,9 @@
                                     </button>
                                     <span x-show="templateDeleteConfirm === tmpl.name" x-cloak class="flex items-center gap-1">
                                         <button type="button" @click="deleteTemplate(tmpl.name)"
-                                                class="px-1.5 py-0.5 text-[10px] text-white bg-red-500 rounded">{{ t('models.manager.delete_yes') }}</button>
+                                                class="px-1.5 py-0.5 text-[12px] text-white bg-red-500 rounded">{{ t('models.manager.delete_yes') }}</button>
                                         <button type="button" @click="templateDeleteConfirm = null"
-                                                class="px-1.5 py-0.5 text-[10px] text-neutral-600">{{ t('models.manager.delete_no') }}</button>
+                                                class="px-1.5 py-0.5 text-[12px] text-neutral-600">{{ t('models.manager.delete_no') }}</button>
                                     </span>
                                 </div>
                             </template>
@@ -188,7 +188,7 @@
                                                 : 'bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100'"
                                             class="px-2.5 py-1 text-xs rounded-full transition-all flex items-center gap-1">
                                         <span x-show="p.expose_as_model"
-                                              class="px-1 py-0.5 text-[10px] font-bold rounded bg-white/70"
+                                              class="px-1 py-0.5 text-[12px] font-bold rounded bg-white/70"
                                               :class="p.has_engine_fields ? 'text-amber-700' : 'text-emerald-700'">API</span>
                                         <span x-text="p.display_name || p.name"></span>
                                         <span x-show="activeProfileName === p.name && profilesDrift"
@@ -206,9 +206,9 @@
                                     </button>
                                     <span x-show="profileDeleteConfirm === p.name" x-cloak class="flex items-center gap-1">
                                         <button type="button" @click="deleteProfile(p.name)"
-                                                class="px-1.5 py-0.5 text-[10px] text-white bg-red-500 rounded">{{ t('models.manager.delete_yes') }}</button>
+                                                class="px-1.5 py-0.5 text-[12px] text-white bg-red-500 rounded">{{ t('models.manager.delete_yes') }}</button>
                                         <button type="button" @click="profileDeleteConfirm = null"
-                                                class="px-1.5 py-0.5 text-[10px] text-neutral-600">{{ t('models.manager.delete_no') }}</button>
+                                                class="px-1.5 py-0.5 text-[12px] text-neutral-600">{{ t('models.manager.delete_no') }}</button>
                                     </span>
                                 </div>
                             </template>
@@ -235,7 +235,7 @@
                                     :class="newProfile.expose_as_model
                                         ? 'bg-emerald-600 text-white border-emerald-600'
                                         : 'bg-white text-neutral-500 border-neutral-200 hover:text-neutral-900 hover:border-neutral-400'"
-                                    class="shrink-0 inline-flex items-center gap-1 px-2.5 py-1.5 border rounded-lg text-[10px] font-bold transition-colors">
+                                    class="shrink-0 inline-flex items-center gap-1 px-2.5 py-1.5 border rounded-lg text-[12px] font-bold transition-colors">
                                 API
                                 <span x-text="newProfile.expose_as_model ? t('modal.model_settings.profiles.expose_as_model_on') : t('modal.model_settings.profiles.expose_as_model_off')"></span>
                             </button>
@@ -254,13 +254,13 @@
                     <template x-for="p in profiles" :key="'edit-'+p.name">
                         <div x-show="profileScope === 'model' && editingProfile === p.name" x-cloak class="mt-3 p-3 bg-white border border-neutral-200 rounded-lg space-y-2">
                             <div class="block">
-                                <span class="block mb-1 text-[10px] font-semibold uppercase tracking-wide text-neutral-500">{{ t('modal.model_settings.profiles.display_name_label') }}</span>
+                                <span class="block mb-1 text-[12px] font-semibold uppercase tracking-wide text-neutral-500">{{ t('modal.model_settings.profiles.display_name_label') }}</span>
                                 <input type="text" :value="p._editDisplayName ?? p.display_name" @input="p._editDisplayName = $event.target.value"
                                        :placeholder="t('modal.model_settings.profiles.display_name_label')"
                                        class="w-full px-3 py-1.5 border border-neutral-200 rounded-lg text-xs">
                             </div>
                             <div class="block">
-                                <span class="block mb-1 text-[10px] font-semibold uppercase tracking-wide text-neutral-500">{{ t('modal.model_settings.profiles.name_placeholder') }}</span>
+                                <span class="block mb-1 text-[12px] font-semibold uppercase tracking-wide text-neutral-500">{{ t('modal.model_settings.profiles.name_placeholder') }}</span>
                                 <div class="flex gap-2">
                                     <input type="text" :value="p._editApiName ?? p.api_name" @input="p._editApiName = $event.target.value"
                                            :placeholder="t('modal.model_settings.profiles.name_placeholder')"
@@ -272,14 +272,14 @@
                                             :class="(p._editExposeAsModel ?? p.expose_as_model)
                                                 ? 'bg-emerald-600 text-white border-emerald-600'
                                                 : 'bg-white text-neutral-500 border-neutral-200 hover:text-neutral-900 hover:border-neutral-400'"
-                                            class="shrink-0 inline-flex items-center gap-1 px-2.5 py-1.5 border rounded-lg text-[10px] font-bold transition-colors">
+                                            class="shrink-0 inline-flex items-center gap-1 px-2.5 py-1.5 border rounded-lg text-[12px] font-bold transition-colors">
                                         API
                                         <span x-text="(p._editExposeAsModel ?? p.expose_as_model) ? t('modal.model_settings.profiles.expose_as_model_on') : t('modal.model_settings.profiles.expose_as_model_off')"></span>
                                     </button>
                                 </div>
                             </div>
                             <div class="block">
-                                <span class="block mb-1 text-[10px] font-semibold uppercase tracking-wide text-neutral-500">{{ t('modal.model_settings.profiles.description_label') }}</span>
+                                <span class="block mb-1 text-[12px] font-semibold uppercase tracking-wide text-neutral-500">{{ t('modal.model_settings.profiles.description_label') }}</span>
                                 <input type="text" :value="p._editDescription ?? p.description" @input="p._editDescription = $event.target.value"
                                        :placeholder="t('modal.model_settings.profiles.description_label')"
                                        class="w-full px-3 py-1.5 border border-neutral-200 rounded-lg text-xs">
@@ -1212,7 +1212,7 @@
                                         <div class="flex items-start justify-between gap-3">
                                             <div class="min-w-0">
                                                 <span class="text-sm font-medium text-neutral-700">{{ t('modal.model_settings.index_cache') }}</span>
-                                                <p class="text-xs text-neutral-500 mt-0.5">{{ t('modal.model_settings.index_cache_hint') }} (<a href="https://github.com/THUDM/IndexCache" target="_blank" rel="noopener" class="text-blue-500 hover:text-blue-700 underline">{{ t('modal.model_settings.github') }}</a>)</p>
+                                                <p class="text-xs text-neutral-500 mt-0.5">{{ t('modal.model_settings.index_cache_hint') }} (<a href="https://github.com/THUDM/IndexCache" target="_blank" rel="noopener" class="text-neutral-600 hover:text-neutral-800 underline">{{ t('modal.model_settings.github') }}</a>)</p>
                                             </div>
                                             <button type="button"
                                                     @click="if (!modelSettings.is_paroquant) { modelSettings.enableIndexCache = !modelSettings.enableIndexCache; if (!modelSettings.enableIndexCache) modelSettings.index_cache_freq = null; }"
@@ -1240,7 +1240,7 @@
                                     <div class="flex items-start justify-between gap-3">
                                         <div class="min-w-0">
                                             <span class="text-sm font-medium text-neutral-700">{{ t('modal.model_settings.specprefill') }}</span>
-                                            <p class="text-xs text-neutral-500 mt-0.5">{{ t('modal.model_settings.specprefill_hint') }} (<a href="https://arxiv.org/abs/2502.02789" target="_blank" rel="noopener" class="text-blue-500 hover:text-blue-700 underline">{{ t('modal.model_settings.specprefill_paper') }}</a>) (<a href="https://huggingface.co/Thump604/specprefill-paper" target="_blank" rel="noopener" class="text-blue-500 hover:text-blue-700 underline">{{ t('modal.model_settings.huggingface') }}</a>)</p>
+                                            <p class="text-xs text-neutral-500 mt-0.5">{{ t('modal.model_settings.specprefill_hint') }} (<a href="https://arxiv.org/abs/2502.02789" target="_blank" rel="noopener" class="text-neutral-600 hover:text-neutral-800 underline">{{ t('modal.model_settings.specprefill_paper') }}</a>) (<a href="https://huggingface.co/Thump604/specprefill-paper" target="_blank" rel="noopener" class="text-neutral-600 hover:text-neutral-800 underline">{{ t('modal.model_settings.huggingface') }}</a>)</p>
                                         </div>
                                         <button type="button"
                                                 @click="if (!modelSettings.is_paroquant && !modelSettings.vlm_mtp_enabled) modelSettings.specprefill_enabled = !modelSettings.specprefill_enabled"
@@ -1293,7 +1293,7 @@
                                     <div class="flex items-start justify-between gap-3">
                                         <div class="min-w-0">
                                             <span class="text-sm font-medium text-neutral-700">{{ t('modal.model_settings.dflash') }}</span>
-                                            <p class="text-xs text-neutral-500 mt-0.5">{{ t('modal.model_settings.dflash_hint') }}<br><strong>{{ t('modal.model_settings.dflash_single_stream') }}</strong><br>{{ t('modal.model_settings.dflash_mlx_impl') }}(<a href="https://github.com/bstnxbt/dflash-mlx" target="_blank" rel="noopener" class="text-blue-500 hover:text-blue-700 underline">{{ t('modal.model_settings.github') }}</a>)</p>
+                                            <p class="text-xs text-neutral-500 mt-0.5">{{ t('modal.model_settings.dflash_hint') }}<br><strong>{{ t('modal.model_settings.dflash_single_stream') }}</strong><br>{{ t('modal.model_settings.dflash_mlx_impl') }}(<a href="https://github.com/bstnxbt/dflash-mlx" target="_blank" rel="noopener" class="text-neutral-600 hover:text-neutral-800 underline">{{ t('modal.model_settings.github') }}</a>)</p>
                                             <p x-show="!modelSettings.dflash_compatible && modelSettings.dflash_compatibility_reason"
                                                class="text-xs text-amber-600 mt-1"
                                                x-text="modelSettings.dflash_compatibility_reason"></p>

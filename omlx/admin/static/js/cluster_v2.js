@@ -796,7 +796,7 @@ function clusterV2Wizard() {
 
         requestPhaseTone(request) {
             const phase = this.requestPhaseLabel(request);
-            if (phase === 'prefill') return 'bg-blue-50 border-blue-200 text-blue-700';
+            if (phase === 'prefill') return 'bg-neutral-100 border-neutral-200 text-neutral-800';
             if (phase === 'decode') return 'bg-green-50 border-green-200 text-green-700';
             if (phase === 'failed') return 'bg-red-50 border-red-200 text-red-700';
             return 'bg-neutral-50 border-neutral-200 text-neutral-600';
@@ -991,7 +991,7 @@ function clusterV2Wizard() {
                     label: window.t('cluster.v2.deploy.status_loading'),
                     detail:
                         window.t('cluster.v2.deploy.status_starting_detail'),
-                    tone: 'bg-blue-50 border-blue-200 text-blue-700',
+                    tone: 'bg-neutral-100 border-neutral-200 text-neutral-800',
                     pulse: true,
                 };
             }

@@ -89,7 +89,7 @@ def test_swift_tokens_are_compiled_by_the_app():
 
 def test_scale_has_exactly_six_levels():
     assert list(SCALE) == ["aux", "body", "emphasis", "section", "page", "kpi"]
-    assert [step["px"] for step in SCALE.values()] == [10, 12, 15, 17, 20, 28]
+    assert [step["px"] for step in SCALE.values()] == [12, 14, 16, 18, 24, 32]
 
 
 def test_css_exposes_the_scale_and_the_floor():
@@ -140,7 +140,12 @@ def test_no_text_below_the_auxiliary_floor():
     offenders = {}
     pattern = re.compile(r"font-size:\s*(\d+(?:\.\d+)?)px")
     for path in TEMPLATES + OWN_STYLESHEETS + OWN_SCRIPTS:
-        for value in pattern.findall(path.read_text(encoding="utf-8")):
+        text = path.read_text(encoding="utf-8")
+        if path.name == "base.html":
+            # The enhanced-readability block names the sizes it lifts; those are
+            # selectors, not rendered sizes.
+            text = re.sub(r"<style>\s*\[data-enhanced-readability\][\s\S]*?</style>", "", text)
+        for value in pattern.findall(text):
             if float(value) < FLOOR["aux"]:
                 offenders.setdefault(str(path.relative_to(ROOT)), set()).add(value)
     assert not offenders, f"text below the {FLOOR['aux']}px floor: {offenders}"

@@ -138,13 +138,13 @@ struct ModelCardSheet: View {
         HStack(alignment: .center, spacing: 12) {
             VStack(alignment: .leading, spacing: 4) {
                 Text(target.repoId)
-                    .font(.omlxText(15, weight: .semibold))
+                    .font(.omlxText(16, weight: .semibold))
                     .foregroundStyle(theme.text)
                     .textSelection(.enabled)
                     .lineLimit(1)
                     .truncationMode(.middle)
                 Text(target.source.displayName)
-                    .font(.omlxText(11, weight: .medium))
+                    .font(.omlxText(12, weight: .medium))
                     .foregroundStyle(theme.textSecondary)
                     .textCase(.uppercase)
                     .kerning(0.6)
@@ -212,7 +212,7 @@ struct ModelCardSheet: View {
             activeTab = tab
         } label: {
             Text(tab.label)
-                .font(.omlxText(11.5, weight: .semibold))
+                .font(.omlxText(12, weight: .semibold))
                 .foregroundStyle(isSelected ? theme.text : theme.textSecondary)
                 .padding(.horizontal, 10)
                 .padding(.vertical, 4)
@@ -279,7 +279,7 @@ struct ModelCardSheet: View {
 
     private func metaChip(text: String, accent: Bool) -> some View {
         Text(text)
-            .font(.omlxText(10.5, weight: .heavy))
+            .font(.omlxText(12, weight: .heavy))
             .kerning(0.4)
             .textCase(.uppercase)
             .foregroundStyle(accent ? theme.accent : theme.textSecondary)
@@ -299,7 +299,7 @@ struct ModelCardSheet: View {
             Image(systemName: symbol)
                 .font(.system(size: 10, weight: .medium))
             Text(Self.compactCount(value))
-                .font(.omlxMono(11))
+                .font(.omlxMono(12))
         }
         .foregroundStyle(theme.textSecondary)
     }
@@ -314,7 +314,7 @@ struct ModelCardSheet: View {
             Text(String(localized: "downloads.card.lora_warning",
                         defaultValue: "This is a LoRA adapter. It needs a compatible base model to run — downloading on its own won't load in oMLX.",
                         comment: "Warning banner shown in the model card sheet when the repo is an adapter rather than a full model"))
-                .font(.omlxText(11))
+                .font(.omlxText(12))
                 .foregroundStyle(theme.text)
                 .fixedSize(horizontal: false, vertical: true)
             Spacer(minLength: 0)
@@ -343,7 +343,7 @@ struct ModelCardSheet: View {
                 Text(String(localized: "downloads.card.empty",
                             defaultValue: "This model doesn't ship a README.",
                             comment: "Empty state shown when the upstream repo has no model card"))
-                    .font(.omlxText(13))
+                    .font(.omlxText(14))
                     .foregroundStyle(theme.textSecondary)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -384,7 +384,7 @@ struct ModelCardSheet: View {
                             Spacer(minLength: 8)
                             if let s = file.sizeFormatted, !s.isEmpty {
                                 Text(s)
-                                    .font(.omlxMono(11))
+                                    .font(.omlxMono(12))
                                     .foregroundStyle(theme.textSecondary)
                             }
                         }
@@ -425,7 +425,7 @@ struct ModelCardSheet: View {
 
     private func tagPill(_ tag: String) -> some View {
         Text(tag)
-            .font(.omlxMono(11))
+            .font(.omlxMono(12))
             .foregroundStyle(theme.textSecondary)
             .padding(.horizontal, 8)
             .padding(.vertical, 4)
@@ -444,7 +444,7 @@ struct ModelCardSheet: View {
                 .font(.system(size: 28, weight: .light))
                 .foregroundStyle(theme.textTertiary)
             Text(message)
-                .font(.omlxText(13))
+                .font(.omlxText(14))
                 .foregroundStyle(theme.textSecondary)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -467,7 +467,7 @@ struct ModelCardSheet: View {
                         Image(systemName: "arrow.up.right.square")
                             .font(.system(size: 11))
                     }
-                    .font(.omlxText(11.5, weight: .medium))
+                    .font(.omlxText(12, weight: .medium))
                     .foregroundStyle(theme.textSecondary)
                 }
                 .buttonStyle(.plain)
@@ -511,7 +511,7 @@ struct ModelCardSheet: View {
             Text(String(localized: "downloads.card.loading",
                         defaultValue: "Loading model card…",
                         comment: "Status text shown while the model README is being fetched"))
-                .font(.omlxText(11))
+                .font(.omlxText(12))
                 .foregroundStyle(theme.textSecondary)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -525,10 +525,10 @@ struct ModelCardSheet: View {
             Text(String(localized: "downloads.card.error",
                         defaultValue: "Couldn't load model card",
                         comment: "Title shown in the model card sheet when the fetch failed"))
-                .font(.omlxText(13, weight: .semibold))
+                .font(.omlxText(14, weight: .semibold))
                 .foregroundStyle(theme.text)
             Text(message)
-                .font(.omlxText(11))
+                .font(.omlxText(12))
                 .foregroundStyle(theme.textSecondary)
                 .multilineTextAlignment(.center)
                 .textSelection(.enabled)

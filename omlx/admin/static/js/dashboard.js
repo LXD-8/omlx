@@ -1069,6 +1069,12 @@
                     this.stopStatsRefresh();
                 }
                 if (value === 'logs') {
+                    // The viewer's window needs the panel's real height, and the
+                    // panel is hidden until this tick: measure after the paint.
+                    this.$nextTick(() => {
+                        this.measureLogViewport();
+                        this.measureLogRowHeight();
+                    });
                     await this.loadLogs();
                     this.startLogRefresh();
                 } else {
@@ -3022,6 +3028,10 @@
                 if (model) await this.openModelSettings(model, true);
             },
             async openModelSettings(model, preservingEdits = false) {
+                // Open first, load second. The sheet used to appear only after
+                // the profile and template fetches resolved, so any failure in
+                // those (a 404, a model without settings) left the button dead.
+                if (!preservingEdits) this.showModelSettingsModal = true;
                 const baseline = JSON.stringify(this.modelSettings);
                 const seq = ++this._applySeq;
                 this.profileError = '';
@@ -3046,10 +3056,22 @@
                             this.profileScope = saved;
                         }
                     } catch (e) {}
-                    await Promise.all([
-                        this.loadProfilesForModel(model.id),
-                        this.loadTemplates(),
-                    ]);
+                    try {
+                        await Promise.all([
+                            this.loadProfilesForModel(model.id),
+                            this.loadTemplates(),
+                        ]);
+                    } catch (err) {
+                        // The sheet is already open; say what failed instead of
+                        // leaving an empty panel behind a dead button.
+                        console.error('Failed to load model profiles/templates:', err);
+                        this.notify({
+                            id: 'model-profiles',
+                            tone: 'red',
+                            title: window.t('toast.settings_save_failed'),
+                            message: String(err && err.message ? err.message : err),
+                        });
+                    }
                     if (this.reasoningParsers.length === 0) {
                         try {
                             const resp = await fetch('/admin/api/grammar/parsers');
@@ -5003,14 +5025,36 @@
                     }
                 };
 
-                es.onerror = () => {
-                    if (this.benchRunning) {
-                        this.benchError = window.t('js.error.benchmark_connection_lost');
-                        this.benchRunning = false;
-                        this.benchProgress = null;
-                    }
+                es.onerror = async () => {
+                    // The stream also ends when the run finished or the server
+                    // restarted. Ask for the results before calling it a
+                    // connection loss, and keep the run id in the message.
                     es.close();
                     this.benchEventSource = null;
+                    if (!this.benchRunning) return;
+                    let recovered = false;
+                    if (benchId) {
+                        try {
+                            const res = await fetch(`/admin/api/bench/${benchId}/results`);
+                            if (res.ok) {
+                                const payload = await res.json();
+                                if (payload && (payload.single || payload.batch)) {
+                                    this.benchSingleResults = payload.single || this.benchSingleResults;
+                                    this.benchBatchResults = payload.batch || this.benchBatchResults;
+                                    recovered = true;
+                                }
+                            }
+                        } catch (err) {
+                            /* fall through to the error path */
+                        }
+                    }
+                    this.benchRunning = false;
+                    this.benchProgress = null;
+                    if (!recovered) {
+                        this.benchError = window.t('js.error.benchmark_connection_lost')
+                            + (benchId ? ` (${benchId})` : '');
+                    }
+                    this.loadModels();
                 };
             },
 
@@ -6213,6 +6257,10 @@
             // the list is patched rather than rebuilt and the scroll position
             // survives a refresh.
             ingestLogText(text) {
+                if (!window.OmlxLogs) {
+                    this.logError = window.t('js.error.log_parser_missing');
+                    return;
+                }
                 const merged = window.OmlxLogs.mergeLogText(this._logRaw, text);
                 // A reset renumbers the records, so the previous anchor means
                 // nothing there.

@@ -29,27 +29,27 @@ enum DesignTokens {
 
     /// The six type levels, in points.
     enum FontSize {
-        static let aux: CGFloat = 10
-        static let body: CGFloat = 12
-        static let emphasis: CGFloat = 15
-        static let section: CGFloat = 17
-        static let page: CGFloat = 20
-        static let kpi: CGFloat = 28
+        static let aux: CGFloat = 12
+        static let body: CGFloat = 14
+        static let emphasis: CGFloat = 16
+        static let section: CGFloat = 18
+        static let page: CGFloat = 24
+        static let kpi: CGFloat = 32
 
         /// Smallest size any auxiliary label may use.
-        static let floor: CGFloat = 10
+        static let floor: CGFloat = 12
         /// Smallest size body copy and above may use.
-        static let bodyFloor: CGFloat = 12
+        static let bodyFloor: CGFloat = 14
         /// Floor once enhanced readability is on.
         static let enhancedReadabilityFloor: CGFloat = 12
     }
 
     enum LineHeight {
-        static let aux: CGFloat = 1.4
+        static let aux: CGFloat = 1.45
         static let body: CGFloat = 1.5
         static let emphasis: CGFloat = 1.45
         static let section: CGFloat = 1.4
-        static let page: CGFloat = 1.3
+        static let page: CGFloat = 1.28
         static let kpi: CGFloat = 1.15
     }
 

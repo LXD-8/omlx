@@ -328,3 +328,38 @@ test('a local benchmark run waits for the confirmation', () => {
     assert.equal(queued, 0);
 });
 
+
+// === The model-settings sheet opens even when its loaders fail (review 2) ===
+
+test('openModelSettings shows the sheet before it loads anything', async () => {
+    const app2 = context.dashboard();
+    app2.showModelSettingsModal = false;
+    app2._applySeq = 0;
+    app2.loadProfilesForModel = async () => { throw new Error('profiles 404'); };
+    app2.loadTemplates = async () => { throw new Error('templates 500'); };
+    app2.buildModelSettingsState = () => ({ temperature: null });
+    app2.computeDrift = () => {};
+    app2.notify = () => {};
+    app2.isDiffusionModel = () => false;
+    app2.reasoningParsers = ['x'];
+    const model = { id: 'm', settings: {} };
+    await app2.openModelSettings(model);
+    assert.equal(app2.showModelSettingsModal, true, 'the sheet must open despite the failures');
+    assert.equal(app2.selectedModel.id, 'm');
+});
+
+test('the models page entry point reaches the same sheet', async () => {
+    const app3 = context.dashboard();
+    app3.showModelSettingsModal = false;
+    app3.managerModelInfo = () => ({ id: 'm', settings: {} });
+    app3.loadProfilesForModel = async () => {};
+    app3.loadTemplates = async () => {};
+    app3.buildModelSettingsState = () => ({});
+    app3.computeDrift = () => {};
+    app3.notify = () => {};
+    app3.isDiffusionModel = () => false;
+    app3.reasoningParsers = ['x'];
+    app3.openModelSettingsFromManager('m');
+    await new Promise(resolve => setTimeout(resolve, 0));
+    assert.equal(app3.showModelSettingsModal, true);
+});

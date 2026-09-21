@@ -10,16 +10,16 @@
 
 :root {
     --bg-primary:        #ffffff;
-    --bg-secondary:      #f8fafc;
-    --bg-tertiary:       #f1f5f9;
-    --border-faint:      #e2e8f0;
-    --border-normal:     #cbd5e1;
-    --text-primary:      #0f172a;
-    --text-secondary:    #475569;
-    --text-tertiary:     #525f72;
-    --text-muted:        #656f7e;
-    --text-danger:       #b91c1c;
-    --link-color:        #2563eb;
+    --bg-secondary:      #f5f5f7;
+    --bg-tertiary:       #ececee;
+    --border-faint:      #e3e3e5;
+    --border-normal:     #d2d2d7;
+    --text-primary:      #1d1d1f;
+    --text-secondary:    #3a3a3c;
+    --text-tertiary:     #48484a;
+    --text-muted:        #5f5f66;
+    --text-danger:       #d70015;
+    --link-color:        #0066cc;
     --btn-primary:       #171717;
     --btn-primary-hover: #27272a;
     --btn-primary-text:  #ffffff;
@@ -27,7 +27,7 @@
     --bg-danger-hover:   rgba(239, 68, 68, 0.1);
     --danger-fg:         #ffffff;
     --focus-ring-color:  #171717;
-    --code-bg:           #f3f4f6;
+    --code-bg:           #f2f2f4;
     --sys-red:           #ff3b30;
     --sys-orange:        #ff9500;
     --sys-green:         #34c759;
@@ -40,20 +40,20 @@
     --badge-orange-fg:   #9a3412;
     --badge-red-fg:      #b91c1c;
     --badge-blue-fg:     #1d4ed8;
-    --fs-aux:            10px;
-    --fs-body:           12px;
-    --fs-emphasis:       15px;
-    --fs-section:        17px;
-    --fs-page:           20px;
-    --fs-kpi:            28px;
-    --lh-aux:            1.4;
+    --fs-aux:            12px;
+    --fs-body:           14px;
+    --fs-emphasis:       16px;
+    --fs-section:        18px;
+    --fs-page:           24px;
+    --fs-kpi:            32px;
+    --lh-aux:            1.45;
     --lh-body:           1.5;
     --lh-emphasis:       1.45;
     --lh-section:        1.4;
-    --lh-page:           1.3;
+    --lh-page:           1.28;
     --lh-kpi:            1.15;
-    --fs-floor:          10px;
-    --fs-floor-body:     12px;
+    --fs-floor:          12px;
+    --fs-floor-body:     14px;
     --fs-floor-enhanced: 12px;
     --space-1:                   4px;
     --space-2:                   8px;
@@ -99,12 +99,12 @@
     --bg-tertiary:       #2d2d32;
     --border-faint:      #3f3f46;
     --border-normal:     #52525b;
-    --text-primary:      #efefef;
-    --text-secondary:    #a1a1aa;
-    --text-tertiary:     #9a9aa5;
-    --text-muted:        #9494a4;
-    --text-danger:       #f87171;
-    --link-color:        #60a5fa;
+    --text-primary:      #f5f5f7;
+    --text-secondary:    #d1d1d6;
+    --text-tertiary:     #aeaeb2;
+    --text-muted:        #98989d;
+    --text-danger:       #ff6961;
+    --link-color:        #2997ff;
     --btn-primary:       #e5e5e5;
     --btn-primary-hover: #d4d4d4;
     --btn-primary-text:  #18181b;
@@ -138,7 +138,7 @@ body {
 }
 
 /*
- * Type scale. Exactly six steps (aux 10px, body 12px, emphasis 15px, section 17px, page 20px, kpi 28px);
+ * Type scale. Exactly six steps (aux 12px, body 14px, emphasis 16px, section 18px, page 24px, kpi 32px);
  * use these classes (or the matching Tailwind alias) instead of a new size.
  */
 .text-aux { font-size: var(--fs-aux); line-height: var(--lh-aux); }

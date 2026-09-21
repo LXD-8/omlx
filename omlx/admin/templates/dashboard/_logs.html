@@ -2,7 +2,6 @@
                 <div class="animate-fade-in-up page-wide">
                     <!-- Header -->
                     <div class="mb-8">
-                        <h2 class="text-xs font-bold uppercase tracking-widest text-neutral-400 mb-2">{{ t('logs.section_label') }}</h2>
                         <h3 class="text-2xl font-bold tracking-tight text-neutral-900">{{ t('logs.heading') }}</h3>
                         <p class="text-sm text-neutral-500 mt-2">{{ t('logs.description') }}</p>
                     </div>
@@ -110,6 +109,10 @@
 
                             <div class="log-viewport h-[400px] sm:h-[600px]" role="rowgroup"
                                  x-ref="logViewport" @scroll="onLogScroll($event)">
+                                <!-- An empty window explains itself: a filter that hides every
+                                     line and an empty file are different problems. -->
+                                <p class="log-empty" x-show="!logLoading && logRows.length === 0" x-cloak
+                                   x-text="logTotalLines > 0 ? window.t('logs.empty_filtered') : window.t('logs.empty_file')"></p>
                                 <div class="log-spacer" :style="'height: ' + (logRows.length * logRowHeight) + 'px'">
                                     <template x-for="(row, i) in visibleLogRows" :key="row.key">
                                         <div class="log-row log-grid" role="row" tabindex="0"

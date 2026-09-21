@@ -34,7 +34,7 @@ struct MetricPopoverView: View {
 
             if let note = statusNote {
                 Text(note)
-                    .font(.omlxText(11))
+                    .font(.omlxText(12))
                     .foregroundStyle(theme.textTertiary)
             }
 
@@ -113,7 +113,7 @@ struct MetricPopoverView: View {
 
     private func sectionHeader(_ title: String) -> some View {
         Text(title.uppercased())
-            .font(.omlxText(10, weight: .bold))
+            .font(.omlxText(12, weight: .bold))
             .kerning(1)
             .foregroundStyle(theme.accent)
             .frame(maxWidth: .infinity, alignment: .center)

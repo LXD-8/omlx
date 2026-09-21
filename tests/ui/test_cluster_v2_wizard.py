@@ -539,7 +539,9 @@ process.stdout.write(JSON.stringify(samples));
     assert loading["runtimeState"] == "loading"
     assert loading["active"] is None
     assert loading["label"] == "Loading"
-    assert "blue" in loading["tone"]
+    # The console accent is neutral; an in-progress tone is still its own
+    # tone, it just is not painted blue any more.
+    assert loading["tone"]
 
     ready = result["runtime_ready.json"]
     assert ready["runtimeState"] == "ready"

@@ -248,12 +248,12 @@ private struct ModelDirectoriesEditor: View {
                     Text(String(localized: "server.row.models_directories",
                                 defaultValue: "Model Directories",
                                 comment: "Row label for the model directories editor"))
-                        .font(.omlxText(13, weight: .medium))
+                        .font(.omlxText(14, weight: .medium))
                         .foregroundStyle(theme.text)
                     Text(String(localized: "server.row.models_directories.sub",
                                 defaultValue: "The first path is the download target. All paths are scanned for local models.",
                                 comment: "Sublabel under the model directories editor"))
-                        .font(.omlxText(11.5))
+                        .font(.omlxText(12))
                         .foregroundStyle(theme.textSecondary)
                 }
                 Spacer(minLength: 12)
@@ -283,7 +283,7 @@ private struct ModelDirectoriesEditor: View {
                           defaultValue: "Primary",
                           comment: "Badge for the first model directory")
                  : String(format: "#%d", index + 1))
-                .font(.omlxMono(10, weight: .semibold))
+                .font(.omlxMono(12, weight: .semibold))
                 .foregroundStyle(index == 0 ? theme.accent : theme.textSecondary)
                 .frame(width: 52, alignment: .leading)
 
@@ -347,7 +347,7 @@ struct ServerHeroCard: View {
                     StatusPill(status: pillStatus)
                 }
                 Text(subtitle)
-                    .font(.omlxText(11.5))
+                    .font(.omlxText(12))
                     .foregroundStyle(theme.textSecondary)
             }
             Spacer(minLength: 12)
@@ -609,7 +609,7 @@ private struct ServerDefaultProfileEditor: View {
                          : String(localized: "server.profile.show_all",
                                   defaultValue: "Show all fields…",
                                   comment: "Toggle label to expand the advanced sampling fields list"))
-                        .font(.omlxText(11.5, weight: .medium))
+                        .font(.omlxText(12, weight: .medium))
                 }
                 .buttonStyle(.omlx(.plain, size: .small))
                 .padding(.horizontal, 14)
@@ -625,7 +625,7 @@ private struct ServerDefaultProfileEditor: View {
             Text(String(localized: "server.profile.per_model_only",
                         defaultValue: "Per-model only",
                         comment: "Pill text marking a sampling field as configurable only on individual model profiles"))
-                .font(.omlxText(10.5, weight: .heavy))
+                .font(.omlxText(12, weight: .heavy))
                 .kerning(0.6)
                 .textCase(.uppercase)
                 .foregroundStyle(theme.textTertiary)
@@ -705,7 +705,7 @@ private struct ServerAdvancedSection: View {
                     Text(String(localized: "server.section.advanced",
                                 defaultValue: "Advanced",
                                 comment: "Disclosure header for the advanced server settings"))
-                        .font(.omlxText(11, weight: .semibold))
+                        .font(.omlxText(12, weight: .semibold))
                         .foregroundStyle(theme.textSecondary)
                         .textCase(.uppercase)
                         .kerning(0.6)

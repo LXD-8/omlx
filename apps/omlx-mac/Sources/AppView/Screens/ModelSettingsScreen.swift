@@ -98,7 +98,7 @@ private struct Header: View {
             VStack(alignment: .leading, spacing: 2) {
                 HStack(spacing: 4) {
                     Text(model?.displayTitle ?? "—")
-                        .font(.omlxText(17, weight: .semibold))
+                        .font(.omlxText(18, weight: .semibold))
                         .foregroundStyle(theme.text)
                         .lineLimit(1)
                         .truncationMode(.tail)
@@ -108,7 +108,7 @@ private struct Header: View {
                 }
                 if let m = model {
                     Text("\(m.id) · \(m.estimatedSizeFormatted ?? formatBytes(m.estimatedSize))")
-                        .font(.omlxMono(11))
+                        .font(.omlxMono(12))
                         .foregroundStyle(theme.textSecondary)
                         .lineLimit(1)
                         .truncationMode(.middle)
@@ -282,7 +282,7 @@ private struct SettingsApplySheet: View {
             Text(String(localized: "settings.apply.recipe.title",
                         defaultValue: "Apply custom recipe",
                         comment: "Title of the paste-a-recipe sheet"))
-                .font(.omlxText(17, weight: .semibold))
+                .font(.omlxText(18, weight: .semibold))
                 .foregroundStyle(theme.text)
             Text(String(localized: "settings.apply.recipe.hint",
                         defaultValue: "Paste a recipe copied from the Recipe row of a benchmark detail page on omlx.ai.",
@@ -294,7 +294,7 @@ private struct SettingsApplySheet: View {
                                      defaultValue: "Open community benchmarks",
                                      comment: "Link button that opens the omlx.ai performance leaderboard"))
             TextEditor(text: $recipeText)
-                .font(.omlxMono(11))
+                .font(.omlxMono(12))
                 .scrollContentBackground(.hidden)
                 .frame(height: 110)
                 .padding(6)
@@ -337,7 +337,7 @@ private struct SettingsApplySheet: View {
             Text(String(localized: "settings.apply.result.title_optimal",
                         defaultValue: "Optimal settings from omlx.ai",
                         comment: "Title of the optimal-settings sheet"))
-                .font(.omlxText(17, weight: .semibold))
+                .font(.omlxText(18, weight: .semibold))
                 .foregroundStyle(theme.text)
             if let candidates {
                 if candidates.found {
@@ -401,7 +401,7 @@ private struct SettingsApplySheet: View {
         if !rows.isEmpty {
             VStack(alignment: .leading, spacing: 6) {
                 Text(label)
-                    .font(.omlxText(11, weight: .semibold))
+                    .font(.omlxText(12, weight: .semibold))
                     .foregroundStyle(theme.textSecondary)
                 ForEach(rows) { row in
                     HStack(alignment: .center, spacing: 10) {
@@ -410,13 +410,13 @@ private struct SettingsApplySheet: View {
                                 linkButton(url, title: urlText)
                             } else {
                                 Text(row.benchmarkId)
-                                    .font(.omlxMono(11))
+                                    .font(.omlxMono(12))
                                     .foregroundStyle(theme.text)
                             }
                             Text(ModelSettingsScreenVM.candidateStats(
                                 pp: row.ppTps, tg: row.tgTps, memoryGb: row.memoryGb,
                                 quantization: row.quantization, omlxVersion: row.omlxVersion))
-                                .font(.omlxMono(11))
+                                .font(.omlxMono(12))
                                 .foregroundStyle(theme.textSecondary)
                         }
                         Spacer()
@@ -446,7 +446,7 @@ private struct SettingsApplySheet: View {
         Text(String(localized: "settings.apply.result.none_title",
                     defaultValue: "No benchmark result matches this device and model.",
                     comment: "Headline when omlx.ai has no benchmark for the current device and model"))
-            .font(.omlxText(13, weight: .medium))
+            .font(.omlxText(14, weight: .medium))
             .foregroundStyle(theme.text)
         Text(String(localized: "settings.apply.result.none_body",
                     defaultValue: "Find a similar model on the community benchmarks and apply its recipe with Apply custom recipe.",
@@ -469,7 +469,7 @@ private struct SettingsApplySheet: View {
                  : String(localized: "settings.apply.result.title_optimal",
                           defaultValue: "Optimal settings from omlx.ai",
                           comment: "Title of the optimal-settings sheet"))
-                .font(.omlxText(17, weight: .semibold))
+                .font(.omlxText(18, weight: .semibold))
                 .foregroundStyle(theme.text)
             Text(result.changed == false
                  ? String(localized: "settings.apply.result.no_change",
@@ -482,14 +482,14 @@ private struct SettingsApplySheet: View {
                     : String(localized: "settings.apply.result.done_optimal",
                              defaultValue: "The settings below were applied from the selected benchmark!",
                              comment: "Result line after a chosen benchmark snapshot was applied")))
-                .font(.omlxText(13, weight: .medium))
+                .font(.omlxText(14, weight: .medium))
                 .foregroundStyle(theme.text)
             if let urlText = result.benchmarkUrl, let url = URL(string: urlText) {
                 linkButton(url, title: urlText)
                 Text(ModelSettingsScreenVM.candidateStats(
                     pp: result.ppTps, tg: result.tgTps,
                     quantization: result.quantization, omlxVersion: result.omlxVersion))
-                    .font(.omlxMono(11))
+                    .font(.omlxMono(12))
                     .foregroundStyle(theme.textSecondary)
             }
             let skipped = ModelSettingsScreenVM.summarizeSkipped(result.skipped)
@@ -514,11 +514,11 @@ private struct SettingsApplySheet: View {
             Text(String(localized: "settings.apply.result.applied",
                         defaultValue: "Applied settings",
                         comment: "Label above the JSON of the applied settings"))
-                .font(.omlxText(11, weight: .medium))
+                .font(.omlxText(12, weight: .medium))
                 .foregroundStyle(theme.textSecondary)
             ScrollView {
                 Text(ModelSettingsScreenVM.appliedJSON(result.applied))
-                    .font(.omlxMono(11))
+                    .font(.omlxMono(12))
                     .foregroundStyle(theme.text)
                     .textSelection(.enabled)
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -1397,7 +1397,7 @@ private struct EntryEditor: View {
         VStack(alignment: .leading, spacing: 6) {
             HStack(spacing: 8) {
                 Text(typeLabel)
-                    .font(.omlxText(11, weight: .semibold))
+                    .font(.omlxText(12, weight: .semibold))
                     .foregroundStyle(theme.textSecondary)
                 Spacer()
                 Button {
@@ -1493,7 +1493,7 @@ private struct EntryEditor: View {
                 defaultValue: "Custom",
                 comment: "Checkbox label that enables a custom reasoning_effort value"
             ))
-            .font(.omlxText(11))
+            .font(.omlxText(12))
             .foregroundStyle(theme.textSecondary)
         }
         .toggleStyle(.checkbox)
@@ -1525,7 +1525,7 @@ private struct EntryEditor: View {
             Text(String(localized: "settings.advanced.chat_template.force",
                         defaultValue: "Force",
                         comment: "Checkbox label for forcing a chat-template kwarg via forced_ct_kwargs"))
-                .font(.omlxText(11))
+                .font(.omlxText(12))
                 .foregroundStyle(theme.textSecondary)
         }
         .toggleStyle(.checkbox)
@@ -1687,7 +1687,7 @@ private struct ExperimentalSection: View {
                         if vm.aneTuningIsRunning {
                             if let status = vm.aneTuningStatus {
                                 Text(status.message)
-                                    .font(.omlxText(11))
+                                    .font(.omlxText(12))
                                     .foregroundStyle(theme.textSecondary)
                                     .fixedSize(horizontal: false, vertical: true)
                                     .multilineTextAlignment(.trailing)
@@ -1708,7 +1708,7 @@ private struct ExperimentalSection: View {
                             .buttonStyle(.omlx(.destructive, size: .small))
                         } else if let recommendation = vm.aneTuningStatus?.recommendation {
                             Text(aneRecommendationText(recommendation))
-                                .font(.omlxText(11))
+                                .font(.omlxText(12))
                                 .foregroundStyle(theme.textSecondary)
                                 .fixedSize(horizontal: false, vertical: true)
                                 .multilineTextAlignment(.trailing)
@@ -1737,7 +1737,7 @@ private struct ExperimentalSection: View {
                             if let reason = status.terminationReason,
                                !reason.isEmpty {
                                 Text(reason)
-                                    .font(.omlxText(10))
+                                    .font(.omlxText(12))
                                     .foregroundStyle(
                                         status.status == "error"
                                             ? Color.red

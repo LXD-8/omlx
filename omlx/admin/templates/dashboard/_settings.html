@@ -106,7 +106,7 @@
                             <h2 class="text-xs font-bold uppercase tracking-widest text-neutral-400 mb-2">{{ t('settings.global.section_label') }}</h2>
                             <h3 class="text-2xl font-bold tracking-tight text-neutral-900">{{ t('settings.global.heading') }}</h3>
                             <p class="text-sm text-neutral-500 mt-2">
-                                {{ t('settings.global.restart_notice') }} <span class="px-1 py-0.5 text-[10px] font-medium rounded bg-amber-50 text-amber-600 border border-amber-200">{{ t('settings.global.restart_badge') }}</span> {{ t('settings.global.restart_suffix') }}
+                                {{ t('settings.global.restart_notice') }} <span class="px-1 py-0.5 text-[12px] font-medium rounded bg-amber-50 text-amber-600 border border-amber-200">{{ t('settings.global.restart_badge') }}</span> {{ t('settings.global.restart_suffix') }}
                             </p>
                         </div>
                         <button type="button" @click="resetGlobalSettingsDefaults()"
@@ -347,7 +347,7 @@
                                                             <svg class="w-3.5 h-3.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/></svg>
                                                         </button>
                                                     </div>
-                                                    <div class="text-[10px] text-neutral-400 mt-1" x-text="sk.created_at ? new Date(sk.created_at).toLocaleDateString() : ''"></div>
+                                                    <div class="text-[12px] text-neutral-400 mt-1" x-text="sk.created_at ? new Date(sk.created_at).toLocaleDateString() : ''"></div>
                                                 </div>
                                                 <button type="button" @click="deleteSubKey(sk.key)"
                                                         class="p-1.5 text-neutral-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors ml-2"
@@ -397,7 +397,7 @@
                                      }">
                                     <div class="flex items-center gap-2">
                                         <label class="text-sm text-neutral-700">{{ t('settings.server.host') }}</label>
-                                        <span class="px-1.5 py-0.5 text-[10px] font-medium rounded bg-amber-50 text-amber-600 border border-amber-200">{{ t('settings.global.restart_badge') }}</span>
+                                        <span class="px-1.5 py-0.5 text-[12px] font-medium rounded bg-amber-50 text-amber-600 border border-amber-200">{{ t('settings.global.restart_badge') }}</span>
                                     </div>
                                     <div class="flex flex-col items-end gap-1">
                                         <div class="flex items-center gap-2">
@@ -419,7 +419,7 @@
                                 <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 px-4 sm:px-6 py-4">
                                     <div class="flex items-center gap-2">
                                         <label class="text-sm text-neutral-700">{{ t('settings.server.port') }}</label>
-                                        <span class="px-1.5 py-0.5 text-[10px] font-medium rounded bg-amber-50 text-amber-600 border border-amber-200">{{ t('settings.global.restart_badge') }}</span>
+                                        <span class="px-1.5 py-0.5 text-[12px] font-medium rounded bg-amber-50 text-amber-600 border border-amber-200">{{ t('settings.global.restart_badge') }}</span>
                                     </div>
                                     <input type="number" x-model.number="globalSettings.server.port"
                                            class="w-full sm:w-48 px-3 py-2 text-sm text-right border border-neutral-200 rounded-lg focus:ring-2 focus:ring-neutral-900 focus:border-transparent transition-all">
@@ -545,7 +545,7 @@
                                     <div>
                                         <div class="flex items-center gap-2">
                                             <label class="text-sm text-neutral-700">{{ t('settings.resource.prefill_memory_guard') }}</label>
-                                            <span class="px-1.5 py-0.5 text-[10px] font-medium rounded bg-amber-50 text-amber-600 border border-amber-200">{{ t('settings.resource.restart_badge') }}</span>
+                                            <span class="px-1.5 py-0.5 text-[12px] font-medium rounded bg-amber-50 text-amber-600 border border-amber-200">{{ t('settings.resource.restart_badge') }}</span>
                                         </div>
                                         <p class="text-xs text-neutral-400 mt-0.5">{{ t('settings.resource.prefill_memory_guard_description') }}</p>
                                         <p class="text-xs text-neutral-500 mt-1"
@@ -669,8 +669,8 @@
                                 <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 px-4 sm:px-6 py-4">
                                     <div>
                                         <div class="flex items-center gap-2">
-                                            <div class="flex items-center gap-2"><label class="text-sm text-neutral-700">{{ t('settings.resource.max_concurrent_requests') }}</label> <span class="px-1.5 py-0.5 text-[10px] font-medium rounded bg-amber-50 text-amber-600 border border-amber-200">{{ t('settings.global.restart_badge') }}</span></div>
-                                            <span class="px-1.5 py-0.5 text-[10px] font-medium rounded-full bg-amber-50 text-amber-600 border border-amber-200">
+                                            <div class="flex items-center gap-2"><label class="text-sm text-neutral-700">{{ t('settings.resource.max_concurrent_requests') }}</label> <span class="px-1.5 py-0.5 text-[12px] font-medium rounded bg-amber-50 text-amber-600 border border-amber-200">{{ t('settings.global.restart_badge') }}</span></div>
+                                            <span class="px-1.5 py-0.5 text-[12px] font-medium rounded-full bg-amber-50 text-amber-600 border border-amber-200">
                                                 {{ t('settings.resource.restart_badge') }}
                                             </span>
                                         </div>
@@ -683,7 +683,7 @@
                                 <!-- Embedding Batch Size -->
                                 <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 px-4 sm:px-6 py-4">
                                     <div>
-                                        <div class="flex items-center gap-2"><label class="text-sm text-neutral-700">{{ t('settings.resource.embedding_batch_size') }}</label> <span class="px-1.5 py-0.5 text-[10px] font-medium rounded bg-amber-50 text-amber-600 border border-amber-200">{{ t('settings.global.restart_badge') }}</span></div>
+                                        <div class="flex items-center gap-2"><label class="text-sm text-neutral-700">{{ t('settings.resource.embedding_batch_size') }}</label> <span class="px-1.5 py-0.5 text-[12px] font-medium rounded bg-amber-50 text-amber-600 border border-amber-200">{{ t('settings.global.restart_badge') }}</span></div>
                                         <p class="text-xs text-neutral-400 mt-0.5">{{ t('settings.resource.embedding_batch_size_hint') }}</p>
                                     </div>
                                     <input type="number" x-model.number="globalSettings.scheduler.embedding_batch_size"
@@ -790,8 +790,8 @@
                                 <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 px-4 sm:px-6 py-4">
                                     <div>
                                         <div class="flex items-center gap-2">
-                                            <div class="flex items-center gap-2"><label class="text-sm text-neutral-700">{{ t('settings.cache.hot_cache_only') }}</label> <span class="px-1.5 py-0.5 text-[10px] font-medium rounded bg-amber-50 text-amber-600 border border-amber-200">{{ t('settings.global.restart_badge') }}</span></div>
-                                            <span class="px-1.5 py-0.5 text-[10px] font-medium rounded-full bg-amber-50 text-amber-600 border border-amber-200">
+                                            <div class="flex items-center gap-2"><label class="text-sm text-neutral-700">{{ t('settings.cache.hot_cache_only') }}</label> <span class="px-1.5 py-0.5 text-[12px] font-medium rounded bg-amber-50 text-amber-600 border border-amber-200">{{ t('settings.global.restart_badge') }}</span></div>
+                                            <span class="px-1.5 py-0.5 text-[12px] font-medium rounded-full bg-amber-50 text-amber-600 border border-amber-200">
                                                 {{ t('settings.global.restart_badge') }}
                                             </span>
                                         </div>
@@ -1020,7 +1020,6 @@
                         <!-- Advanced Settings (collapsible, collapsed by default) -->
 {% if advanced_shown %}
                         <div class="settings-section" id="settings-advanced" x-data="{ advancedOpen: false }">
-                             x-data="{ advancedOpen: false }">
                             <button @click="advancedOpen = !advancedOpen"
                                     class="w-full flex items-center justify-between px-6 py-4 bg-neutral-50 hover:bg-neutral-100 transition-colors cursor-pointer">
                                 <div class="flex items-center gap-3">
@@ -1028,7 +1027,7 @@
                                     <span class="text-xs font-bold uppercase tracking-wider text-neutral-400">{{ t('settings.advanced.section_label') }}</span>
                                 </div>
                                 <div class="flex items-center gap-2">
-                                    <span class="px-2 py-0.5 text-[10px] font-medium rounded-full bg-amber-50 text-amber-600 border border-amber-200">
+                                    <span class="px-2 py-0.5 text-[12px] font-medium rounded-full bg-amber-50 text-amber-600 border border-amber-200">
                                         {{ t('settings.advanced.restart_badge') }}
                                     </span>
                                     <i data-lucide="chevron-down" class="w-4 h-4 text-neutral-400 transition-transform duration-200"
@@ -1041,13 +1040,13 @@
                                     <div class="px-6 py-3 bg-neutral-50">
                                         <div class="flex items-center gap-2">
                                             <i data-lucide="network" class="w-3.5 h-3.5 text-neutral-400"></i>
-                                            <span class="text-[10px] font-bold uppercase tracking-wider text-neutral-400">{{ t('settings.advanced.distributed_inference') }}</span>
+                                            <span class="text-[12px] font-bold uppercase tracking-wider text-neutral-400">{{ t('settings.advanced.distributed_inference') }}</span>
                                         </div>
                                     </div>
                                     <div class="divide-y divide-neutral-100">
                                         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 px-4 sm:px-6 py-4">
                                             <div class="flex-1 min-w-0">
-                                                <div class="flex items-center gap-2"><label class="text-sm text-neutral-700">{{ t('settings.advanced.distributed_inference_enabled') }}</label> <span class="px-1.5 py-0.5 text-[10px] font-medium rounded bg-amber-50 text-amber-600 border border-amber-200">{{ t('settings.global.restart_badge') }}</span></div>
+                                                <div class="flex items-center gap-2"><label class="text-sm text-neutral-700">{{ t('settings.advanced.distributed_inference_enabled') }}</label> <span class="px-1.5 py-0.5 text-[12px] font-medium rounded bg-amber-50 text-amber-600 border border-amber-200">{{ t('settings.global.restart_badge') }}</span></div>
                                                 <p class="text-xs text-neutral-400 mt-0.5">{{ t('settings.advanced.distributed_inference_hint') }}</p>
                                             </div>
                                             <button type="button"
@@ -1064,7 +1063,7 @@
                                     <div class="px-6 py-3 bg-neutral-50 border-t border-neutral-200">
                                         <div class="flex items-center gap-2">
                                             <i data-lucide="zap" class="w-3.5 h-3.5 text-neutral-400"></i>
-                                            <span class="text-[10px] font-bold uppercase tracking-wider text-neutral-400">{{ t('settings.advanced.performance') }}</span>
+                                            <span class="text-[12px] font-bold uppercase tracking-wider text-neutral-400">{{ t('settings.advanced.performance') }}</span>
                                         </div>
                                     </div>
                                     <div class="divide-y divide-neutral-100">
@@ -1100,13 +1099,13 @@
                                     <div class="px-6 py-3 bg-neutral-50 border-t border-neutral-200">
                                         <div class="flex items-center gap-2">
                                             <i data-lucide="hard-drive" class="w-3.5 h-3.5 text-neutral-400"></i>
-                                            <span class="text-[10px] font-bold uppercase tracking-wider text-neutral-400">{{ t('settings.advanced.cache') }}</span>
+                                            <span class="text-[12px] font-bold uppercase tracking-wider text-neutral-400">{{ t('settings.advanced.cache') }}</span>
                                         </div>
                                     </div>
                                     <div class="divide-y divide-neutral-100">
                                         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 px-4 sm:px-6 py-4">
                                             <div>
-                                                <div class="flex items-center gap-2"><label class="text-sm text-neutral-700">{{ t('settings.advanced.initial_cache_blocks') }}</label> <span class="px-1.5 py-0.5 text-[10px] font-medium rounded bg-amber-50 text-amber-600 border border-amber-200">{{ t('settings.global.restart_badge') }}</span></div>
+                                                <div class="flex items-center gap-2"><label class="text-sm text-neutral-700">{{ t('settings.advanced.initial_cache_blocks') }}</label> <span class="px-1.5 py-0.5 text-[12px] font-medium rounded bg-amber-50 text-amber-600 border border-amber-200">{{ t('settings.global.restart_badge') }}</span></div>
                                                 <p class="text-xs text-neutral-400 mt-0.5">{{ t('settings.advanced.initial_cache_blocks_hint') }}</p>
                                             </div>
                                             <input type="number" x-model.number="globalSettings.cache.initial_cache_blocks"
@@ -1143,7 +1142,7 @@
                                     <div class="px-6 py-3 bg-neutral-50 border-t border-neutral-200">
                                         <div class="flex items-center gap-2">
                                             <i data-lucide="database-zap" class="w-3.5 h-3.5 text-neutral-400"></i>
-                                            <span class="text-[10px] font-bold uppercase tracking-wider text-neutral-400">{{ t('settings.advanced.gdn_cache_policy') }}</span>
+                                            <span class="text-[12px] font-bold uppercase tracking-wider text-neutral-400">{{ t('settings.advanced.gdn_cache_policy') }}</span>
                                         </div>
                                         <p class="text-xs text-neutral-400 mt-1.5">{{ t('settings.advanced.gdn_cache_policy_hint') }}</p>
                                     </div>
@@ -1198,7 +1197,7 @@
                                     <div class="px-6 py-3 bg-neutral-50 border-t border-neutral-200">
                                         <div class="flex items-center gap-2">
                                             <i data-lucide="upload" class="w-3.5 h-3.5 text-neutral-400"></i>
-                                            <span class="text-[10px] font-bold uppercase tracking-wider text-neutral-400">{{ t('settings.advanced.uploads') }}</span>
+                                            <span class="text-[12px] font-bold uppercase tracking-wider text-neutral-400">{{ t('settings.advanced.uploads') }}</span>
                                         </div>
                                     </div>
                                     <div class="divide-y divide-neutral-100">
@@ -1218,7 +1217,7 @@
                                     <div class="px-6 py-3 bg-neutral-50 border-t border-neutral-200">
                                         <div class="flex items-center gap-2">
                                             <i data-lucide="radio" class="w-3.5 h-3.5 text-neutral-400"></i>
-                                            <span class="text-[10px] font-bold uppercase tracking-wider text-neutral-400">{{ t('settings.advanced.streaming') }}</span>
+                                            <span class="text-[12px] font-bold uppercase tracking-wider text-neutral-400">{{ t('settings.advanced.streaming') }}</span>
                                         </div>
                                     </div>
                                     <div class="divide-y divide-neutral-100">
@@ -1615,31 +1614,31 @@
                         <div class="flex items-center gap-4 px-4 sm:px-6 py-3 bg-neutral-50 border-b border-neutral-200 text-xs font-bold uppercase tracking-wider text-neutral-500">
                             <div class="flex-1 min-w-0 flex items-center gap-1 cursor-pointer hover:text-neutral-700 select-none" @click="toggleSort('id')">
                                 {{ t('settings.models.table.model') }}
-                                <span x-show="sortBy === 'id'" x-text="sortOrder === 'asc' ? '▲' : '▼'" class="text-[10px]"></span>
+                                <span x-show="sortBy === 'id'" x-text="sortOrder === 'asc' ? '▲' : '▼'" class="text-[12px]"></span>
                             </div>
                             <div class="hidden sm:flex w-20 text-center items-center justify-center gap-1 cursor-pointer hover:text-neutral-700 select-none" @click="toggleSort('type')">
                                 {{ t('settings.models.table.type') }}
-                                <span x-show="sortBy === 'type'" x-text="sortOrder === 'asc' ? '▲' : '▼'" class="text-[10px]"></span>
+                                <span x-show="sortBy === 'type'" x-text="sortOrder === 'asc' ? '▲' : '▼'" class="text-[12px]"></span>
                             </div>
                             <div class="hidden sm:flex w-60 text-center items-center justify-center gap-1 cursor-pointer hover:text-neutral-700 select-none" @click="toggleSort('size')">
                                 {{ t('settings.models.table.size') }}
-                                <span x-show="sortBy === 'size'" x-text="sortOrder === 'asc' ? '▲' : '▼'" class="text-[10px]"></span>
+                                <span x-show="sortBy === 'size'" x-text="sortOrder === 'asc' ? '▲' : '▼'" class="text-[12px]"></span>
                             </div>
                             <div class="w-20 text-center flex items-center justify-center gap-1 cursor-pointer hover:text-neutral-700 select-none" @click="toggleSort('loaded')">
                                 {{ t('settings.models.table.status') }}
-                                <span x-show="sortBy === 'loaded'" x-text="sortOrder === 'asc' ? '▲' : '▼'" class="text-[10px]"></span>
+                                <span x-show="sortBy === 'loaded'" x-text="sortOrder === 'asc' ? '▲' : '▼'" class="text-[12px]"></span>
                             </div>
                             <div class="hidden sm:flex w-12 text-center items-center justify-center gap-1 cursor-pointer hover:text-neutral-700 select-none" @click="toggleSort('pinned')">
                                 {{ t('settings.models.table.pin') }}
-                                <span x-show="sortBy === 'pinned'" x-text="sortOrder === 'asc' ? '▲' : '▼'" class="text-[10px]"></span>
+                                <span x-show="sortBy === 'pinned'" x-text="sortOrder === 'asc' ? '▲' : '▼'" class="text-[12px]"></span>
                             </div>
                             <div class="hidden sm:flex w-12 text-center items-center justify-center gap-1 cursor-pointer hover:text-neutral-700 select-none" @click="toggleSort('is_hidden')">
                                 {{ t('settings.models.table.visible') }}
-                                <span x-show="sortBy === 'is_hidden'" x-text="sortOrder === 'asc' ? '▲' : '▼'" class="text-[10px]"></span>
+                                <span x-show="sortBy === 'is_hidden'" x-text="sortOrder === 'asc' ? '▲' : '▼'" class="text-[12px]"></span>
                             </div>
                             <div class="hidden sm:flex w-14 text-center items-center justify-center gap-1 cursor-pointer hover:text-neutral-700 select-none" @click="toggleSort('is_default')">
                                 {{ t('settings.models.table.default') }}
-                                <span x-show="sortBy === 'is_default'" x-text="sortOrder === 'asc' ? '▲' : '▼'" class="text-[10px]"></span>
+                                <span x-show="sortBy === 'is_default'" x-text="sortOrder === 'asc' ? '▲' : '▼'" class="text-[12px]"></span>
                             </div>
                             <div class="w-10 text-center"></div>
                         </div>
@@ -1675,15 +1674,15 @@
                                                :title="model.display_name || model.id"
                                                x-text="model.display_name || model.id"></p>
                                             <span x-show="model.settings?.model_alias" x-cloak
-                                                  class="px-1.5 py-0.5 text-[10px] font-medium rounded bg-neutral-100 text-neutral-500 border border-neutral-200 truncate max-w-[120px]"
+                                                  class="px-1.5 py-0.5 text-[12px] font-medium rounded bg-neutral-100 text-neutral-500 border border-neutral-200 truncate max-w-[120px]"
                                                   x-text="model.settings?.model_alias"></span>
                                             <span x-show="model.is_helper" x-cloak
-                                                  class="px-1.5 py-0.5 text-[10px] font-medium rounded bg-amber-50 text-amber-600 border border-amber-200"
+                                                  class="px-1.5 py-0.5 text-[12px] font-medium rounded bg-amber-50 text-amber-600 border border-amber-200"
                                                   @mouseenter="showTip($event.currentTarget, window.t('settings.models.table.helper_tooltip'))"
                                                   @mouseleave="hideTip()"
                                                   x-text="window.t('settings.models.table.helper_badge')"></span>
                                             <span x-show="model.is_hidden" x-cloak
-                                                  class="px-1.5 py-0.5 text-[10px] font-medium rounded bg-neutral-100 text-neutral-500 border border-neutral-200"
+                                                  class="px-1.5 py-0.5 text-[12px] font-medium rounded bg-neutral-100 text-neutral-500 border border-neutral-200"
                                                   @mouseenter="showTip($event.currentTarget, window.t('settings.models.table.hidden_tooltip'))"
                                                   @mouseleave="hideTip()"
                                                   x-text="window.t('settings.models.table.hidden_badge')"></span>
@@ -1846,14 +1845,14 @@
                                                 <span class="inline-flex items-center gap-1 px-2.5 py-0.5 text-xs font-medium rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200"
                                                       @mouseenter="showTip($event.currentTarget, profileTooltip(profile))"
                                                       @mouseleave="hideTip()">
-                                                    <span class="px-1 py-0.5 text-[10px] font-bold rounded bg-white/70"
+                                                    <span class="px-1 py-0.5 text-[12px] font-bold rounded bg-white/70"
                                                           :class="profile.has_engine_fields ? 'text-amber-700' : 'text-emerald-700'">API</span>
                                                     <span x-text="profile.api_name || profile.name"></span>
                                                 </span>
                                             </template>
                                             <!-- 2. Preset pill (cyan) if settings match a preset exactly -->
                                             <template x-if="!model.settings?.active_profile_name && matchedPreset(model.settings)">
-                                                <span class="inline-flex items-center gap-1 px-2.5 py-0.5 text-xs font-medium rounded-full bg-cyan-50 text-cyan-700 border border-cyan-200">
+                                                <span class="inline-flex items-center gap-1 px-2.5 py-0.5 text-xs font-medium rounded-full bg-neutral-100 text-cyan-700 border border-cyan-200">
                                                     <i data-lucide="settings" class="w-3 h-3"></i>
                                                     <span x-text="matchedPreset(model.settings).display_name || matchedPreset(model.settings).name"></span>
                                                 </span>
@@ -1865,7 +1864,7 @@
                                                 </span>
                                             </template>
                                             <template x-if="model.settings?.max_tokens">
-                                                <span class="inline-flex items-center px-2.5 py-0.5 text-xs font-medium rounded-full bg-blue-50 text-blue-700 border border-blue-200">
+                                                <span class="inline-flex items-center px-2.5 py-0.5 text-xs font-medium rounded-full bg-neutral-100 text-neutral-800 border border-neutral-200">
                                                     max_tokens: <span class="ml-1" x-text="model.settings.max_tokens"></span>
                                                 </span>
                                             </template>
@@ -1885,7 +1884,7 @@
                                                 </span>
                                             </template>
                                             <template x-if="model.settings?.min_p !== null && model.settings?.min_p !== undefined">
-                                                <span class="inline-flex items-center px-2.5 py-0.5 text-xs font-medium rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200">
+                                                <span class="inline-flex items-center px-2.5 py-0.5 text-xs font-medium rounded-full bg-neutral-100 text-indigo-700 border border-indigo-200">
                                                     min_p: <span class="ml-1" x-text="model.settings.min_p"></span>
                                                 </span>
                                             </template>
@@ -1900,17 +1899,17 @@
                                                 </span>
                                             </template>
                                             <template x-if="model.settings?.max_tool_result_tokens">
-                                                <span class="inline-flex items-center px-2.5 py-0.5 text-xs font-medium rounded-full bg-teal-50 text-teal-700 border border-teal-200">
+                                                <span class="inline-flex items-center px-2.5 py-0.5 text-xs font-medium rounded-full bg-neutral-100 text-neutral-700 border border-neutral-200">
                                                     tool_result_tokens: <span class="ml-1" x-text="model.settings.max_tool_result_tokens"></span>
                                                 </span>
                                             </template>
                                             <template x-if="model.settings?.reasoning_parser">
-                                                <span class="inline-flex items-center px-2.5 py-0.5 text-xs font-medium rounded-full bg-violet-50 text-violet-700 border border-violet-200">
+                                                <span class="inline-flex items-center px-2.5 py-0.5 text-xs font-medium rounded-full bg-neutral-100 text-neutral-800 border border-neutral-200">
                                                     reasoning_parser: <span class="ml-1" x-text="model.settings.reasoning_parser"></span>
                                                 </span>
                                             </template>
                                             <template x-if="model.settings?.enable_thinking === true">
-                                                <span class="inline-flex items-center px-2.5 py-0.5 text-xs font-medium rounded-full bg-sky-50 text-sky-700 border border-sky-200">
+                                                <span class="inline-flex items-center px-2.5 py-0.5 text-xs font-medium rounded-full bg-neutral-100 text-sky-700 border border-sky-200">
                                                     thinking
                                                 </span>
                                             </template>
@@ -1921,7 +1920,7 @@
                                             </template>
                                             <template x-if="model.settings?.chat_template_kwargs">
                                                 <template x-for="[k, v] in Object.entries(model.settings.chat_template_kwargs)" :key="k">
-                                                    <span class="inline-flex items-center px-2.5 py-0.5 text-xs font-medium rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200">
+                                                    <span class="inline-flex items-center px-2.5 py-0.5 text-xs font-medium rounded-full bg-neutral-100 text-indigo-700 border border-indigo-200">
                                                         <span x-text="k"></span>: <span class="ml-1" x-text="v"></span>
                                                     </span>
                                                 </template>
