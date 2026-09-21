@@ -203,6 +203,31 @@ def test_empty_state_carries_icon_title_and_action():
     assert "<button>Browse</button>" in html
 
 
+def test_the_switch_is_a_rounded_rectangle_that_the_knob_travels_across():
+    """The switch is a control with a length and a height, not a capsule: the
+    track and the knob take the control corner (the knob one hairline tighter,
+    concentric), and the small size uses the same travel as the default one —
+    it used to stop 6px short of the far edge."""
+    def block(selector):
+        assert f"{selector} {{" in COMPONENTS_CSS, f"{selector} has no spec"
+        body = COMPONENTS_CSS[COMPONENTS_CSS.index(f"{selector} {{"):]
+        return body[: body.index("}")]
+
+    track = block(".switch")
+    assert "border-radius: var(--radius-sm)" in track
+    assert "--radius-pill" not in track, "a capsule is what the switch was"
+
+    knob = block(".switch__knob")
+    assert "border-radius: calc(var(--radius-sm) - 1px)" in knob
+    assert "--radius-pill" not in knob
+
+    travel = block(".switch--on .switch__knob")
+    assert "translateX(calc(var(--space-5) - var(--space-1)))" in travel
+    assert ".switch--sm.switch--on .switch__knob" not in COMPONENTS_CSS, (
+        "the small switch needs no travel of its own"
+    )
+
+
 def test_every_class_the_macros_emit_is_declared():
     ui = _ui()
     template = Environment(
