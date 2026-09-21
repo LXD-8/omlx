@@ -105,7 +105,7 @@
                         <div>
                             <h3 class="text-2xl font-bold tracking-tight text-neutral-900">{{ t('settings.global.heading') }}</h3>
                             <p class="text-sm text-neutral-500 mt-2">
-                                {{ t('settings.global.restart_notice') }} <span class="px-1 py-0.5 text-[12px] font-medium rounded bg-amber-50 text-amber-600 border border-amber-200">{{ t('settings.global.restart_badge') }}</span> {{ t('settings.global.restart_suffix') }}
+                                {{ t('settings.global.restart_notice') }} {{ ui.badge(t('settings.global.restart_badge'), tone='orange') }} {{ t('settings.global.restart_suffix') }}
                             </p>
                         </div>
                         <button type="button" @click="resetGlobalSettingsDefaults()"
@@ -394,7 +394,7 @@
                                      }">
                                     <div class="flex items-center gap-2">
                                         <label class="text-sm text-neutral-700">{{ t('settings.server.host') }}</label>
-                                        <span class="px-1.5 py-0.5 text-[12px] font-medium rounded bg-amber-50 text-amber-600 border border-amber-200">{{ t('settings.global.restart_badge') }}</span>
+                                        {{ ui.badge(t('settings.global.restart_badge'), tone='orange') }}
                                     </div>
                                     <div class="flex flex-col items-end gap-1">
                                         <div class="flex items-center gap-2">
@@ -416,7 +416,7 @@
                                 <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 px-4 sm:px-6 py-4">
                                     <div class="flex items-center gap-2">
                                         <label class="text-sm text-neutral-700">{{ t('settings.server.port') }}</label>
-                                        <span class="px-1.5 py-0.5 text-[12px] font-medium rounded bg-amber-50 text-amber-600 border border-amber-200">{{ t('settings.global.restart_badge') }}</span>
+                                        {{ ui.badge(t('settings.global.restart_badge'), tone='orange') }}
                                     </div>
                                     <input type="number" x-model.number="globalSettings.server.port"
                                            class="w-full sm:w-48 px-3 py-2 text-sm text-right border border-neutral-200 rounded-lg focus:ring-2 focus:ring-neutral-900 focus:border-transparent transition-all">
@@ -542,7 +542,7 @@
                                     <div>
                                         <div class="flex items-center gap-2">
                                             <label class="text-sm text-neutral-700">{{ t('settings.resource.prefill_memory_guard') }}</label>
-                                            <span class="px-1.5 py-0.5 text-[12px] font-medium rounded bg-amber-50 text-amber-600 border border-amber-200">{{ t('settings.resource.restart_badge') }}</span>
+                                            {{ ui.badge(t('settings.global.restart_badge'), tone='orange') }}
                                         </div>
                                         <p class="text-xs text-neutral-400 mt-0.5">{{ t('settings.resource.prefill_memory_guard_description') }}</p>
                                         <p class="text-xs text-neutral-500 mt-1"
@@ -666,10 +666,7 @@
                                 <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 px-4 sm:px-6 py-4">
                                     <div>
                                         <div class="flex items-center gap-2">
-                                            <div class="flex items-center gap-2"><label class="text-sm text-neutral-700">{{ t('settings.resource.max_concurrent_requests') }}</label> <span class="px-1.5 py-0.5 text-[12px] font-medium rounded bg-amber-50 text-amber-600 border border-amber-200">{{ t('settings.global.restart_badge') }}</span></div>
-                                            <span class="px-1.5 py-0.5 text-[12px] font-medium rounded-full bg-amber-50 text-amber-600 border border-amber-200">
-                                                {{ t('settings.resource.restart_badge') }}
-                                            </span>
+                                            <div class="flex items-center gap-2"><label class="text-sm text-neutral-700">{{ t('settings.resource.max_concurrent_requests') }}</label> {{ ui.badge(t('settings.global.restart_badge'), tone='orange') }}</div>
                                         </div>
                                         <p class="text-xs text-neutral-400 mt-0.5">{{ t('settings.resource.max_concurrent_requests_hint') }}</p>
                                     </div>
@@ -680,7 +677,7 @@
                                 <!-- Embedding Batch Size -->
                                 <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 px-4 sm:px-6 py-4">
                                     <div>
-                                        <div class="flex items-center gap-2"><label class="text-sm text-neutral-700">{{ t('settings.resource.embedding_batch_size') }}</label> <span class="px-1.5 py-0.5 text-[12px] font-medium rounded bg-amber-50 text-amber-600 border border-amber-200">{{ t('settings.global.restart_badge') }}</span></div>
+                                        <div class="flex items-center gap-2"><label class="text-sm text-neutral-700">{{ t('settings.resource.embedding_batch_size') }}</label> {{ ui.badge(t('settings.global.restart_badge'), tone='orange') }}</div>
                                         <p class="text-xs text-neutral-400 mt-0.5">{{ t('settings.resource.embedding_batch_size_hint') }}</p>
                                     </div>
                                     <input type="number" x-model.number="globalSettings.scheduler.embedding_batch_size"
@@ -787,10 +784,7 @@
                                 <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 px-4 sm:px-6 py-4">
                                     <div>
                                         <div class="flex items-center gap-2">
-                                            <div class="flex items-center gap-2"><label class="text-sm text-neutral-700">{{ t('settings.cache.hot_cache_only') }}</label> <span class="px-1.5 py-0.5 text-[12px] font-medium rounded bg-amber-50 text-amber-600 border border-amber-200">{{ t('settings.global.restart_badge') }}</span></div>
-                                            <span class="px-1.5 py-0.5 text-[12px] font-medium rounded-full bg-amber-50 text-amber-600 border border-amber-200">
-                                                {{ t('settings.global.restart_badge') }}
-                                            </span>
+                                            <div class="flex items-center gap-2"><label class="text-sm text-neutral-700">{{ t('settings.cache.hot_cache_only') }}</label> {{ ui.badge(t('settings.global.restart_badge'), tone='orange') }}</div>
                                         </div>
                                         <p class="text-xs text-neutral-400 mt-0.5">{{ t('settings.cache.hot_cache_only_hint') }}</p>
                                     </div>
@@ -1022,9 +1016,7 @@
                                     <span class="text-xs font-bold uppercase tracking-wider text-neutral-400">{{ t('settings.advanced.section_label') }}</span>
                                 </div>
                                 <div class="flex items-center gap-2">
-                                    <span class="px-2 py-0.5 text-[12px] font-medium rounded-full bg-amber-50 text-amber-600 border border-amber-200">
-                                        {{ t('settings.advanced.restart_badge') }}
-                                    </span>
+                                    {{ ui.badge(t('settings.advanced.restart_badge'), tone='orange') }}
                                     <i data-lucide="chevron-down" class="w-4 h-4 text-neutral-400 transition-transform duration-200"
                                        :class="advancedOpen && 'rotate-180'"></i>
                                 </div>
@@ -1041,7 +1033,7 @@
                                     <div class="divide-y divide-neutral-100">
                                         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 px-4 sm:px-6 py-4">
                                             <div class="flex-1 min-w-0">
-                                                <div class="flex items-center gap-2"><label class="text-sm text-neutral-700">{{ t('settings.advanced.distributed_inference_enabled') }}</label> <span class="px-1.5 py-0.5 text-[12px] font-medium rounded bg-amber-50 text-amber-600 border border-amber-200">{{ t('settings.global.restart_badge') }}</span></div>
+                                                <div class="flex items-center gap-2"><label class="text-sm text-neutral-700">{{ t('settings.advanced.distributed_inference_enabled') }}</label> {{ ui.badge(t('settings.global.restart_badge'), tone='orange') }}</div>
                                                 <p class="text-xs text-neutral-400 mt-0.5">{{ t('settings.advanced.distributed_inference_hint') }}</p>
                                             </div>
                                             <button type="button"
@@ -1100,7 +1092,7 @@
                                     <div class="divide-y divide-neutral-100">
                                         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 px-4 sm:px-6 py-4">
                                             <div>
-                                                <div class="flex items-center gap-2"><label class="text-sm text-neutral-700">{{ t('settings.advanced.initial_cache_blocks') }}</label> <span class="px-1.5 py-0.5 text-[12px] font-medium rounded bg-amber-50 text-amber-600 border border-amber-200">{{ t('settings.global.restart_badge') }}</span></div>
+                                                <div class="flex items-center gap-2"><label class="text-sm text-neutral-700">{{ t('settings.advanced.initial_cache_blocks') }}</label> {{ ui.badge(t('settings.global.restart_badge'), tone='orange') }}</div>
                                                 <p class="text-xs text-neutral-400 mt-0.5">{{ t('settings.advanced.initial_cache_blocks_hint') }}</p>
                                             </div>
                                             <input type="number" x-model.number="globalSettings.cache.initial_cache_blocks"
@@ -1666,10 +1658,10 @@
                                                :title="model.display_name || model.id"
                                                x-text="model.display_name || model.id"></p>
                                             <span x-show="model.settings?.model_alias" x-cloak
-                                                  class="px-1.5 py-0.5 text-[12px] font-medium rounded bg-neutral-100 text-neutral-500 border border-neutral-200 truncate max-w-[120px]"
+                                                  class="badge truncate max-w-[120px]"
                                                   x-text="model.settings?.model_alias"></span>
                                             <span x-show="model.is_helper" x-cloak
-                                                  class="px-1.5 py-0.5 text-[12px] font-medium rounded bg-amber-50 text-amber-600 border border-amber-200"
+                                                  class="badge badge--orange"
                                                   @mouseenter="showTip($event.currentTarget, window.t('settings.models.table.helper_tooltip'))"
                                                   @mouseleave="hideTip()"
                                                   x-text="window.t('settings.models.table.helper_badge')"></span>

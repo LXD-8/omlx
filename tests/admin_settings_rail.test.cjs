@@ -92,6 +92,10 @@ function makeApp({ elements = {}, hash = '', clipboard = null } = {}) {
         getElementById: id => (id === 'settings-sections'
             ? { textContent: JSON.stringify(REGISTRY) }
             : elements[id] || null),
+        // The rail measures the sticky sub-tab row's bottom edge to know where a
+        // section has to reach to count as current; the fake DOM has no such
+        // element, so the nav falls back to its constant.
+        querySelector: () => null,
         addEventListener: (name, fn) => {
             (listeners[name] = listeners[name] || []).push(fn);
         },

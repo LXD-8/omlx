@@ -830,7 +830,9 @@
     }
 
     /* The right sidebar is part of the layout, not a transient overlay: on a
-       window with room for it, the chat column simply gives it the space. */
+       window with room for it, the chat column simply gives it the space — and
+       gives it back when the sidebar is closed. Without the `--open` state the
+       column would stay put, which is what made the toggle look dead. */
     @media (min-width: 1100px) {
         .chat-drawer {
             position: static;
@@ -838,6 +840,10 @@
             box-shadow: none;
             height: 100%;
             flex-shrink: 0;
+        }
+
+        .chat-drawer:not(.drawer--open) {
+            display: none;
         }
 
         .chat-drawer-scrim {

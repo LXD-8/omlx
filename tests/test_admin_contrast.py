@@ -15,10 +15,11 @@ What is asserted:
   and is not used to excuse anything.
 * **UI edges** — the focus ring against the two surfaces it can land on, and the
   destructive button's fill against the page behind it, at 3:1.
-* **The tinted action and the tinted selection** — the accent fill's label, and
-  the settings rail's selected item both as a label (``badge.blue`` at 4.5:1 on
-  its own 12% tint) and as a mark (3:1). The system blue is the one tint the
-  console uses for interaction; the four system colours stay status marks.
+* **The tinted action and the selected row** — the accent fill's label at 4.5:1,
+  and the settings rail's selected item: a grey one step deeper than the rail
+  itself (``text.primary`` at 10% of itself over ``bgSecondary``), because where
+  you are is not an action. The system blue stays the tint for things you can
+  act on; the four system colours stay status marks.
 
 Not asserted, deliberately:
 
@@ -30,6 +31,12 @@ Not asserted, deliberately:
   bars and the memory watermark's blue track, orange guard mark and 22% blue
   overlap tint. WCAG 1.4.11 does not cover graphical objects, and each of these
   is redundant with a legend entry that spells the number out.
+* The selected rail row's fill: it is the row's own surface at 10% of the text
+  colour, i.e. a grey one step deeper than the rail, so it measures ~1.2:1
+  against the rail. That is the point of it (review 6 asked for a grey, not the
+  accent), and the row is not identified by the fill alone -- the label is
+  bolder and the row carries the rail's left rule. The label's own contrast is
+  asserted above.
 * The Apple system colours as marks: over the light page they measure green
   2.22:1, orange 2.20:1, red 3.55:1 and blue 4.02:1, and 4.61-8.32:1 over the
   dark one. They still paint dots, bars and fills; the *labels* on a tone badge
@@ -54,9 +61,9 @@ NON_TEXT_MIN = 3.0
 # What `color-mix(in srgb, <tone> 14%, transparent)` resolves to over a solid
 # surface: the tone at 14% alpha, composited in sRGB.
 BADGE_TINT_ALPHA = 0.14
-# What `color-mix(in srgb, var(--accent) 12%, transparent)` resolves to over a
-# solid surface: how the settings rail paints a selected section.
-SELECTION_TINT_ALPHA = 0.12
+# What `color-mix(in srgb, var(--text-primary) 10%, transparent)` resolves to
+# over the rail's own surface: how the settings rail paints a selected section.
+SELECTION_TINT_ALPHA = 0.10
 TONES = ("green", "orange", "red", "blue")
 APPEARANCES = ("light", "dark")
 
@@ -113,9 +120,10 @@ def _badge_tint(appearance: str, tone: str) -> str:
 
 
 def _selection_tint(appearance: str) -> str:
+    """The rail paints `text.primary` at 10% over its own grey surface."""
     return _composite(
-        TOKENS["semantic"][appearance]["accent"],
-        _surface(appearance, "bgPrimary"),
+        _text(appearance, "primary"),
+        _surface(appearance, "bgSecondary"),
         SELECTION_TINT_ALPHA,
     )
 
@@ -171,8 +179,8 @@ def _text_pairs() -> list[tuple[str, str, str]]:
         )
         pairs.append(
             (
-                f"{appearance} badge.blue label on the selected rail row",
-                TOKENS["badge"][appearance]["blue"],
+                f"{appearance} label on the selected rail row",
+                _text(appearance, "primary"),
                 _selection_tint(appearance),
             )
         )
@@ -226,13 +234,7 @@ def _non_text_pairs() -> list[tuple[str, str, str]]:
                 _surface(appearance, "bgPrimary"),
             )
         )
-        pairs.append(
-            (
-                f"{appearance} selected rail row on bgPrimary",
-                TOKENS["badge"][appearance]["blue"],
-                _selection_tint(appearance),
-            )
-        )
+
     return pairs
 
 
@@ -306,7 +308,7 @@ def test_the_pairing_table_covers_the_palette():
     # 6 text tokens x 3 surfaces x 2 themes, plus code (3), the two control
     # fills, the four tones and the neutral badge, per theme.
     assert len(TEXT_PAIRS) == len(APPEARANCES) * (6 * 3 + 3 + 2 + 4 + 1 + 3)
-    assert len(NON_TEXT_PAIRS) == len(APPEARANCES) * 6
+    assert len(NON_TEXT_PAIRS) == len(APPEARANCES) * 5
     assert len(FIXED_PAIRS) == 2 + 2 + 1 + 4 + 2 + 2
 
 

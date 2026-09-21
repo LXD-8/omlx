@@ -423,7 +423,7 @@
   "settings.global.section_label": "全域設定",
   "settings.global.heading": "伺服器配置",
   "settings.global.restart_notice": "標有",
-  "settings.global.restart_badge": "重新啟動",
+  "settings.global.restart_badge": "需要重新啟動",
   "settings.global.restart_suffix": "的設定需要重新啟動伺服器。",
   "settings.integrations.section_label": "整合",
   "settings.integrations.heading": "整合設定",
