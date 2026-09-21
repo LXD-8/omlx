@@ -56,7 +56,11 @@ enum DesignTokens {
     enum Container {
         static let gutter: CGFloat = 32
         static let form: CGFloat = 760
-        static let wide: CGFloat = 1280
+        /// The measure every console page shares out of the box.
+        static let measure: CGFloat = 1280
+        /// The wider measures the Status tab's layout control offers.
+        static let measureWide: CGFloat = 1440
+        static let measureWider: CGFloat = 1600
         static let rail: CGFloat = 160
     }
 

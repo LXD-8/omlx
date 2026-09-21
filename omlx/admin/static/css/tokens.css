@@ -23,16 +23,22 @@
     --btn-primary:       #171717;
     --btn-primary-hover: #27272a;
     --btn-primary-text:  #ffffff;
+    --accent-fill:       #171717;
+    --accent-fill-hover: #262626;
+    --accent-fill-text:  #ffffff;
+    --switch-on:         #000000;
+    --switch-knob:       #ffffff;
     --btn-danger:        #dc2626;
     --bg-danger-hover:   rgba(239, 68, 68, 0.1);
     --danger-fg:         #ffffff;
-    --focus-ring-color:  #171717;
+    --focus-ring-color:  #007aff;
+    --focus-ring-width:  2px;
     --code-bg:           #f2f2f4;
     --sys-red:           #ff3b30;
     --sys-orange:        #ff9500;
     --sys-green:         #34c759;
     --sys-blue:          #007aff;
-    --timeline-accent:   #52525b;
+    --accent:            #007aff;
     --topbar-bg:         rgba(255, 255, 255, 0.72);
     --topbar-border:     rgba(15, 23, 42, 0.08);
     --scrim:             rgba(15, 23, 42, 0.45);
@@ -69,7 +75,13 @@
     --radius-pill:               999px;
     --gutter:                    32px;
     --container-form:            760px;
-    --container-wide:            1280px;
+    --container-wide:            var(--measure-default);
+    --topbar-height:             78px;
+    --sticky-offset:             143px;
+    --measure-default:           1280px;
+    --measure-wide:              1440px;
+    --measure-wider:             1600px;
+    --measure-full:              none;
     --kpi-min-width:             220px;
     --heat-label-column:         90px;
     --log-time-column:           150px;
@@ -108,16 +120,22 @@
     --btn-primary:       #e5e5e5;
     --btn-primary-hover: #d4d4d4;
     --btn-primary-text:  #18181b;
+    --accent-fill:       #e5e5e5;
+    --accent-fill-hover: #d4d4d8;
+    --accent-fill-text:  #18181b;
+    --switch-on:         #a1a1aa;
+    --switch-knob:       #ffffff;
     --btn-danger:        #dc2626;
     --bg-danger-hover:   rgba(239, 68, 68, 0.2);
     --danger-fg:         #ffffff;
-    --focus-ring-color:  #efefef;
+    --focus-ring-color:  #0a84ff;
+    --focus-ring-width:  2px;
     --code-bg:           #27272a;
     --sys-red:           #ff453a;
     --sys-orange:        #ff9f0a;
     --sys-green:         #30d158;
     --sys-blue:          #0a84ff;
-    --timeline-accent:   #a1a1aa;
+    --accent:            #0a84ff;
     --topbar-bg:         rgba(29, 29, 32, 0.72);
     --topbar-border:     rgba(255, 255, 255, 0.08);
     --scrim:             rgba(0, 0, 0, 0.6);
@@ -164,8 +182,12 @@ body {
 }
 
 /*
- * Layout skeleton: one gutter everywhere, two content measures. Form and
- * settings screens read best narrow, dashboards and logs need the width.
+ * Layout skeleton: one gutter, one measure, one page frame.
+ *
+ * The measure is the dashboard's: ``--container-wide`` starts at the
+ * ``default`` entry of ``layout.widths`` and the Status tab's layout control
+ * rewrites it on :root, so choosing a wider dashboard widens every other tab
+ * with it. ``full`` is ``none``: a page with no limit.
  */
 .page-gutter {
     padding-inline: var(--gutter);
@@ -179,6 +201,17 @@ body {
 .page-narrow {
     max-inline-size: var(--container-form);
     margin-inline: auto;
+}
+
+/*
+ * The page frame. Two full spaces of air under the last row of controls, so a
+ * button never lands on the window's bottom edge, and the gutter on both sides
+ * at every width. Pages that scroll their own content (the chat shell) keep
+ * their own frame but use the same two numbers.
+ */
+.page-frame {
+    padding-block: var(--space-6) var(--space-10);
+    padding-inline: var(--gutter);
 }
 
 /* The only translucent layer in the console. */

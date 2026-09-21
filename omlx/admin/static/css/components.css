@@ -64,8 +64,11 @@
 }
 
 /* === Button ===
-   Primary = the screen's single committed action; secondary = neutral;
-   ghost = toolbar/row actions; destructive = system red. */
+   Primary = the screen's single committed action, in the console's one tint
+   (the system blue the HIG fills tinted buttons with); secondary = neutral;
+   ghost = toolbar/row actions; destructive = system red. The neutral
+   `--btn-primary` fill is still the chosen-knob of a segmented control, where
+   colour would imply a state that is not there. */
 
 .btn {
     display: inline-flex;
@@ -89,12 +92,12 @@
 }
 
 .btn--primary {
-    background-color: var(--btn-primary);
-    color: var(--btn-primary-text);
+    background-color: var(--accent-fill);
+    color: var(--accent-fill-text);
 }
 
 .btn--primary:hover:not(:disabled) {
-    background-color: var(--btn-primary-hover);
+    background-color: var(--accent-fill-hover);
 }
 
 .btn--secondary {
@@ -380,6 +383,74 @@
     background-color: var(--bg-primary);
     color: var(--text-primary);
     box-shadow: var(--shadow-card);
+}
+
+/* === Switch (the console's one on/off control) ===
+   Off is a neutral track, on is the system green the HIG fills a switch with.
+   The knob's position already carries the state, so the colour is a second
+   signal rather than the only one; the knob is a token colour because the app
+   draws its own. Sizes are the two the markup used before it was a component:
+   44x24 with a 20pt knob, and 36x20 with a 16pt one. */
+
+.switch {
+    position: relative;
+    flex: none;
+    width: calc(var(--space-8) - var(--space-1));
+    height: var(--space-5);
+    padding: 0;
+    background-color: var(--bg-tertiary);
+    border: 1px solid var(--border-normal);
+    border-radius: var(--radius-pill);
+    cursor: pointer;
+    transition: background-color var(--duration-normal) ease, border-color var(--duration-normal) ease;
+}
+
+.switch--sm {
+    width: calc(var(--space-8) - var(--space-3));
+    height: var(--space-4);
+    margin-top: var(--space-1);
+}
+
+.switch--on {
+    background-color: var(--switch-on);
+    border-color: var(--switch-on);
+}
+
+/* A switch that turns on something risky reads red, the same red the console
+   uses for destructive actions. Never the only signal: the label says what it does. */
+.switch--danger {
+    background-color: var(--sys-red);
+    border-color: var(--sys-red);
+}
+
+.switch:focus-visible {
+    outline: var(--focus-ring-width) solid var(--focus-ring-color);
+    outline-offset: var(--focus-ring-width);
+}
+
+.switch__knob {
+    position: absolute;
+    top: 1px;
+    left: 1px;
+    width: calc(var(--space-5) - var(--space-1));
+    height: calc(var(--space-5) - var(--space-1));
+    background-color: var(--switch-knob);
+    border-radius: var(--radius-pill);
+    box-shadow: var(--shadow-card);
+    transition: transform var(--duration-normal) ease;
+}
+
+.switch--sm .switch__knob {
+    width: var(--space-3);
+    height: var(--space-3);
+}
+
+.switch--on .switch__knob {
+    transform: translateX(calc(var(--space-5) - var(--space-1)));
+}
+
+.switch--sm.switch--on .switch__knob {
+    transform: translateX(var(--space-4));
 }
 
 /* === Empty state === */
@@ -1261,8 +1332,8 @@
 .settings-rail {
     position: sticky;
     /* Clears the top bar and the sub-tab switcher above it. */
-    top: calc(var(--space-10) + var(--space-6) + var(--space-3));
-    max-height: calc(100vh - var(--space-10));
+    top: var(--sticky-offset);
+    max-height: calc(100vh - var(--sticky-offset) - var(--space-6));
     overflow-y: auto;
     padding: var(--space-4);
     background-color: var(--bg-secondary);
@@ -1342,12 +1413,19 @@
     color: var(--text-primary);
     background-color: var(--bg-tertiary);
 }
+/* macOS sidebar selection: the tint, not a grey plate. The label steps to the
+   tone that clears 4.5:1 on its own 12% tint (tests/test_admin_contrast.py). */
 .settings-rail__item--active {
-    color: var(--text-primary);
+    color: var(--badge-blue-fg);
     font-weight: 600;
-    background-color: var(--bg-primary);
-    border-left-color: var(--btn-primary);
+    background-color: color-mix(in srgb, var(--accent) 12%, transparent);
+    border-left-color: var(--accent);
     box-shadow: var(--shadow-card);
+}
+
+.settings-rail__item--active:hover {
+    color: var(--badge-blue-fg);
+    background-color: color-mix(in srgb, var(--accent) 16%, transparent);
 }
 .settings-rail__empty {
     margin-top: var(--space-3);
@@ -1386,7 +1464,9 @@
 
 /* A card that the rail can deep-link to and scroll smoothly into view. */
 .settings-section {
-    scroll-margin-top: var(--space-10);
+    /* A section the rail scrolls to lands below the top bar and the switcher,
+       not under them. */
+    scroll-margin-top: var(--sticky-offset);
 }
 .settings-anchor {
     color: var(--text-tertiary);
@@ -1487,7 +1567,7 @@
    section cards on the right. */
 .settings-tabs {
     position: sticky;
-    top: calc(var(--space-10) + var(--space-3));
+    top: var(--topbar-height);
     z-index: 30;
     background-color: var(--bg-primary);
     padding-block: var(--space-2);

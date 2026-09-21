@@ -85,7 +85,7 @@
 
 {% set settings_json = settings_sections | tojson %}
 
-            <div x-show="mainTab === 'settings'" class="page-wide" x-cloak role="tabpanel" id="panel-settings" aria-labelledby="tab-settings">
+            <div x-show="mainTab === 'settings'" x-cloak role="tabpanel" id="panel-settings" aria-labelledby="tab-settings">
             <!-- Tab Navigation -->
             <div class="settings-tabs mb-6 animate-fade-in-up">
                 {{ ui.segmented(tabs, 'activeTab', "setSettingsTab('{value}')",
@@ -218,10 +218,8 @@
                                     <button type="button" role="switch"
                                             @click="setEnhancedReadability(!enhancedReadability)"
                                             :aria-checked="enhancedReadability ? 'true' : 'false'"
-                                            :class="enhancedReadability ? 'bg-black' : 'bg-neutral-200'"
-                                            class="relative w-11 h-6 rounded-full transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black">
-                                        <span :class="enhancedReadability ? 'translate-x-5' : 'translate-x-0'"
-                                              class="block w-5 h-5 bg-white rounded-full shadow-sm transform transition-transform duration-300 absolute top-0.5 left-0.5"></span>
+                                            class="switch" :class="enhancedReadability ? 'switch--on' : ''">
+                                        <span class="switch__knob"></span>
                                     </button>
                                 </div>
                             </div>
@@ -280,10 +278,10 @@
                                     <button type="button"
                                             @click="if (isLoopbackBindHost(globalSettings.server.host)) globalSettings.auth.skip_api_key_verification = !globalSettings.auth.skip_api_key_verification"
                                             :disabled="!isLoopbackBindHost(globalSettings.server.host)"
-                                            :class="!isLoopbackBindHost(globalSettings.server.host) ? 'bg-neutral-200 opacity-50 cursor-not-allowed' : (globalSettings.auth.skip_api_key_verification ? 'bg-black' : 'bg-neutral-200')"
-                                            class="relative w-11 h-6 rounded-full transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black">
+                                            :class="!isLoopbackBindHost(globalSettings.server.host) ? 'opacity-50 cursor-not-allowed' : (globalSettings.auth.skip_api_key_verification ? 'switch--on' : '')"
+                                            class="switch">
                                         <span :class="isLoopbackBindHost(globalSettings.server.host) && globalSettings.auth.skip_api_key_verification ? 'translate-x-5' : 'translate-x-0'"
-                                              class="block w-5 h-5 bg-white rounded-full shadow-sm transform transition-transform duration-300 absolute top-0.5 left-0.5"></span>
+                                              class="switch__knob"></span>
                                     </button>
                                 </div>
                                 <!-- Sub Keys Section -->
@@ -461,10 +459,10 @@
                                     </div>
                                     <button type="button"
                                             @click="globalSettings.model.model_fallback = !globalSettings.model.model_fallback"
-                                            :class="globalSettings.model.model_fallback ? 'bg-black' : 'bg-neutral-200'"
-                                            class="relative w-11 h-6 rounded-full transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black">
+                                            :class="globalSettings.model.model_fallback ? 'switch--on' : ''"
+                                            class="switch">
                                         <span :class="globalSettings.model.model_fallback ? 'translate-x-5' : 'translate-x-0'"
-                                              class="block w-5 h-5 bg-white rounded-full shadow-sm transform transition-transform duration-300 absolute top-0.5 left-0.5"></span>
+                                              class="switch__knob"></span>
                                     </button>
                                 </div>
                                 <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 px-4 sm:px-6 py-4">
@@ -474,10 +472,10 @@
                                     </div>
                                     <button type="button"
                                             @click="globalSettings.model.hide_helper_models = !globalSettings.model.hide_helper_models"
-                                            :class="globalSettings.model.hide_helper_models ? 'bg-black' : 'bg-neutral-200'"
-                                            class="relative w-11 h-6 rounded-full transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black">
+                                            :class="globalSettings.model.hide_helper_models ? 'switch--on' : ''"
+                                            class="switch">
                                         <span :class="globalSettings.model.hide_helper_models ? 'translate-x-5' : 'translate-x-0'"
-                                              class="block w-5 h-5 bg-white rounded-full shadow-sm transform transition-transform duration-300 absolute top-0.5 left-0.5"></span>
+                                              class="switch__knob"></span>
                                     </button>
                                 </div>
                                 <div class="px-6 py-4">
@@ -516,10 +514,10 @@
                                     </div>
                                     <button type="button"
                                             @click="globalSettings.huggingface.hf_cache_enabled = !globalSettings.huggingface.hf_cache_enabled"
-                                            :class="globalSettings.huggingface.hf_cache_enabled ? 'bg-black' : 'bg-neutral-200'"
-                                            class="relative w-11 h-6 rounded-full transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black">
+                                            :class="globalSettings.huggingface.hf_cache_enabled ? 'switch--on' : ''"
+                                            class="switch">
                                         <span :class="globalSettings.huggingface.hf_cache_enabled ? 'translate-x-5' : 'translate-x-0'"
-                                              class="block w-5 h-5 bg-white rounded-full shadow-sm transform transition-transform duration-300 absolute top-0.5 left-0.5"></span>
+                                              class="switch__knob"></span>
                                     </button>
                                 </div>
                             </div>
@@ -592,10 +590,10 @@
                                         </div>
                                         <button type="button"
                                                 @click="globalSettings.memory.prefill_memory_guard = !globalSettings.memory.prefill_memory_guard"
-                                                :class="globalSettings.memory.prefill_memory_guard ? 'bg-black' : 'bg-neutral-200'"
-                                                class="relative w-11 h-6 rounded-full transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black">
+                                                :class="globalSettings.memory.prefill_memory_guard ? 'switch--on' : ''"
+                                                class="switch">
                                             <span :class="globalSettings.memory.prefill_memory_guard ? 'translate-x-5' : 'translate-x-0'"
-                                                  class="block w-5 h-5 bg-white rounded-full shadow-sm transform transition-transform duration-300 absolute top-0.5 left-0.5"></span>
+                                                  class="switch__knob"></span>
                                         </button>
                                     </div>
                                 </div>
@@ -698,10 +696,10 @@
                                     </div>
                                     <button type="button"
                                             @click="globalSettings.scheduler.chunked_prefill = !globalSettings.scheduler.chunked_prefill"
-                                            :class="globalSettings.scheduler.chunked_prefill ? 'bg-black' : 'bg-neutral-200'"
-                                            class="relative w-11 h-6 rounded-full transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black">
+                                            :class="globalSettings.scheduler.chunked_prefill ? 'switch--on' : ''"
+                                            class="switch">
                                         <span :class="globalSettings.scheduler.chunked_prefill ? 'translate-x-5' : 'translate-x-0'"
-                                              class="block w-5 h-5 bg-white rounded-full shadow-sm transform transition-transform duration-300 absolute top-0.5 left-0.5"></span>
+                                              class="switch__knob"></span>
                                     </button>
                                 </div>
                                 <!-- Prioritize Decoding During Prefill -->
@@ -712,10 +710,10 @@
                                     </div>
                                     <button type="button"
                                             @click="globalSettings.scheduler.decode_fairness = !globalSettings.scheduler.decode_fairness"
-                                            :class="globalSettings.scheduler.decode_fairness ? 'bg-black' : 'bg-neutral-200'"
-                                            class="relative w-11 h-6 flex-shrink-0 rounded-full transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black">
+                                            :class="globalSettings.scheduler.decode_fairness ? 'switch--on' : ''"
+                                            class="switch flex-shrink-0">
                                         <span :class="globalSettings.scheduler.decode_fairness ? 'translate-x-5' : 'translate-x-0'"
-                                              class="block w-5 h-5 bg-white rounded-full shadow-sm transform transition-transform duration-300 absolute top-0.5 left-0.5"></span>
+                                              class="switch__knob"></span>
                                     </button>
                                 </div>
                                 <!-- Prefill Priority -->
@@ -781,10 +779,10 @@
                                         <label class="text-sm text-neutral-700">{{ t('settings.cache.enabled') }}</label>
                                     </div>
                                     <button type="button" @click="globalSettings.cache.enabled = !globalSettings.cache.enabled"
-                                            :class="globalSettings.cache.enabled ? 'bg-black' : 'bg-neutral-200'"
-                                            class="relative w-11 h-6 rounded-full transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black">
+                                            :class="globalSettings.cache.enabled ? 'switch--on' : ''"
+                                            class="switch">
                                         <span :class="globalSettings.cache.enabled ? 'translate-x-5' : 'translate-x-0'"
-                                              class="block w-5 h-5 bg-white rounded-full shadow-sm transform transition-transform duration-300 absolute top-0.5 left-0.5"></span>
+                                              class="switch__knob"></span>
                                     </button>
                                 </div>
                                 <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 px-4 sm:px-6 py-4">
@@ -798,10 +796,10 @@
                                         <p class="text-xs text-neutral-400 mt-0.5">{{ t('settings.cache.hot_cache_only_hint') }}</p>
                                     </div>
                                     <button type="button" @click="globalSettings.cache.hot_cache_only = !globalSettings.cache.hot_cache_only"
-                                            :class="globalSettings.cache.hot_cache_only ? 'bg-black' : 'bg-neutral-200'"
-                                            class="relative w-11 h-6 rounded-full transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black">
+                                            :class="globalSettings.cache.hot_cache_only ? 'switch--on' : ''"
+                                            class="switch">
                                         <span :class="globalSettings.cache.hot_cache_only ? 'translate-x-5' : 'translate-x-0'"
-                                              class="block w-5 h-5 bg-white rounded-full shadow-sm transform transition-transform duration-300 absolute top-0.5 left-0.5"></span>
+                                              class="switch__knob"></span>
                                     </button>
                                 </div>
                                 <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 px-4 sm:px-6 py-4">
@@ -926,10 +924,10 @@
                                     </div>
                                     <button type="button"
                                             @click="globalSettings.mcp.expose_tools = !globalSettings.mcp.expose_tools"
-                                            :class="globalSettings.mcp.expose_tools ? 'bg-black' : 'bg-neutral-200'"
-                                            class="relative w-11 h-6 rounded-full transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black">
+                                            :class="globalSettings.mcp.expose_tools ? 'switch--on' : ''"
+                                            class="switch">
                                         <span :class="globalSettings.mcp.expose_tools ? 'translate-x-5' : 'translate-x-0'"
-                                              class="block w-5 h-5 bg-white rounded-full shadow-sm transform transition-transform duration-300 absolute top-0.5 left-0.5"></span>
+                                              class="switch__knob"></span>
                                     </button>
                                 </div>
                             </div>
@@ -956,12 +954,10 @@
                                     </div>
                                     <button type="button"
                                             @click="globalSettings.usage.usage_history = !globalSettings.usage.usage_history"
-                                            :class="globalSettings.usage.usage_history ? 'bg-black' : 'bg-neutral-200'"
                                             :aria-checked="globalSettings.usage.usage_history.toString()"
                                             role="switch"
-                                            class="relative w-11 h-6 rounded-full transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black">
-                                        <span :class="globalSettings.usage.usage_history ? 'translate-x-5' : 'translate-x-0'"
-                                              class="block w-5 h-5 bg-white rounded-full shadow-sm transform transition-transform duration-300 absolute top-0.5 left-0.5"></span>
+                                            class="switch" :class="globalSettings.usage.usage_history ? 'switch--on' : ''">
+                                        <span class="switch__knob"></span>
                                     </button>
                                 </div>
                             </div>
@@ -1051,10 +1047,10 @@
                                             </div>
                                             <button type="button"
                                                     @click="globalSettings.server.distributed_inference_enabled = !globalSettings.server.distributed_inference_enabled"
-                                                    :class="globalSettings.server.distributed_inference_enabled ? 'bg-black' : 'bg-neutral-200'"
-                                                    class="relative w-11 h-6 flex-shrink-0 rounded-full transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black">
+                                                    :class="globalSettings.server.distributed_inference_enabled ? 'switch--on' : ''"
+                                                    class="switch flex-shrink-0">
                                                 <span :class="globalSettings.server.distributed_inference_enabled ? 'translate-x-5' : 'translate-x-0'"
-                                                      class="block w-5 h-5 bg-white rounded-full shadow-sm transform transition-transform duration-300 absolute top-0.5 left-0.5"></span>
+                                                      class="switch__knob"></span>
                                             </button>
                                         </div>
                                     </div>
@@ -1087,10 +1083,10 @@
                                             </div>
                                             <button type="button"
                                                     @click="globalSettings.server.preserve_mid_system_cache = !globalSettings.server.preserve_mid_system_cache"
-                                                    :class="globalSettings.server.preserve_mid_system_cache ? 'bg-black' : 'bg-neutral-200'"
-                                                    class="relative w-11 h-6 rounded-full transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black">
+                                                    :class="globalSettings.server.preserve_mid_system_cache ? 'switch--on' : ''"
+                                                    class="switch">
                                                 <span :class="globalSettings.server.preserve_mid_system_cache ? 'translate-x-5' : 'translate-x-0'"
-                                                      class="block w-5 h-5 bg-white rounded-full shadow-sm transform transition-transform duration-300 absolute top-0.5 left-0.5"></span>
+                                                      class="switch__knob"></span>
                                             </button>
                                         </div>
                                     </div>
@@ -1118,10 +1114,10 @@
                                                 <p class="text-xs text-neutral-400 mt-0.5">{{ t('settings.advanced.hot_cache_write_through_hint') }}</p>
                                             </div>
                                             <button type="button" @click="globalSettings.cache.hot_cache_write_through = !globalSettings.cache.hot_cache_write_through"
-                                                    :class="globalSettings.cache.hot_cache_write_through ? 'bg-black' : 'bg-neutral-200'"
-                                                    class="relative w-11 h-6 rounded-full transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black">
+                                                    :class="globalSettings.cache.hot_cache_write_through ? 'switch--on' : ''"
+                                                    class="switch">
                                                 <span :class="globalSettings.cache.hot_cache_write_through ? 'translate-x-5' : 'translate-x-0'"
-                                                      class="block w-5 h-5 bg-white rounded-full shadow-sm transform transition-transform duration-300 absolute top-0.5 left-0.5"></span>
+                                                      class="switch__knob"></span>
                                             </button>
                                         </div>
                                         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 px-4 sm:px-6 py-4">
@@ -1130,10 +1126,10 @@
                                                 <p class="text-xs text-neutral-400 mt-0.5">{{ t('settings.advanced.ane_compile_cache_hint') }}</p>
                                             </div>
                                             <button type="button" @click="globalSettings.cache.ane_compile_cache = !globalSettings.cache.ane_compile_cache"
-                                                    :class="globalSettings.cache.ane_compile_cache ? 'bg-black' : 'bg-neutral-200'"
-                                                    class="relative w-11 h-6 rounded-full transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black">
+                                                    :class="globalSettings.cache.ane_compile_cache ? 'switch--on' : ''"
+                                                    class="switch">
                                                 <span :class="globalSettings.cache.ane_compile_cache ? 'translate-x-5' : 'translate-x-0'"
-                                                      class="block w-5 h-5 bg-white rounded-full shadow-sm transform transition-transform duration-300 absolute top-0.5 left-0.5"></span>
+                                                      class="switch__knob"></span>
                                             </button>
                                         </div>
                                     </div>
@@ -1326,10 +1322,9 @@
                                     </div>
                                     <button type="button"
                                             @click="globalSettings.integrations.markitdown_enabled = !globalSettings.integrations.markitdown_enabled; saveIntegrationSettings().then(() => loadModels())"
-                                            :class="globalSettings.integrations.markitdown_enabled ? 'bg-black' : 'bg-neutral-200'"
-                                            class="relative w-11 h-6 rounded-full transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black">
-                                        <span :class="globalSettings.integrations.markitdown_enabled ? 'translate-x-5' : 'translate-x-0'"
-                                              class="block w-5 h-5 bg-white rounded-full shadow-sm transform transition-transform duration-300 absolute top-0.5 left-0.5"></span>
+                                            :class="globalSettings.integrations.markitdown_enabled ? 'switch--on' : ''"
+                                            class="switch">
+                                        <span class="switch__knob"></span>
                                     </button>
                                 </div>
                                 <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 px-4 sm:px-6 py-4">
@@ -1341,12 +1336,11 @@
                                             @click="globalSettings.integrations.markitdown_expose_model = !globalSettings.integrations.markitdown_expose_model; saveIntegrationSettings().then(() => loadModels())"
                                             :disabled="!globalSettings.integrations.markitdown_enabled"
                                             :class="[
-                                                globalSettings.integrations.markitdown_expose_model && globalSettings.integrations.markitdown_enabled ? 'bg-black' : 'bg-neutral-200',
+                                                globalSettings.integrations.markitdown_expose_model && globalSettings.integrations.markitdown_enabled ? 'switch--on' : '',
                                                 !globalSettings.integrations.markitdown_enabled ? 'opacity-40 cursor-not-allowed' : ''
                                             ]"
-                                            class="relative w-11 h-6 rounded-full transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black">
-                                        <span :class="globalSettings.integrations.markitdown_expose_model && globalSettings.integrations.markitdown_enabled ? 'translate-x-5' : 'translate-x-0'"
-                                              class="block w-5 h-5 bg-white rounded-full shadow-sm transform transition-transform duration-300 absolute top-0.5 left-0.5"></span>
+                                            class="switch">
+                                        <span class="switch__knob"></span>
                                     </button>
                                 </div>
                                 <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 px-4 sm:px-6 py-4">
@@ -1505,10 +1499,10 @@
                                     </div>
                                     <button type="button"
                                             @click="globalSettings.integrations.web_search_content_truncate = !globalSettings.integrations.web_search_content_truncate; saveIntegrationSettings()"
-                                            :class="globalSettings.integrations.web_search_content_truncate ? 'bg-black' : 'bg-neutral-200'"
-                                            class="relative w-11 h-6 rounded-full transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black">
+                                            :class="globalSettings.integrations.web_search_content_truncate ? 'switch--on' : ''"
+                                            class="switch">
                                         <span :class="globalSettings.integrations.web_search_content_truncate ? 'translate-x-5' : 'translate-x-0'"
-                                              class="block w-5 h-5 bg-white rounded-full shadow-sm transform transition-transform duration-300 absolute top-0.5 left-0.5"></span>
+                                              class="switch__knob"></span>
                                     </button>
                                 </div>
                                 <div x-show="globalSettings.integrations.web_search_content_mode === 'full' && globalSettings.integrations.web_search_content_truncate"
@@ -1760,12 +1754,12 @@
                                                     @mouseleave="hideTip()"
                                                     @focus="showTip($event.currentTarget, model.pinned ? window.t('settings.models.table.pin_on_tooltip') : window.t('settings.models.table.pin_off_tooltip'))"
                                                     @blur="hideTip()"
-                                                    :class="model.pinned ? 'bg-black' : 'bg-neutral-200'"
-                                                    class="relative w-9 h-5 rounded-full transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black"
+                                                    :class="model.pinned ? 'switch--on' : ''"
+                                                    class="switch switch--sm"
                                                 >
                                                     <span
                                                         :class="model.pinned ? 'translate-x-4' : 'translate-x-0'"
-                                                        class="block w-4 h-4 bg-white rounded-full shadow-sm transform transition-transform duration-300 absolute top-0.5 left-0.5"
+                                                        class="switch__knob"
                                                     ></span>
                                                 </button>
                                             </template>
@@ -1783,12 +1777,12 @@
                                                     @mouseleave="hideTip()"
                                                     @focus="showTip($event.currentTarget, !model.is_hidden ? window.t('settings.models.table.visible_on_tooltip') : window.t('settings.models.table.visible_off_tooltip'))"
                                                     @blur="hideTip()"
-                                                    :class="!model.is_hidden ? 'bg-black' : 'bg-neutral-200'"
-                                                    class="relative w-9 h-5 rounded-full transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black"
+                                                    :class="!model.is_hidden ? 'switch--on' : ''"
+                                                    class="switch switch--sm"
                                                 >
                                                     <span
                                                         :class="!model.is_hidden ? 'translate-x-4' : 'translate-x-0'"
-                                                        class="block w-4 h-4 bg-white rounded-full shadow-sm transform transition-transform duration-300 absolute top-0.5 left-0.5"
+                                                        class="switch__knob"
                                                     ></span>
                                                 </button>
                                             </template>
