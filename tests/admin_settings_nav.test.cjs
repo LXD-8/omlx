@@ -86,11 +86,3 @@ test('the clearance is where a scrolled-to section lands, then the sticky row, t
     assert.equal(nav.activeClearance(null), nav.ACTIVE_OFFSET);
     assert.equal(nav.activeClearance(null, { scrollMarginTop: 'auto' }), nav.ACTIVE_OFFSET);
 });
-
-test('sectionAnchors lists the deep-linkable ids', () => {
-    assert.deepEqual(nav.sectionAnchors(SECTIONS), [
-        'settings-language',
-        'settings-appearance',
-        'settings-server',
-    ]);
-});

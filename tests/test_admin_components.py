@@ -228,6 +228,39 @@ def test_the_switch_is_a_rounded_rectangle_that_the_knob_travels_across():
     )
 
 
+# Classes the console builds at render time: the base is written once and the
+# variant comes from data, so the full name never appears as a literal.
+DYNAMIC_CLASSES = (
+    "btn--",      # ui.button(variant=…)
+    "badge--",    # ui.badge(tone=…)
+    "toast--",    # omlxToast({tone})
+    "notice--",   # ui.notice(tone=…)
+    "skeleton--", # ui.skeleton_kpis / skeleton_table
+)
+
+
+def test_every_declared_class_is_used_somewhere():
+    """Dead CSS is how a component library rots: the console declared
+    `.surface-card`, `.surface-group`, `.card-stack`, `.hairline` and
+    `.skeleton-table__head` and no template, script or page ever named them."""
+    # Everything that can name a class *except* components.css itself, which by
+    # definition contains every name it declares.
+    sources = [path for path in TEMPLATES.rglob("*.html")]
+    sources += [path for path in (ROOT / "omlx" / "admin" / "static" / "js").rglob("*.js")]
+    sources += [
+        path
+        for path in (ROOT / "omlx" / "admin" / "static" / "css").rglob("*.css")
+        if path.name not in ("tailwind.css", "components.css", "tokens.css")
+    ]
+    haystack = "\n".join(path.read_text(encoding="utf-8") for path in sources)
+    dead = [
+        name
+        for name in sorted(DECLARED_CLASSES)
+        if name not in haystack and not name.startswith(DYNAMIC_CLASSES)
+    ]
+    assert not dead, f"classes nothing renders: {dead}"
+
+
 def test_every_class_the_macros_emit_is_declared():
     ui = _ui()
     template = Environment(

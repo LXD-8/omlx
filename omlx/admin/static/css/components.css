@@ -11,21 +11,6 @@
 
 /* === Surfaces === */
 
-/* A content surface: solid, micro shadow, no hard border. */
-.surface-card {
-    background-color: var(--bg-primary);
-    border: 1px solid var(--border-faint);
-    border-radius: var(--radius-lg);
-    box-shadow: var(--shadow-card);
-}
-
-/* A grouped block inside a page (the "grey group" of macOS settings). */
-.surface-group {
-    background-color: var(--bg-secondary);
-    border: 1px solid var(--border-faint);
-    border-radius: var(--radius-lg);
-}
-
 /* Recessed area inside a card: table headers, code blocks, empty states. */
 .surface-inset {
     background-color: var(--bg-tertiary);
@@ -36,16 +21,6 @@
 
 .section-stack > * + * {
     margin-top: var(--space-5);
-}
-
-.card-stack > * + * {
-    margin-top: var(--space-3);
-}
-
-.hairline {
-    border: 0;
-    border-top: 1px solid var(--border-faint);
-    margin: 0;
 }
 
 .row {
@@ -1175,14 +1150,6 @@
 .skeleton-row + .skeleton-row,
 .skeleton-table__row + .skeleton-table__row {
     border-top: 1px solid var(--border-faint);
-}
-
-.skeleton-table__head {
-    display: flex;
-    align-items: center;
-    gap: var(--space-4);
-    padding: var(--space-2) var(--space-4);
-    background-color: var(--bg-secondary);
 }
 
 .skeleton-row__cell {

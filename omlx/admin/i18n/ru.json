@@ -399,8 +399,6 @@
   "settings.sections.models_desc": "Все обнаруженные модели с размером, состоянием и настройками сэмплера.",
   "settings.sections.integrations_desc": "Преобразование документов и веб-поиск для запросов чата.",
   "settings.sections.label": "Разделы",
-  "settings.sections.search_placeholder": "Поиск разделов…",
-  "settings.sections.no_match": "Нет подходящих разделов",
   "settings.sections.copy_link": "Скопировать ссылку на этот раздел",
   "settings.sections.appearance": "Внешний вид",
   "settings.sections.appearance_desc": "Тема и читаемость текста в этой консоли.",
