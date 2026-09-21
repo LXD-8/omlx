@@ -400,6 +400,9 @@
    draws its own. Sizes are the two the markup used before it was a component:
    44x24 with a 20pt knob, and 36x20 with a 16pt one. */
 
+/* The track is a rounded rectangle with a length and a height, not a capsule:
+   the corner is one control step, so the switch reads as a switch at both
+   sizes. The knob is the same corner, one hairline tighter (concentric). */
 .switch {
     position: relative;
     flex: none;
@@ -408,7 +411,7 @@
     padding: 0;
     background-color: var(--bg-tertiary);
     border: 1px solid var(--border-normal);
-    border-radius: var(--radius-pill);
+    border-radius: var(--radius-sm);
     cursor: pointer;
     transition: background-color var(--duration-normal) ease, border-color var(--duration-normal) ease;
 }
@@ -443,7 +446,7 @@
     width: calc(var(--space-5) - var(--space-1));
     height: calc(var(--space-5) - var(--space-1));
     background-color: var(--switch-knob);
-    border-radius: var(--radius-pill);
+    border-radius: calc(var(--radius-sm) - 1px);
     box-shadow: var(--shadow-card);
     transition: transform var(--duration-normal) ease;
 }
@@ -453,12 +456,11 @@
     height: var(--space-3);
 }
 
+/* One travel for both sizes: the small track is one step narrower *and* its
+   knob is one step smaller, so the knob lands one hairline from the far edge
+   either way (the small switch used to stop short of it by one step). */
 .switch--on .switch__knob {
     transform: translateX(calc(var(--space-5) - var(--space-1)));
-}
-
-.switch--sm.switch--on .switch__knob {
-    transform: translateX(var(--space-4));
 }
 
 /* === Empty state === */
