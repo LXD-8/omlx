@@ -86,12 +86,20 @@
                             <pre class="log-detail__body" x-text="logSelectedRow ? logSelectedRow.message : ''"></pre>
                             <div class="log-occurrences" x-show="logSelectedRow && logSelectedRow.count > 1" x-cloak>
                                 <span x-text="window.t('logs.detail.occurrences').replace('{count}', logSelectedRow ? logSelectedRow.count : 0)"></span>
-                                <template x-for="(occurrence, i) in (logSelectedRow ? logSelectedRow.occurrences : [])" :key="occurrence.time + '#' + i">
-                                    <span class="log-occurrence">
-                                        <span x-text="occurrence.time"></span>
-                                        <span x-text="occurrence.requestId"></span>
-                                    </span>
-                                </template>
+                                <!-- The list scrolls in its own box: a group can repeat
+                                     thousands of times and the panel must not push the
+                                     viewer off the page. -->
+                                <div class="log-occurrences__list">
+                                    <template x-for="(occurrence, i) in logOccurrences.shown" :key="occurrence.time + '#' + i">
+                                        <span class="log-occurrence">
+                                            <span x-text="occurrence.time"></span>
+                                            <span x-text="occurrence.requestId"></span>
+                                        </span>
+                                    </template>
+                                </div>
+                                <!-- The rest of a long run stays counted, not mounted. -->
+                                <span class="log-occurrences__more" x-show="logOccurrences.hidden > 0" x-cloak
+                                      x-text="window.t('logs.detail.occurrences_more').replace('{count}', window.formatCount(logOccurrences.hidden))"></span>
                             </div>
                         </div>
 

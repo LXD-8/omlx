@@ -130,6 +130,7 @@ def _geometry_vars(tokens: dict) -> list[tuple[str, str]]:
         ("--log-level-column", f"{layout['logLevelColumn']}px"),
         ("--log-module-column", f"{layout['logModuleColumn']}px"),
         ("--log-row-height", f"{layout['logRowHeight']}px"),
+        ("--log-occurrences-height", f"{layout['logOccurrencesHeight']}px"),
         ("--settings-rail-width", f"{layout['railWidth']}px"),
         ("--settings-rail-stack-below", f"{layout['railStackBelow']}px"),
     ]

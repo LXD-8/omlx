@@ -2,8 +2,8 @@
 """Structure of the Settings tab after it was rebuilt around the anchor rail.
 
 The tab is one long scroll with three sub-tabs. This PR gives it an in-page
-rail (section list, per-section search, copy-anchor, restart/live badges) and an
-Appearance section that drives the same theme state the navbar does.
+rail (section list, copy-anchor, restart/live badges) and an Appearance section
+that drives the same theme state the navbar does.
 
 These are static assertions over the template and the component stylesheet; the
 rail's arithmetic is covered by tests/admin_settings_nav.test.cjs.
@@ -167,30 +167,25 @@ def test_rail_scrolls_and_reflects_the_active_section():
     assert "prefers-reduced-motion" in DASHBOARD_JS
 
 
-# === Search ===
+# === The rail is the list, nothing else ===
 
 
-def test_search_filters_the_rail_locally():
-    assert 'x-model="settingsSearch"' in SETTINGS
-    assert "settingsSearch = ''" in SETTINGS, "the query can be cleared"
-    assert "settingsApplySearch" in DASHBOARD_JS
-    assert "filterSections" in DASHBOARD_JS and "filterSections" in NAV_JS
-    assert "fetch(" not in NAV_JS, "the filter is local"
-    assert "settingsSections.length === 0" in SETTINGS, "an empty result says so"
-    assert "settings.sections.no_match" in SETTINGS
-
-
-def test_search_scrolls_to_the_first_match():
-    body = DASHBOARD_JS[DASHBOARD_JS.index("settingsApplySearch() {"):][:600]
-    assert "settingsFirstMatch" in body
-    assert "settingsScrollToSection" in body
-
-
-def test_search_keywords_are_per_section():
+def test_the_rail_carries_no_heading_and_no_search_box():
+    """A heading over the list and a box to filter it both competed with the
+    list; the browser's own find already searches the page."""
+    rail = SETTINGS[SETTINGS.index('<nav class="settings-rail"'):]
+    rail = rail[:rail.index("</nav>")]
+    assert "settings-rail__list" in rail
+    assert "<input" not in rail, "the rail has no filter box"
+    assert "settings-rail__title" not in rail and "settings-rail__title" not in COMPONENTS_CSS
+    assert "settings-rail__empty" not in COMPONENTS_CSS
+    for helper in ("settingsSearch", "settingsApplySearch", "settingsFirstMatch", "filterSections"):
+        assert helper not in DASHBOARD_JS, helper
+        assert helper not in NAV_JS, helper
+    # The registry only carries what the rail renders.
     for sections in _registry(_render()).values():
         for section in sections:
-            assert section["keywords"], f"{section['id']} has no search keywords"
-            assert section["title"] and section["description"]
+            assert set(section) == {"id", "title", "badge"}, section
 
 
 # === Copy anchor ===

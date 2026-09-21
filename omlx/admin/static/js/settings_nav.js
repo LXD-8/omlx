@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: Apache-2.0
 /*
- * The Settings tab's in-page navigation: which sections a sub-tab has, which
- * of them a search matches, what the deep link for a section is, and which one
- * the reader is currently looking at.
+ * The Settings tab's in-page navigation: which sections a sub-tab has, what
+ * the deep link for a section is, and which one the reader is currently
+ * looking at.
  *
  * The section list itself is data (the template renders it as JSON and reads
  * it back, so the titles come from the i18n catalogue). This file holds the
- * four pure rules behind the rail so they can be tested without a browser —
+ * three pure rules behind the rail so they can be tested without a browser —
  * tests/admin_settings_nav.test.cjs — and so dashboard.js stays a view model.
  */
 
@@ -18,27 +18,6 @@
     // is what a clicked section lands on. This is only used when that cannot be
     // measured.
     const ACTIVE_OFFSET = 120;
-
-    /*
-     * Sections whose title, description or keyword list contains the query.
-     * A query made only of whitespace matches everything, and case is ignored
-     * for the Latin listings while CJK keywords match literally.
-     */
-    function filterSections(sections, query) {
-        const needle = String(query == null ? '' : query).trim().toLowerCase();
-        if (!needle) return sections.slice();
-        return sections.filter((section) => {
-            const haystack = [
-                section.id,
-                section.title,
-                section.description,
-                (section.keywords || []).join(' '),
-            ];
-            return haystack.some(
-                (value) => value != null && String(value).toLowerCase().includes(needle)
-            );
-        });
-    }
 
     /* The shareable link to a section: origin + path + its anchor. */
     function sectionAnchor(origin, pathname, sectionId) {
@@ -94,7 +73,6 @@
 
     global.OMLXSettingsNav = {
         ACTIVE_OFFSET,
-        filterSections,
         sectionAnchor,
         activeSection,
         activeClearance,

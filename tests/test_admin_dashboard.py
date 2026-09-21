@@ -27,6 +27,7 @@ STATUS = (DASH / "_status.html").read_text(encoding="utf-8")
 SERVING = (BLOCKS / "_serving_stats.html").read_text(encoding="utf-8")
 ACTIVE = (BLOCKS / "_active_models.html").read_text(encoding="utf-8")
 USAGE = (DASH / "_usage.html").read_text(encoding="utf-8")
+NAVBAR = (DASH / "_navbar.html").read_text(encoding="utf-8")
 DASHBOARD_JS = (ADMIN / "static" / "js" / "dashboard.js").read_text(encoding="utf-8")
 USAGE_JS = (ADMIN / "static" / "js" / "usage.js").read_text(encoding="utf-8")
 EN = json.loads((ADMIN / "i18n" / "en.json").read_text(encoding="utf-8"))
@@ -67,6 +68,25 @@ def test_server_status_header_card():
     assert "restartServerStart()" in header, "restart is reachable from the header"
     assert "unloadAllModels()" in header
     assert "mainTab === 'status'" in STATUS
+
+
+def test_the_scope_toggle_sets_the_scope_it_shows():
+    """The two scopes arrive in one poll and the KPI cards read `statsScope`
+    themselves, so the toggle only has to set it — and it does."""
+    assert "active='statsScope'" in SERVING
+    assert "statsScope = '{value}'" in SERVING
+    assert "status.scope_label" in SERVING, "the toggle names itself for assistive tech"
+    assert "kpiValue(" in DASHBOARD_JS and "statsScope === 'alltime'" in DASHBOARD_JS
+    assert "loadStats()" in DASHBOARD_JS, "both payloads are fetched together"
+
+
+def test_the_brand_pair_uses_the_type_scale():
+    """The wordmark and the version under it sit at the top of every page; both
+    are token steps, one step up from the point sizes they used to carry."""
+    assert "text-2xl leading-none" in NAVBAR, "the wordmark is the page step (24)"
+    assert "text-sm text-neutral-500" in NAVBAR, "the version is the body step (14)"
+    assert "text-xl leading-none" not in NAVBAR, "the old 18pt wordmark is gone"
+    assert "text-[12px] text-neutral-500" not in NAVBAR, "and the 12pt version with it"
 
 
 def test_kpi_cards_are_left_aligned_without_a_sparkline():
