@@ -65,20 +65,14 @@ def test_server_status_header_card():
     assert "mainTab === 'status'" in STATUS
 
 
-def test_kpi_cards_are_left_aligned_with_a_sparkline_each():
+def test_kpi_cards_are_left_aligned_without_a_sparkline():
     assert SERVING.count('class="kpi"') == 4
-    for key in ("requests", "prompt", "cached", "cache"):
-        assert f"sparkPath('{key}')" in SERVING
     assert 'class="kpi__value"' in SERVING
     assert "text-center" not in SERVING, "KPI cards are left aligned"
-    assert "kpiHistory" in DASHBOARD_JS
-    assert "recordKpiHistory" in DASHBOARD_JS
-
-
-def test_kpi_history_records_the_series_the_cards_draw():
-    body = DASHBOARD_JS[DASHBOARD_JS.index("            recordKpiHistory() {"):][:900]
-    for field in ("total_requests", "total_prompt_tokens", "total_cached_tokens", "cache_efficiency"):
-        assert field in body, f"{field} is not sampled"
+    # The review removed the line under the figure; nothing may draw it again.
+    assert "kpi__spark" not in SERVING
+    assert "sparkPath" not in DASHBOARD_JS
+    assert "kpiHistory" not in DASHBOARD_JS
 
 
 def test_memory_watermark_bar():

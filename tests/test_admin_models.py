@@ -170,7 +170,10 @@ def test_loaded_rows_carry_the_glow_without_a_border():
     assert "isModelLoaded(name) {" in DASHBOARD_JS
     rule = COMPONENTS_CSS.split(".model-row--loaded {", 1)[1].split("}", 1)[0]
     assert "var(--shadow-glow)" in rule
-    assert "var(--sys-" in rule, "the tint comes from a system token"
+    # The review asked every page's accent to be neutral, so the tint is the
+    # text token rather than a system colour; blue stays inside the badges that
+    # actually mean "in progress".
+    assert "var(--text-" in rule, "the tint comes from a neutral token"
     assert "border" not in rule, "no hard border"
     assert re.search(r"#[0-9a-fA-F]{3,8}", rule) is None
 

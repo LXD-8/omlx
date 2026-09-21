@@ -1889,9 +1889,9 @@
         <!-- Sidebar Header with tabs -->
         <div class="p-4 border-b border-line flex-shrink-0">
             <div class="flex items-center gap-1">
-                <div class="flex flex-1 items-center gap-1">
+                <div class="flex flex-1 flex-wrap items-center gap-1">
                     <button @click="rightSidebarTab = 'settings'"
-                        class="flex-1 flex items-center justify-center gap-2 px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-colors"
+                        class="flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-aux font-semibold whitespace-nowrap transition-colors"
                         :class="rightSidebarTab === 'settings'
                             ? 'bg-neutral-200 dark:bg-neutral-700 text-neutral-900 dark:text-neutral-100'
                             : 'text-neutral-500 hover:bg-neutral-100 dark:hover:bg-neutral-800'">
@@ -1899,7 +1899,7 @@
                         <span>{{ t('chat.model_tab') }}</span>
                     </button>
                     <button @click="rightSidebarTab = 'profile'"
-                        class="flex-1 flex items-center justify-center gap-2 px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-colors"
+                        class="flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-aux font-semibold whitespace-nowrap transition-colors"
                         :class="rightSidebarTab === 'profile'
                             ? 'bg-neutral-200 dark:bg-neutral-700 text-neutral-900 dark:text-neutral-100'
                             : 'text-neutral-500 hover:bg-neutral-100 dark:hover:bg-neutral-800'">
@@ -1907,7 +1907,7 @@
                         <span>{{ t('chat.profile_tab') }}</span>
                     </button>
                     <button @click="rightSidebarTab = 'chat'"
-                        class="flex-1 flex items-center justify-center gap-2 px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-colors"
+                        class="flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-aux font-semibold whitespace-nowrap transition-colors"
                         :class="rightSidebarTab === 'chat'
                             ? 'bg-neutral-200 dark:bg-neutral-700 text-neutral-900 dark:text-neutral-100'
                             : 'text-neutral-500 hover:bg-neutral-100 dark:hover:bg-neutral-800'">

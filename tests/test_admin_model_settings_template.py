@@ -631,7 +631,9 @@ def test_dashboard_layout_template_contract():
     assert "css/gridstack.min.css" in dashboard
     assert "js/gridstack-all.js" in dashboard
     assert "js/dashboard_layout.js" in dashboard
-    assert "dashboardWidthClass : 'max-w-7xl'" in dashboard
+    # Non-status tabs read the console's shared measure; the Status tab keeps its
+    # own width control.
+    assert "dashboardWidthClass : 'page-wide'" in dashboard
     assert 'class="max-w-7xl mx-auto px-4' not in dashboard
 
     assert "ui_dashboard_layout" in dashboard_js

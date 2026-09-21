@@ -484,9 +484,6 @@
             // False until the first /api/stats payload (or its failure) lands:
             // the Status tab shows skeletons until then instead of zeroes.
             statsLoaded: false,
-            // Rolling samples for the KPI sparklines, one array per card.
-            kpiHistory: {requests: [], prompt: [], cached: [], cache: []},
-            kpiHistoryLimit: 40,
             selectedStatsModel: '',
             showClearStatsConfirm: false,
             showClearAlltimeConfirm: false,
@@ -4343,7 +4340,6 @@
                         const data = await response.json();
                         this.stats = { ...this.stats, ...data };
                         this.statsLoaded = true;
-                        this.recordKpiHistory();
                     } else if (response.status === 401) {
                         window.location.href = '/admin';
                     }
@@ -4362,7 +4358,6 @@
                     if (alltimeResponse.ok) {
                         const alltimeData = await alltimeResponse.json();
                         this.alltimeStats = { ...this.alltimeStats, ...alltimeData };
-                        if (this.statsScope === 'alltime') this.recordKpiHistory();
                     }
                 } catch (err) {
                     console.error('Failed to load stats:', err);
@@ -4587,51 +4582,10 @@
             /* --- Status header / KPI cards / memory watermark --- */
 
             // One field of the payload the KPI cards show, read through the
-            // scope toggle so the cards and the sparkline always agree.
+            // scope toggle so the cards always agree.
             kpiValue(field) {
                 const snapshot = this.statsScope === 'alltime' ? this.alltimeStats : this.stats;
                 return snapshot ? snapshot[field] : undefined;
-            },
-
-            // The sparkline keeps its own history: the stats payload is a
-            // snapshot, and a single sample has no shape to draw.
-            recordKpiHistory() {
-                const snapshot = this.statsScope === 'alltime' ? this.alltimeStats : this.stats;
-                if (!snapshot) return;
-                const series = {
-                    requests: snapshot.total_requests,
-                    prompt: snapshot.total_prompt_tokens,
-                    cached: snapshot.total_cached_tokens,
-                    cache: snapshot.cache_efficiency,
-                };
-                Object.entries(series).forEach(([key, value]) => {
-                    if (typeof value !== 'number' || !isFinite(value)) return;
-                    const history = this.kpiHistory[key];
-                    history.push(value);
-                    if (history.length > this.kpiHistoryLimit) history.shift();
-                });
-            },
-
-            sparkPath(key) {
-                const history = this.kpiHistory[key] || [];
-                if (history.length < 2) return '';
-                const lowest = Math.min(...history);
-                const highest = Math.max(...history);
-                const span = highest - lowest;
-                const step = 100 / (history.length - 1);
-                return history
-                    .map((value, index) => {
-                        const x = (index * step).toFixed(2);
-                        // A flat series is drawn down the middle: pinning it to
-                        // the floor would read as "no samples".
-                        const y = (span === 0 ? 12 : 22 - ((value - lowest) / span) * 20).toFixed(2);
-                        return `${index === 0 ? 'M' : 'L'}${x},${y}`;
-                    })
-                    .join(' ');
-            },
-
-            sparkIsEmpty(key) {
-                return (this.kpiHistory[key] || []).length < 2;
             },
 
             // One track, scaled to the hard limit: the measured footprint, the

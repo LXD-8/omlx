@@ -44,7 +44,6 @@
 </span>
 {%- endmacro %}
 
-<<<<<<< HEAD
 {#- Dual-value metric: the measured figure large, the figure it is to be read
     against as a smaller line below (an estimate behind a measurement, a limit
     behind a usage). Both are Alpine expressions so a row updates in place. -#}
@@ -64,16 +63,21 @@
     Alpine expression holding it instead; the element is then filled by x-text.
     `id` gives the card a stable anchor (the settings rail deep-links to one). -#}
 {% macro card(title=None, subtitle=None, header_actions=None, attrs='',
-              id=None, title_bind=None, subtitle_bind=None) -%}
+              id=None, title_bind=None, subtitle_bind=None, icon=None) -%}
 {%- set body -%}{{ caller() }}{%- endset -%}
 <section class="card {{ attrs }}"{% if id %} id="{{ id }}"{% endif %}>
-    {%- if title or subtitle or title_bind or subtitle_bind or header_actions %}
+    {%- if title or subtitle or title_bind or subtitle_bind or header_actions or icon %}
     <header class="card__header">
-        <div>
-            {%- if title or title_bind %}<h3 class="card__title"{% if title_bind %} x-text="{{ title_bind }}"{% endif %}>{{ title }}</h3>{% endif %}
-            {%- if subtitle or subtitle_bind %}<p class="card__subtitle"{% if subtitle_bind %} x-text="{{ subtitle_bind }}"{% endif %}>{{ subtitle }}</p>{% endif %}
+        <div class="card__heading">
+            {%- if icon %}<i data-lucide="{{ icon }}" class="card__icon w-4 h-4" aria-hidden="true"></i>{% endif %}
+            {%- if title or subtitle or title_bind or subtitle_bind %}
+            <div class="card__heading-text">
+                {%- if title or title_bind %}<h3 class="card__title"{% if title_bind %} x-text="{{ title_bind }}"{% endif %}>{{ title }}</h3>{% endif %}
+                {%- if subtitle or subtitle_bind %}<p class="card__subtitle"{% if subtitle_bind %} x-text="{{ subtitle_bind }}"{% endif %}>{{ subtitle }}</p>{% endif %}
+            </div>
+            {%- endif %}
         </div>
-        {%- if header_actions %}<div class="flex items-center gap-2">{{ header_actions }}</div>{% endif %}
+        {%- if header_actions %}<div class="card__actions">{{ header_actions }}</div>{% endif %}
     </header>
     {%- endif %}
     <div class="card__body">{{ body }}</div>

@@ -85,7 +85,7 @@
 
 {% set settings_json = settings_sections | tojson %}
 
-            <div x-show="mainTab === 'settings'" class="page-narrow" x-cloak role="tabpanel" id="panel-settings" aria-labelledby="tab-settings">
+            <div x-show="mainTab === 'settings'" class="page-wide" x-cloak role="tabpanel" id="panel-settings" aria-labelledby="tab-settings">
             <!-- Tab Navigation -->
             <div class="mb-10 animate-fade-in-up">
                 {{ ui.segmented(tabs, 'activeTab', "setSettingsTab('{value}')",
@@ -101,7 +101,7 @@
             <div x-show="activeTab === 'global'" x-cloak>
                 <div class="animate-fade-in-up">
                     <!-- Header -->
-                    <div class="mb-8 flex items-start justify-between gap-4">
+                    <div class="mb-8 flex items-center justify-between gap-4">
                         <div>
                             <h2 class="text-xs font-bold uppercase tracking-widest text-neutral-400 mb-2">{{ t('settings.global.section_label') }}</h2>
                             <h3 class="text-2xl font-bold tracking-tight text-neutral-900">{{ t('settings.global.heading') }}</h3>
@@ -154,8 +154,7 @@
 
                         <!-- Language Section -->
                         {% if language_shown %}
-                        {% set language_head %}<i data-lucide="globe" class="w-4 h-4 text-neutral-400"></i>{% endset %}
-                        {% set language_actions %}<span class="text-xs font-bold uppercase tracking-wider text-neutral-600">{{ t('settings.language.section_label') }}</span>{{ language_badge }}
+                        {% set language_actions %}{{ language_badge }}
                             <button type="button"
                                     @click="settingsCopyAnchor('settings-language')"
                                     class="settings-anchor p-1 rounded"
@@ -164,7 +163,7 @@
                                     aria-label="{{ t('settings.sections.copy_link') }}">
                                 <i data-lucide="link" class="w-3.5 h-3.5" aria-hidden="true"></i>
                             </button>{% endset %}
-                        {% call ui.card(title=language_head | safe, header_actions=language_actions | safe, attrs='settings-section', id="settings-language") %}
+                        {% call ui.card(icon='globe', title=t('settings.language.section_label'), header_actions=language_actions | safe, attrs='settings-section', id="settings-language") %}
                             <div class="divide-y divide-neutral-100">
                                 <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 px-4 sm:px-6 py-4">
                                     <label class="text-sm text-neutral-700">{{ t('settings.language.label') }}</label>
@@ -188,8 +187,7 @@
 
                         <!-- Appearance Section -->
 {% if appearance_shown %}
-                        {% set appearance_head %}<i data-lucide="sun-moon" class="w-4 h-4 text-neutral-400"></i>{% endset %}
-                        {% set appearance_actions %}<span class="text-xs font-bold uppercase tracking-wider text-neutral-600">{{ t('settings.sections.appearance') }}</span>{{ appearance_badge }}
+                        {% set appearance_actions %}{{ appearance_badge }}
                             <button type="button"
                                     @click="settingsCopyAnchor('settings-appearance')"
                                     class="settings-anchor p-1 rounded"
@@ -198,7 +196,7 @@
                                     aria-label="{{ t('settings.sections.copy_link') }}">
                                 <i data-lucide="link" class="w-3.5 h-3.5" aria-hidden="true"></i>
                             </button>{% endset %}
-                        {% call ui.card(title=appearance_head | safe, header_actions=appearance_actions | safe, attrs='settings-section', id="settings-appearance") %}
+                        {% call ui.card(icon='sun-moon', title=t('settings.sections.appearance'), header_actions=appearance_actions | safe, attrs='settings-section', id="settings-appearance") %}
                             <div class="divide-y divide-neutral-100">
                                 <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 px-4 sm:px-6 py-4">
                                     <div>
@@ -232,8 +230,7 @@
 
                         <!-- Auth & Info Section -->
                         {% if auth_shown %}
-                        {% set auth_head %}<i data-lucide="shield" class="w-4 h-4 text-neutral-400"></i>{% endset %}
-                        {% set auth_actions %}<span class="text-xs font-bold uppercase tracking-wider text-neutral-600">{{ t('settings.auth.section_label') }}</span>{{ auth_badge }}
+                        {% set auth_actions %}{{ auth_badge }}
                             <button type="button"
                                     @click="settingsCopyAnchor('settings-auth')"
                                     class="settings-anchor p-1 rounded"
@@ -242,7 +239,7 @@
                                     aria-label="{{ t('settings.sections.copy_link') }}">
                                 <i data-lucide="link" class="w-3.5 h-3.5" aria-hidden="true"></i>
                             </button>{% endset %}
-                        {% call ui.card(title=auth_head | safe, header_actions=auth_actions | safe, attrs='settings-section', id="settings-auth") %}
+                        {% call ui.card(icon='shield', title=t('settings.auth.section_label'), header_actions=auth_actions | safe, attrs='settings-section', id="settings-auth") %}
                             <div class="divide-y divide-neutral-100">
                                 <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 px-4 sm:px-6 py-4">
                                     <div>
@@ -371,8 +368,7 @@
 
                         <!-- Server Section -->
                         {% if server_shown %}
-                        {% set server_head %}<i data-lucide="server" class="w-4 h-4 text-neutral-400"></i>{% endset %}
-                        {% set server_actions %}<span class="text-xs font-bold uppercase tracking-wider text-neutral-600">{{ t('settings.server.section_label') }}</span>{{ server_badge }}
+                        {% set server_actions %}{{ server_badge }}
                             <button type="button"
                                     @click="settingsCopyAnchor('settings-server')"
                                     class="settings-anchor p-1 rounded"
@@ -381,7 +377,7 @@
                                     aria-label="{{ t('settings.sections.copy_link') }}">
                                 <i data-lucide="link" class="w-3.5 h-3.5" aria-hidden="true"></i>
                             </button>{% endset %}
-                        {% call ui.card(title=server_head | safe, header_actions=server_actions | safe, attrs='settings-section', id="settings-server") %}
+                        {% call ui.card(icon='server', title=t('settings.server.section_label'), header_actions=server_actions | safe, attrs='settings-section', id="settings-server") %}
                             <div class="divide-y divide-neutral-100">
                                 <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 px-4 sm:px-6 py-4"
                                      x-effect="if (showGlobalResetNotice) _mode = null"
@@ -447,8 +443,7 @@
 
                         <!-- Model Section -->
                         {% if model_shown %}
-                        {% set model_head %}<i data-lucide="box" class="w-4 h-4 text-neutral-400"></i>{% endset %}
-                        {% set model_actions %}<span class="text-xs font-bold uppercase tracking-wider text-neutral-600">{{ t('settings.model.section_label') }}</span>{{ model_badge }}
+                        {% set model_actions %}{{ model_badge }}
                             <button type="button"
                                     @click="settingsCopyAnchor('settings-model')"
                                     class="settings-anchor p-1 rounded"
@@ -457,7 +452,7 @@
                                     aria-label="{{ t('settings.sections.copy_link') }}">
                                 <i data-lucide="link" class="w-3.5 h-3.5" aria-hidden="true"></i>
                             </button>{% endset %}
-                        {% call ui.card(title=model_head | safe, header_actions=model_actions | safe, attrs='settings-section', id="settings-model") %}
+                        {% call ui.card(icon='box', title=t('settings.model.section_label'), header_actions=model_actions | safe, attrs='settings-section', id="settings-model") %}
                             <div class="divide-y divide-neutral-100">
                                 <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 px-4 sm:px-6 py-4">
                                     <div>
@@ -533,8 +528,7 @@
 
                         <!-- Memory Management Section -->
                         {% if resource_shown %}
-                        {% set resource_head %}<i data-lucide="gauge" class="w-4 h-4 text-neutral-400"></i>{% endset %}
-                        {% set resource_actions %}<span class="text-xs font-bold uppercase tracking-wider text-neutral-600">{{ t('settings.resource.section_label') }}</span>{{ resource_badge }}
+                        {% set resource_actions %}{{ resource_badge }}
                             <button type="button"
                                     @click="settingsCopyAnchor('settings-resource')"
                                     class="settings-anchor p-1 rounded"
@@ -543,7 +537,7 @@
                                     aria-label="{{ t('settings.sections.copy_link') }}">
                                 <i data-lucide="link" class="w-3.5 h-3.5" aria-hidden="true"></i>
                             </button>{% endset %}
-                        {% call ui.card(title=resource_head | safe, header_actions=resource_actions | safe, attrs='settings-section', id="settings-resource") %}
+                        {% call ui.card(icon='gauge', title=t('settings.resource.section_label'), header_actions=resource_actions | safe, attrs='settings-section', id="settings-resource") %}
                             <div class="divide-y divide-neutral-100">
                                 <!-- Memory Guard + Tier. `data-anchor` is what the
                                      Logs tab's "raise memory_guard_tier" action scrolls to. -->
@@ -771,8 +765,7 @@
 
                         <!-- Cache Section -->
                         {% if cache_shown %}
-                        {% set cache_head %}<i data-lucide="hard-drive" class="w-4 h-4 text-neutral-400"></i>{% endset %}
-                        {% set cache_actions %}<span class="text-xs font-bold uppercase tracking-wider text-neutral-600">{{ t('settings.cache.section_label') }}</span>{{ cache_badge }}
+                        {% set cache_actions %}{{ cache_badge }}
                             <button type="button"
                                     @click="settingsCopyAnchor('settings-cache')"
                                     class="settings-anchor p-1 rounded"
@@ -781,7 +774,7 @@
                                     aria-label="{{ t('settings.sections.copy_link') }}">
                                 <i data-lucide="link" class="w-3.5 h-3.5" aria-hidden="true"></i>
                             </button>{% endset %}
-                        {% call ui.card(title=cache_head | safe, header_actions=cache_actions | safe, attrs='settings-section', id="settings-cache") %}
+                        {% call ui.card(icon='hard-drive', title=t('settings.cache.section_label'), header_actions=cache_actions | safe, attrs='settings-section', id="settings-cache") %}
                             <div class="divide-y divide-neutral-100">
                                 <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 px-4 sm:px-6 py-4">
                                     <div class="flex items-center gap-2">
@@ -824,8 +817,7 @@
 
                         <!-- Sampling Defaults Section -->
                         {% if generation_shown %}
-                        {% set generation_head %}<i data-lucide="sliders" class="w-4 h-4 text-neutral-400"></i>{% endset %}
-                        {% set generation_actions %}<span class="text-xs font-bold uppercase tracking-wider text-neutral-600">{{ t('settings.generation.section_label') }}</span>{{ generation_badge }}
+                        {% set generation_actions %}{{ generation_badge }}
                             <button type="button"
                                     @click="settingsCopyAnchor('settings-generation')"
                                     class="settings-anchor p-1 rounded"
@@ -834,7 +826,7 @@
                                     aria-label="{{ t('settings.sections.copy_link') }}">
                                 <i data-lucide="link" class="w-3.5 h-3.5" aria-hidden="true"></i>
                             </button>{% endset %}
-                        {% call ui.card(title=generation_head | safe, header_actions=generation_actions | safe, attrs='settings-section', id="settings-generation") %}
+                        {% call ui.card(icon='sliders', title=t('settings.generation.section_label'), header_actions=generation_actions | safe, attrs='settings-section', id="settings-generation") %}
                             <div class="divide-y divide-neutral-100">
                                 <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 px-4 sm:px-6 py-4">
                                     <div>
@@ -911,8 +903,7 @@
 
                         <!-- MCP Section -->
                         {% if mcp_shown %}
-                        {% set mcp_head %}<i data-lucide="plug" class="w-4 h-4 text-neutral-400"></i>{% endset %}
-                        {% set mcp_actions %}<span class="text-xs font-bold uppercase tracking-wider text-neutral-600">{{ t('settings.mcp.section_label') }}</span>{{ mcp_badge }}
+                        {% set mcp_actions %}{{ mcp_badge }}
                             <button type="button"
                                     @click="settingsCopyAnchor('settings-mcp')"
                                     class="settings-anchor p-1 rounded"
@@ -921,7 +912,7 @@
                                     aria-label="{{ t('settings.sections.copy_link') }}">
                                 <i data-lucide="link" class="w-3.5 h-3.5" aria-hidden="true"></i>
                             </button>{% endset %}
-                        {% call ui.card(title=mcp_head | safe, header_actions=mcp_actions | safe, attrs='settings-section', id="settings-mcp") %}
+                        {% call ui.card(icon='plug', title=t('settings.mcp.section_label'), header_actions=mcp_actions | safe, attrs='settings-section', id="settings-mcp") %}
                             <div class="divide-y divide-neutral-100">
                                 <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 px-4 sm:px-6 py-4">
                                     <label class="text-sm text-neutral-700">{{ t('settings.mcp.config_path') }}</label>
@@ -947,8 +938,7 @@
 
                         <!-- Usage History Section -->
                         {% if usage_shown %}
-                        {% set usage_head %}<i data-lucide="history" class="w-4 h-4 text-neutral-400"></i>{% endset %}
-                        {% set usage_actions %}<span class="text-xs font-bold uppercase tracking-wider text-neutral-600">{{ t('settings.usage.section_label') }}</span>{{ usage_badge }}
+                        {% set usage_actions %}{{ usage_badge }}
                             <button type="button"
                                     @click="settingsCopyAnchor('settings-usage')"
                                     class="settings-anchor p-1 rounded"
@@ -957,7 +947,7 @@
                                     aria-label="{{ t('settings.sections.copy_link') }}">
                                 <i data-lucide="link" class="w-3.5 h-3.5" aria-hidden="true"></i>
                             </button>{% endset %}
-                        {% call ui.card(title=usage_head | safe, header_actions=usage_actions | safe, attrs='settings-section', id="settings-usage") %}
+                        {% call ui.card(icon='history', title=t('settings.usage.section_label'), header_actions=usage_actions | safe, attrs='settings-section', id="settings-usage") %}
                             <div class="divide-y divide-neutral-100">
                                 <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 px-4 sm:px-6 py-4">
                                     <div>
@@ -980,8 +970,7 @@
 
                         <!-- Network Section -->
                         {% if network_shown %}
-                        {% set network_head %}<i data-lucide="network" class="w-4 h-4 text-neutral-400"></i>{% endset %}
-                        {% set network_actions %}<span class="text-xs font-bold uppercase tracking-wider text-neutral-600">{{ t('settings.network.section_label') }}</span>{{ network_badge }}
+                        {% set network_actions %}{{ network_badge }}
                             <button type="button"
                                     @click="settingsCopyAnchor('settings-network')"
                                     class="settings-anchor p-1 rounded"
@@ -990,7 +979,7 @@
                                     aria-label="{{ t('settings.sections.copy_link') }}">
                                 <i data-lucide="link" class="w-3.5 h-3.5" aria-hidden="true"></i>
                             </button>{% endset %}
-                        {% call ui.card(title=network_head | safe, header_actions=network_actions | safe, attrs='settings-section', id="settings-network") %}
+                        {% call ui.card(icon='network', title=t('settings.network.section_label'), header_actions=network_actions | safe, attrs='settings-section', id="settings-network") %}
                             <div class="divide-y divide-neutral-100">
                                 <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 px-4 sm:px-6 py-4">
                                     <div>
@@ -1320,8 +1309,7 @@
 
                         <!-- MarkItDown Section -->
                         {% if int_markitdown_shown %}
-                        {% set int_markitdown_head %}<i data-lucide="file-text" class="w-4 h-4 text-neutral-400"></i>{% endset %}
-                        {% set int_markitdown_actions %}<span class="text-xs font-bold uppercase tracking-wider text-neutral-600">{{ t('settings.integrations.markitdown.section_label') }}</span>{{ int_markitdown_badge }}
+                        {% set int_markitdown_actions %}{{ int_markitdown_badge }}
                             <button type="button"
                                     @click="settingsCopyAnchor('settings-int-markitdown')"
                                     class="settings-anchor p-1 rounded"
@@ -1330,7 +1318,7 @@
                                     aria-label="{{ t('settings.sections.copy_link') }}">
                                 <i data-lucide="link" class="w-3.5 h-3.5" aria-hidden="true"></i>
                             </button>{% endset %}
-                        {% call ui.card(title=int_markitdown_head | safe, header_actions=int_markitdown_actions | safe, attrs='settings-section', id="settings-int-markitdown") %}
+                        {% call ui.card(icon='file-text', title=t('settings.integrations.markitdown.section_label'), header_actions=int_markitdown_actions | safe, attrs='settings-section', id="settings-int-markitdown") %}
                             <div class="divide-y divide-neutral-100">
                                 <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 px-4 sm:px-6 py-4">
                                     <div>
@@ -1419,8 +1407,7 @@
 
                         <!-- Web Search Section -->
                         {% if int_websearch_shown %}
-                        {% set int_websearch_head %}<i data-lucide="globe" class="w-4 h-4 text-neutral-400"></i>{% endset %}
-                        {% set int_websearch_actions %}<span class="text-xs font-bold uppercase tracking-wider text-neutral-600">{{ t('settings.integrations.websearch.section_label') }}</span>{{ int_websearch_badge }}
+                        {% set int_websearch_actions %}{{ int_websearch_badge }}
                             <button type="button"
                                     @click="settingsCopyAnchor('settings-int-websearch')"
                                     class="settings-anchor p-1 rounded"
@@ -1429,7 +1416,7 @@
                                     aria-label="{{ t('settings.sections.copy_link') }}">
                                 <i data-lucide="link" class="w-3.5 h-3.5" aria-hidden="true"></i>
                             </button>{% endset %}
-                        {% call ui.card(title=int_websearch_head | safe, header_actions=int_websearch_actions | safe, attrs='settings-section', id="settings-int-websearch") %}
+                        {% call ui.card(icon='globe', title=t('settings.integrations.websearch.section_label'), header_actions=int_websearch_actions | safe, attrs='settings-section', id="settings-int-websearch") %}
                             <div class="divide-y divide-neutral-100">
                                 <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 px-4 sm:px-6 py-4">
                                     <div>

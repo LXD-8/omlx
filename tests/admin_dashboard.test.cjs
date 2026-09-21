@@ -28,29 +28,13 @@ vm.runInContext(
 );
 const app = context.dashboard();
 
-test('sparkline needs two samples and normalises to the card box', () => {
-    assert.equal(app.sparkPath('requests'), '', 'one sample has no shape');
-    app.kpiHistory.requests = [10, 20];
-    assert.equal(app.sparkPath('requests'), 'M0.00,22.00 L100.00,2.00');
-    assert.equal(app.sparkIsEmpty('requests'), false);
-    assert.equal(app.sparkIsEmpty('prompt'), true);
-});
-
-test('a flat series draws a flat line instead of dividing by zero', () => {
-    app.kpiHistory.cache = [42, 42, 42];
-    assert.equal(app.sparkPath('cache'), 'M0.00,12.00 L50.00,12.00 L100.00,12.00');
-});
-
-test('history is capped and keeps the newest sample', () => {
-    app.kpiHistoryLimit = 3;
-    app.stats = { total_requests: 1, total_prompt_tokens: 2, total_cached_tokens: 3, cache_efficiency: 4 };
-    app.statsScope = 'session';
-    for (const value of [1, 2, 3, 4]) {
-        app.stats.total_requests = value;
-        app.recordKpiHistory();
-    }
-    assert.deepEqual(app.kpiHistory.requests, [2, 3, 4]);
-    app.kpiHistoryLimit = 40;
+test('the KPI cards keep no sparkline history', () => {
+    // The review asked for the line under the figure to go, so neither the
+    // sampler nor the path builder may come back.
+    assert.equal(typeof app.sparkPath, 'undefined');
+    assert.equal(typeof app.sparkIsEmpty, 'undefined');
+    assert.equal(typeof app.recordKpiHistory, 'undefined');
+    assert.equal(app.kpiHistory, undefined);
 });
 
 test('the watermark measures against the hard limit', () => {

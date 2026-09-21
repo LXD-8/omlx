@@ -216,18 +216,14 @@ def test_one_gutter_and_two_content_measures():
 
 def test_dashboard_pages_use_the_layout_classes():
     assert "page-gutter" in DASHBOARD, "one gutter for every tab"
-    # The Status tab keeps the width control the layout feature ships
-    # (`dashboardWidthClass`); every other tab takes a fixed measure.
-    tabs = {
-        "_models.html": "page-wide",
-        "_logs.html": "page-wide",
-        "_cluster_v2.html": "page-wide",
-        "_settings.html": "page-narrow",
-        "_bench.html": "page-narrow",
-    }
-    for name, expected in tabs.items():
+    # Every tab reads the same centered measure; the Status tab may widen it
+    # with the layout control it ships.
+    assert "'page-wide'" in DASHBOARD
+    for name in ("_models.html", "_logs.html", "_cluster_v2.html",
+                 "_settings.html", "_bench.html"):
         text = (ADMIN / "templates" / "dashboard" / name).read_text(encoding="utf-8")
-        assert expected in text, f"{name} must use {expected}"
+        assert "page-wide" in text, f"{name} must use the shared measure"
+        assert "page-narrow" not in text, f"{name} must not cap itself below it"
     status = (ADMIN / "templates" / "dashboard" / "_status.html").read_text(encoding="utf-8")
     assert "page-wide" not in status, "the dashboard width control owns this tab"
 

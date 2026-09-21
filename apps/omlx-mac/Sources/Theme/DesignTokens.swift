@@ -56,7 +56,7 @@ enum DesignTokens {
     enum Container {
         static let gutter: CGFloat = 32
         static let form: CGFloat = 760
-        static let wide: CGFloat = 1200
+        static let wide: CGFloat = 1280
         static let rail: CGFloat = 160
     }
 

@@ -57,7 +57,9 @@
 /* A resident model in a table: a token tint and the shared glow ring, never a
    hard border — a border would read as a selection, which this is not. */
 .model-row--loaded {
-    background-color: color-mix(in srgb, var(--sys-blue) 6%, transparent);
+    /* Neutral tint, not a colour: the console's accent is grey, and the row
+       already carries the green Loaded badge that says what this means. */
+    background-color: color-mix(in srgb, var(--text-primary) 5%, transparent);
     box-shadow: var(--shadow-glow);
 }
 
@@ -512,11 +514,11 @@
 }
 
 .watermark__bar--estimated {
-    background-color: color-mix(in srgb, var(--sys-blue) 22%, transparent);
+    background-color: color-mix(in srgb, var(--text-primary) 14%, transparent);
 }
 
 .watermark__bar--actual {
-    background-color: var(--sys-blue);
+    background-color: var(--text-primary);
 }
 
 .watermark__marker {
@@ -547,11 +549,11 @@
 }
 
 .watermark__swatch--actual {
-    background-color: var(--sys-blue);
+    background-color: var(--text-primary);
 }
 
 .watermark__swatch--estimated {
-    background-color: color-mix(in srgb, var(--sys-blue) 22%, transparent);
+    background-color: color-mix(in srgb, var(--text-primary) 14%, transparent);
 }
 
 .watermark__swatch--marker {
@@ -1220,6 +1222,7 @@
     .log-grid__module {
         display: none;
     }
+}
 
 /* === Settings anchor rail ===
    The settings page is one long scroll; the rail lists its sections and keeps
@@ -1439,4 +1442,30 @@
         opacity: 0;
         transform: none;
     }
+}
+
+/* Card header: the icon sits with its title, the badges and controls go right.
+   (Before this, callers passed the title through `header_actions`, which pushed
+   it to the far edge and left the icon alone on the left.) */
+.card__heading {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    min-width: 0;
+}
+
+.card__heading-text {
+    min-width: 0;
+}
+
+.card__icon {
+    flex-shrink: 0;
+    color: var(--text-tertiary);
+}
+
+.card__actions {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    flex-shrink: 0;
 }

@@ -19,7 +19,7 @@
         <div class="absolute inset-0 bg-grain pointer-events-none z-0"></div>
         <div class="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-gradient-to-b from-neutral-50 to-transparent rounded-full blur-3xl -z-10 opacity-50"></div>
 
-        <div class="page-gutter py-6 sm:py-10 relative z-10" :class="mainTab === 'status' ? dashboardWidthClass : 'max-w-7xl'">
+        <div class="page-gutter py-6 sm:py-10 relative z-10 mx-auto" :class="mainTab === 'status' ? dashboardWidthClass : 'page-wide'">
             <!-- Status Main Tab -->
             {% include "dashboard/_status.html" %}
 

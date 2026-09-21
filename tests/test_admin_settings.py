@@ -91,8 +91,11 @@ def _registry(html: str) -> dict:
 # === The rail, its sections and their anchors ===
 
 
-def test_settings_tab_keeps_the_form_measure():
-    assert "page-narrow" in SETTINGS
+def test_settings_tab_uses_the_shared_measure():
+    # The review asked every page to use the window's width up to the dashboard
+    # measure, so the settings tab no longer caps itself at the form width.
+    assert "page-wide" in SETTINGS
+    assert "page-narrow" not in SETTINGS
 
 
 def test_the_rail_lists_the_active_sub_tab():
