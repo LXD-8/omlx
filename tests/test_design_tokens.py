@@ -37,7 +37,7 @@ TEMPLATES = sorted((ADMIN / "templates").rglob("*.html"))
 OWN_STYLESHEETS = [ADMIN / "static" / "css" / "dashboard.css", ADMIN / "static" / "css" / "components.css"]
 OWN_SCRIPTS = [
     ADMIN / "static" / "js" / name
-    for name in ("dashboard.js", "cluster_v2.js", "usage.js")
+    for name in ("dashboard.js", "cluster_v2.js", "usage.js", "logs.js")
 ]
 SWIFT_SOURCES = sorted((ROOT / "apps" / "omlx-mac" / "Sources").rglob("*.swift"))
 

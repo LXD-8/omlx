@@ -101,6 +101,9 @@
     const DASHBOARD_BENCH_TABS = new Set(['throughput', 'accuracy', 'context']);
     const THEME_STORAGE_KEY = 'omlx-chat-theme';
     const ENHANCED_READABILITY_KEY = 'omlx-enhanced-readability';
+    // Log rows mounted above and below the viewport: enough that a fast scroll
+    // never shows a gap, small enough that 10 000 lines stay cheap.
+    const LOG_OVERSCAN = 8;
 
     // Default sort for the settings and manager model tables. Also the target
     // state for the "reset sort" action.
@@ -386,8 +389,14 @@
             showClearHotCacheConfirm: false,
             _statsRefreshTimer: null,
 
-            // Log viewer state
-            logContent: '',
+            // Log viewer state. Everything structural (columns, aggregation,
+            // memory-guard numbers) is derived from the raw text by
+            // static/js/logs.js; only the window and the selection live here.
+            logRows: [],             // aggregated, level-filtered rows
+            logSelectedKey: '',      // row whose detail panel is open
+            logScrollTop: 0,
+            logViewportHeight: 600,
+            logRowHeight: 30,        // measured from the first rendered row
             logLines: 500,
             logRefreshInterval: 5,  // seconds, 0 = disabled
             logAutoRefresh: false,
@@ -400,6 +409,9 @@
             logLastUpdated: '',
             logMinLevel: 'TRACE',
             _logRefreshTimer: null,
+            _logRaw: '',             // the previous poll's window, for the diff
+            _logPending: '',         // text of the record still being written
+            _logRecords: [],         // parsed records, oldest first
 
             // Models sub-tab state
             modelsTab: 'manager',
@@ -699,6 +711,13 @@
                 // Watch for main tab changes to manage refresh timers
                 this.$watch('mainTab', (value) => {
                     this.handleMainTabChange(value);
+                });
+
+                // The log window is measured from the rendered rows, so a
+                // viewport resize (or the readability font floor) re-measures it.
+                window.addEventListener('resize', () => {
+                    this.measureLogViewport();
+                    this.measureLogRowHeight();
                 });
 
                 this.$watch('globalSettings.server.host', (value) => {
@@ -5684,29 +5703,219 @@
                 URL.revokeObjectURL(url);
             },
 
-            // Log viewer functions
-            filteredLogContent() {
-                const LEVELS = ['TRACE', 'DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'];
-                const minIdx = LEVELS.indexOf(this.logMinLevel);
-                if (minIdx <= 0) return this.logContent;
-                const levelRe = /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3} - \S+ - (TRACE|DEBUG|INFO|WARNING|ERROR|CRITICAL) - /;
-                let visible = true;
-                return this.logContent.split('\n').filter(line => {
-                    const m = line.match(levelRe);
-                    if (m) visible = LEVELS.indexOf(m[1]) >= minIdx;
-                    return visible;
-                }).join('\n');
+            // === Log viewer ===
+            // Four columns over the raw text, consecutive repeated warnings
+            // collapsed, memory-guard lines parsed into chips with their two
+            // remedies inline, and only the rows near the viewport in the DOM.
+            // The window and the level filter feed static/js/logs.js.
+
+            get logWindow() {
+                return window.OmlxLogs.visibleRange(
+                    this.logRows.length,
+                    this.logScrollTop,
+                    this.logViewportHeight,
+                    this.logRowHeight,
+                    LOG_OVERSCAN
+                );
             },
 
-            levelButtonClass(lvl) {
-                const LEVELS = ['TRACE', 'DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'];
-                const idx = LEVELS.indexOf(lvl);
-                const minIdx = LEVELS.indexOf(this.logMinLevel);
-                // Levels at or above the minimum are all shown dark so the
-                // included range is obvious; the selected minimum keeps the ring.
-                if (idx < minIdx) return 'bg-neutral-100 text-neutral-300';
-                if (idx === minIdx) return 'bg-neutral-900 text-white';
-                return 'bg-neutral-700 text-white';
+            get visibleLogRows() {
+                const frame = this.logWindow;
+                return this.logRows.slice(frame.start, frame.end);
+            },
+
+            get logSelectedRow() {
+                if (!this.logSelectedKey) return null;
+                return this.logRows.find(row => row.key === this.logSelectedKey) || null;
+            },
+
+            logLevelTone(level) {
+                const rank = window.OmlxLogs.levelRank(level);
+                if (rank >= 4) return 'badge--red';
+                if (rank === 3) return 'badge--orange';
+                if (rank === 2) return 'badge--blue';
+                return '';
+            },
+
+            get logMemoryLabels() {
+                return {
+                    usage: window.t('logs.memory.usage'),
+                    watermark: window.t('logs.memory.watermark'),
+                    ceiling: window.t('logs.memory.ceiling'),
+                    peak: window.t('logs.memory.peak'),
+                };
+            },
+
+            logMemoryChips(row) {
+                if (!row || !row.memory) return [];
+                return window.OmlxLogs.memoryGuardChips(row.memory, this.logMemoryLabels);
+            },
+
+            // The two remedies the guard prints, one click away from the line
+            // that suggested them.
+            get logMemoryActions() {
+                return [
+                    { anchor: 'memory-guard', label: window.t('logs.action.raise_tier') },
+                    { anchor: 'context-window', label: window.t('logs.action.reduce_context') },
+                ];
+            },
+
+            // The API returns the last N lines, so one poll appends new lines at
+            // the end *and* drops lines off the front. Matching the overlap by
+            // line (see logs.js) keeps the records and rows we already have, so
+            // the list is patched rather than rebuilt and the scroll position
+            // survives a refresh.
+            ingestLogText(text) {
+                const merged = window.OmlxLogs.mergeLogText(this._logRaw, text);
+                // A reset renumbers the records, so the previous anchor means
+                // nothing there.
+                const anchor = merged.reset ? null : this.logAnchor();
+                this._logRaw = text;
+                if (merged.reset) {
+                    this.resetLogView();
+                } else if (merged.dropped > 0) {
+                    this.dropLeadingLogRecords(merged.dropped);
+                }
+                if (merged.appended) {
+                    this._logPending += merged.appended;
+                    this.commitLogRecords();
+                }
+                this.rebuildLogRows();
+                this.restoreLogAnchor(anchor);
+            },
+
+            // The row at the top of the window, remembered across a poll so the
+            // sliding window cannot move what the reader is looking at.
+            logAnchor() {
+                const row = this.logRows[this.logWindow.start];
+                return row ? { key: row.key, index: this.logWindow.start } : null;
+            },
+
+            restoreLogAnchor(anchor) {
+                if (!anchor || this.logAutoScroll) return;
+                const index = this.logRows.findIndex(row => row.key === anchor.key);
+                if (index < 0) return;
+                const shift = (index - anchor.index) * this.logRowHeight;
+                const viewport = this.$refs.logViewport;
+                if (!shift || !viewport) return;
+                viewport.scrollTop = Math.max(0, viewport.scrollTop + shift);
+                this.logScrollTop = viewport.scrollTop;
+            },
+
+            // A row is one record plus the continuation lines that followed it,
+            // so a record is committed as soon as its text ends with a newline;
+            // whatever is left in _logPending can still grow.
+            commitLogRecords() {
+                const boundary = this._logPending.lastIndexOf('\n');
+                if (boundary < 0) return;
+                const complete = this._logPending.slice(0, boundary + 1);
+                this._logPending = this._logPending.slice(boundary + 1);
+
+                const records = window.OmlxLogs.parseLogText(complete, this._logRecords.length);
+                if (!records.length) return;
+                const previous = this._logRecords[this._logRecords.length - 1];
+                if (records[0].continuation && previous) {
+                    // We committed this record mid-traceback: the lines that
+                    // arrived with this poll belong to it, not to a new row.
+                    window.OmlxLogs.absorbContinuation(previous, records.shift());
+                }
+                for (const record of records) this._logRecords.push(record);
+            },
+
+            // Lines that fell out of the window take the records they covered
+            // with them; a record cut in half by the window edge goes too.
+            dropLeadingLogRecords(lines) {
+                let dropped = 0;
+                let seen = 0;
+                while (dropped < this._logRecords.length && seen < lines) {
+                    seen += this._logRecords[dropped].lines;
+                    dropped += 1;
+                }
+                if (dropped) this._logRecords = this._logRecords.slice(dropped);
+            },
+
+            rebuildLogRows() {
+                this.logRows = window.OmlxLogs.aggregateLogRows(
+                    this._logRecords,
+                    this.logMinLevel,
+                    this.logRows
+                );
+                if (this.logSelectedKey && !this.logRows.some(row => row.key === this.logSelectedKey)) {
+                    this.logSelectedKey = '';
+                }
+            },
+
+            resetLogView() {
+                this._logPending = '';
+                this._logRecords = [];
+                this.logRows = [];
+                this.logSelectedKey = '';
+                this.logScrollTop = 0;
+                const viewport = this.$refs.logViewport;
+                if (viewport) viewport.scrollTop = 0;
+            },
+
+            changeLogFile() {
+                // A different file shares no lines with the previous one.
+                this._logRaw = '';
+                this.resetLogView();
+                this.loadLogs();
+            },
+
+            setLogMinLevel(level) {
+                this.logMinLevel = level;
+                this.logSelectedKey = '';
+                this.rebuildLogRows();
+                this.logScrollTop = 0;
+                const viewport = this.$refs.logViewport;
+                if (viewport) viewport.scrollTop = 0;
+            },
+
+            measureLogViewport() {
+                const viewport = this.$refs.logViewport;
+                if (!viewport) return;
+                if (viewport.clientHeight) this.logViewportHeight = viewport.clientHeight;
+                this.logScrollTop = viewport.scrollTop;
+            },
+
+            // Rows are uniform, so the window can be computed instead of
+            // measured per row; the pitch still comes from a real row so the
+            // enhanced-readability font floor cannot desynchronise it.
+            measureLogRowHeight() {
+                const viewport = this.$refs.logViewport;
+                if (!viewport) return;
+                const row = viewport.querySelector('.log-row');
+                if (row && row.offsetHeight) this.logRowHeight = row.offsetHeight;
+            },
+
+            onLogScroll(event) {
+                this.logScrollTop = event.target.scrollTop;
+                if (event.target.clientHeight) this.logViewportHeight = event.target.clientHeight;
+            },
+
+            scrollLogToBottom() {
+                const viewport = this.$refs.logViewport;
+                if (!viewport) return;
+                viewport.scrollTop = viewport.scrollHeight;
+                this.logScrollTop = viewport.scrollTop;
+            },
+
+            selectLogRow(row) {
+                this.logSelectedKey = row && this.logSelectedKey !== row.key ? row.key : '';
+            },
+
+            // The guard suggests two levers; both live in Settings → Global, so
+            // the action switches there and scrolls to the section when it
+            // carries an anchor (the tab itself is the answer when it does not).
+            openLogAction(anchor) {
+                this.setSettingsTab('global');
+                this.$nextTick(() => {
+                    const target = anchor ? document.querySelector(`[data-anchor="${anchor}"]`) : null;
+                    if (!target) return;
+                    target.scrollIntoView({ block: 'center' });
+                    target.classList.add('anchor-flash');
+                    setTimeout(() => target.classList.remove('anchor-flash'), 2000);
+                });
             },
 
             async loadLogs() {
@@ -5725,20 +5934,16 @@
 
                     if (response.ok) {
                         const data = await response.json();
-                        this.logContent = data.logs;
+                        this.ingestLogText(data.logs || '');
                         this.logTotalLines = data.total_lines;
                         this.logAvailableFiles = data.available_files || ['server.log'];
                         this.logLastUpdated = new Date().toLocaleTimeString();
 
-                        // Auto-scroll to bottom
-                        if (this.logAutoScroll) {
-                            this.$nextTick(() => {
-                                const textarea = this.$refs.logTextarea;
-                                if (textarea) {
-                                    textarea.scrollTop = textarea.scrollHeight;
-                                }
-                            });
-                        }
+                        this.$nextTick(() => {
+                            this.measureLogViewport();
+                            this.measureLogRowHeight();
+                            if (this.logAutoScroll) this.scrollLogToBottom();
+                        });
                     } else if (response.status === 401) {
                         window.location.href = '/admin';
                     } else {

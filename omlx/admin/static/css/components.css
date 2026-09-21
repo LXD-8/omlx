@@ -500,3 +500,261 @@
     border-radius: var(--radius-sm) var(--radius-sm) 0 0;
     background-color: var(--sys-green);
 }
+
+/* === Log viewer ===
+   Four columns (time / level / module / message) over a windowed list: the
+   card body holds no padding, one grid keeps the header and the rows aligned,
+   and every row is exactly --log-row-height tall so the window can be computed
+   from the scroll offset instead of measured row by row. */
+
+.log-card .card__body {
+    padding: 0;
+}
+
+.log-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-4);
+    padding: var(--space-4) var(--space-5);
+    border-bottom: 1px solid var(--border-faint);
+}
+
+.log-field {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-size: var(--fs-body);
+    color: var(--text-secondary);
+}
+
+.log-grid {
+    display: grid;
+    grid-template-columns:
+        var(--log-time-column)
+        var(--log-level-column)
+        var(--log-module-column)
+        minmax(0, 1fr);
+    align-items: center;
+    gap: var(--space-3);
+}
+
+.log-head {
+    padding: var(--space-2) var(--space-5);
+    background-color: var(--bg-secondary);
+    border-bottom: 1px solid var(--border-faint);
+    font-size: var(--fs-aux);
+    font-weight: 600;
+    color: var(--text-tertiary);
+}
+
+.log-viewport {
+    position: relative;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+}
+
+/* Carries the full height of the list, so the scrollbar is honest even though
+   only a window of rows exists in the DOM. */
+.log-spacer {
+    position: relative;
+}
+
+.log-row {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: var(--log-row-height);
+    padding: 0 var(--space-5);
+    overflow: hidden;
+    border-bottom: 1px solid var(--border-faint);
+    font-size: var(--fs-body);
+    color: var(--text-primary);
+    cursor: pointer;
+}
+
+.log-row:hover {
+    background-color: var(--bg-secondary);
+}
+
+.log-row--selected {
+    background-color: var(--bg-tertiary);
+}
+
+.log-time,
+.log-module {
+    overflow: hidden;
+    font-family: var(--font-mono);
+    font-size: var(--fs-aux);
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.log-time {
+    color: var(--text-tertiary);
+}
+
+.log-module {
+    color: var(--text-secondary);
+}
+
+.log-message {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    min-width: 0;
+}
+
+.log-message__text {
+    min-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+/* The ×N counter of a collapsed run of identical warnings. */
+.log-count {
+    flex-shrink: 0;
+    padding: 0 var(--space-1);
+    font-size: var(--fs-aux);
+    line-height: var(--lh-aux);
+    font-weight: 600;
+    color: var(--sys-orange);
+    background-color: color-mix(in srgb, var(--sys-orange) 14%, transparent);
+    border-radius: var(--radius-sm);
+}
+
+/* How many lines one record covers (a traceback): a count, not a repeat. */
+.log-count--muted {
+    color: var(--text-tertiary);
+    background-color: var(--bg-tertiary);
+}
+
+/* Memory-guard numbers, taken from the line itself. */
+.log-chips {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+    gap: var(--space-1);
+}
+
+.log-chip {
+    display: inline-flex;
+    align-items: baseline;
+    gap: var(--space-1);
+    padding: 0 var(--space-1);
+    font-size: var(--fs-aux);
+    line-height: var(--lh-aux);
+    color: var(--text-secondary);
+    background-color: var(--bg-tertiary);
+    border-radius: var(--radius-sm);
+    white-space: nowrap;
+}
+
+.log-chip__label {
+    color: var(--text-tertiary);
+}
+
+.log-chip__value {
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.log-action {
+    padding: 0 var(--space-1);
+    font-size: var(--fs-aux);
+    line-height: var(--lh-aux);
+    font-weight: 600;
+    color: var(--link-color);
+    background-color: transparent;
+    border: 0;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.log-action:hover {
+    text-decoration: underline;
+}
+
+/* The record open under the toolbar: full text, every occurrence. */
+.log-detail {
+    padding: var(--space-4) var(--space-5);
+    background-color: var(--bg-secondary);
+    border-bottom: 1px solid var(--border-faint);
+}
+
+.log-detail__head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-2);
+    font-size: var(--fs-aux);
+    color: var(--text-tertiary);
+}
+
+.log-detail__body {
+    margin: var(--space-2) 0 0;
+    padding: var(--space-3);
+    max-height: 30vh;
+    overflow: auto;
+    font-family: var(--font-mono);
+    font-size: var(--fs-body);
+    line-height: var(--lh-body);
+    color: var(--text-primary);
+    background-color: var(--bg-primary);
+    border: 1px solid var(--border-faint);
+    border-radius: var(--radius-md);
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+
+.log-occurrences {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+    margin-top: var(--space-2);
+    font-size: var(--fs-aux);
+    color: var(--text-secondary);
+}
+
+.log-occurrence {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    font-family: var(--font-mono);
+}
+
+.log-foot {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+    padding: var(--space-3) var(--space-5);
+    border-top: 1px solid var(--border-faint);
+    font-size: var(--fs-aux);
+    color: var(--text-tertiary);
+}
+
+/* A section the console just jumped to, marked long enough to be found. */
+.anchor-flash {
+    outline: 1px solid var(--sys-blue);
+    outline-offset: var(--space-1);
+    border-radius: var(--radius-sm);
+}
+
+/* Narrow screens: the message is the point, the module column gives way. */
+@media (max-width: 48em) {
+    .log-grid {
+        grid-template-columns:
+            var(--log-time-column)
+            var(--log-level-column)
+            minmax(0, 1fr);
+    }
+
+    .log-grid__module {
+        display: none;
+    }
+}
