@@ -399,8 +399,6 @@
   "settings.sections.models_desc": "Every discovered model with its size, state and sampler overrides.",
   "settings.sections.integrations_desc": "Document conversion and web search for chat requests.",
   "settings.sections.label": "Sections",
-  "settings.sections.search_placeholder": "Search sections…",
-  "settings.sections.no_match": "No section matches",
   "settings.sections.copy_link": "Copy link to this section",
   "settings.sections.appearance": "Appearance",
   "settings.sections.appearance_desc": "Theme and text readability for this console.",

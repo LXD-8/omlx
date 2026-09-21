@@ -65,7 +65,6 @@ def _theme_vars(tokens: dict, appearance: str) -> list[tuple[str, str]]:
         ("--text-danger", text["danger"]),
         ("--link-color", text["link"]),
         ("--btn-primary", control["primary"]),
-        ("--btn-primary-hover", control["primaryHover"]),
         ("--btn-primary-text", control["primaryText"]),
         ("--accent-fill", control["accent"]),
         ("--accent-fill-hover", control["accentHover"]),

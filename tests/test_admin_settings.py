@@ -339,8 +339,7 @@ def test_rail_styling_is_token_only():
 def test_section_copy_is_translated_everywhere():
     for locale in LOCALES:
         catalogue = json.loads((ADMIN / "i18n" / f"{locale}.json").read_text(encoding="utf-8"))
-        for key in ("settings.sections.label", "settings.sections.search_placeholder",
-                    "settings.sections.no_match", "settings.sections.copy_link",
+        for key in ("settings.sections.label", "settings.sections.copy_link",
                     "settings.sections.appearance", "settings.sections.theme"):
             assert key in catalogue, f"{locale}.json is missing {key}"
             assert str(catalogue[key]).strip(), f"{locale}.json has an empty {key}"

@@ -66,16 +66,10 @@
         return rect.height > 0 ? rect.bottom : ACTIVE_OFFSET;
     }
 
-    /* The anchors a section list can be deep-linked to, in rail order. */
-    function sectionAnchors(sections) {
-        return sections.map((section) => section.id);
-    }
-
     global.OMLXSettingsNav = {
         ACTIVE_OFFSET,
         sectionAnchor,
         activeSection,
         activeClearance,
-        sectionAnchors,
     };
 })(typeof window === 'undefined' ? globalThis : window);
