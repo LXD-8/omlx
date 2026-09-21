@@ -238,11 +238,6 @@ def convert_responses_input_to_messages(
     # Process input items
     # Track pending tool calls for grouping into a single assistant message
     pending_tool_calls: List[Dict[str, Any]] = []
-    # Call ids already grouped into a message but not yet answered by a
-    # function_call_output, oldest first. An output that omits `call_id` (and
-    # `id`) is paired with the oldest of these: a fresh random id could never
-    # match the call it answers, which is what left the pair unpaired.
-    unanswered_call_ids: List[str] = []
     # Track reasoning content to attach to the next assistant message
     pending_reasoning: str = ""
     # Track images extracted from function_call_output lists; flushed as a
@@ -341,7 +336,6 @@ def convert_responses_input_to_messages(
         elif item.type == "function_call":
             # Assistant's tool call — accumulate for grouping
             call_id = item.call_id or item.id or f"call_{uuid.uuid4().hex[:8]}"
-            unanswered_call_ids.append(call_id)
             namespace = getattr(item, "namespace", None)
             pending_tool_calls.append(
                 {
@@ -374,18 +368,12 @@ def convert_responses_input_to_messages(
                 output_content = (
                     extracted if extracted is not None else json.dumps(item.output)
                 )
-            # Pair the output with the call it answers. An explicit call_id is
-            # taken as-is (and stops being a candidate); otherwise the oldest
-            # unanswered call is the only id that can pair, and a random one is
-            # only for an output with nothing to pair with at all.
-            call_id = item.call_id or item.id
-            if call_id:
-                if call_id in unanswered_call_ids:
-                    unanswered_call_ids.remove(call_id)
-            elif unanswered_call_ids:
-                call_id = unanswered_call_ids.pop(0)
-            else:
-                call_id = f"call_{uuid.uuid4().hex[:8]}"
+            # Same fallback the function_call side uses, so an omitted
+            # call_id never reaches the template as an empty tool_call_id.
+            # Guaranteeing a *matching* id is not this layer's job: the Open
+            # Responses schema requires `call_id` on both items, and a request
+            # that omits it is rejected (see `validate_responses_request`).
+            call_id = item.call_id or item.id or f"call_{uuid.uuid4().hex[:8]}"
             messages.append(
                 {
                     "role": "tool",
