@@ -23,6 +23,9 @@
  *                      remedies instead of a paragraph of advice.
  *   visibleRange()     which rows to mount for a scroll offset; the viewer
  *                      keeps only the window (plus overscan) in the DOM.
+ *   occurrenceWindow()  how many occurrences of a repeated line the detail
+ *                      panel lists — the same windowing idea, for the list
+ *                      behind a row's ×N badge.
  *
  * Pure functions, no DOM and no translation: tests/admin_logs.test.cjs runs
  * them directly under node.
@@ -311,6 +314,22 @@
         return chips;
     }
 
+    /* How many occurrences of one repeated line the detail panel lists. A
+       polling loop can repeat a warning tens of thousands of times; one element
+       per occurrence froze the tab (a refresh of 20,000 lines painted 20,000
+       nodes), so the panel lists the first window of them and says how many are
+       behind it. The count on the badge stays the full one either way. */
+    var OCCURRENCE_WINDOW = 200;
+
+    function occurrenceWindow(occurrences, limit) {
+        var list = occurrences || [];
+        var max = limit > 0 ? limit : OCCURRENCE_WINDOW;
+        return {
+            shown: list.slice(0, max),
+            hidden: Math.max(0, list.length - max),
+        };
+    }
+
     /* Rows to mount for a scroll offset: the visible slice plus overscan. */
     function visibleRange(total, scrollTop, viewportHeight, rowHeight, overscan) {
         var count = Math.max(0, total || 0);
@@ -334,6 +353,8 @@
         memoryGuardFor: memoryGuardFor,
         memoryGuardChips: memoryGuardChips,
         visibleRange: visibleRange,
+        occurrenceWindow: occurrenceWindow,
+        OCCURRENCE_WINDOW: OCCURRENCE_WINDOW,
     };
 
     global.OmlxLogs = api;

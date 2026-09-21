@@ -118,6 +118,76 @@ def test_segmented_marks_the_active_item():
     assert "statusTab = 'runtime'" in html
 
 
+def test_card_header_puts_the_icon_on_the_title_line():
+    """A heading with a subtitle is two lines tall, and the icon belongs to the
+    title's line: centred on the block it hangs between the title and the
+    subtitle, belonging to neither."""
+    template = Environment(
+        loader=FileSystemLoader(str(TEMPLATES)), autoescape=True
+    ).from_string(
+        '{% import "components/ui.html" as ui %}'
+        "{% call ui.card(icon='file-text', title='MarkItDown', subtitle='Attachments') %}"
+        "BODY{% endcall %}"
+    )
+    assert 'class="card__icon w-4 h-4"' in template.render()
+
+    heading = COMPONENTS_CSS[COMPONENTS_CSS.index(".card__heading {"):]
+    heading = heading[: heading.index("}")]
+    assert "align-items: flex-start" in heading, "the row centres, the icon does not"
+
+    icon = COMPONENTS_CSS[COMPONENTS_CSS.index(".card__icon {"):]
+    icon = icon[: icon.index("}")]
+    assert "margin-top: calc(" in icon, "the icon is centred on the title's line box"
+    assert "--lh-emphasis" in icon and "--fs-emphasis" in icon, "from the type tokens"
+
+
+# A macro call whose arguments are read as one string, so a setter cannot hide
+# behind a nested call or a tuple.
+_SEGMENTED_CALL = re.compile(r"ui\.segmented(?:_each)?\(")
+
+
+def _call_arguments(source: str, open_paren: int) -> str:
+    depth = 0
+    for index in range(open_paren, len(source)):
+        char = source[index]
+        if char in "([{":
+            depth += 1
+        elif char in ")]}":
+            depth -= 1
+            if depth == 0:
+                return source[open_paren + 1:index]
+    raise AssertionError("the segmented call never closes")
+
+
+def _top_level_arguments(arguments: str) -> list:
+    parts, depth, current = [], 0, []
+    for char in arguments:
+        if char in "([{":
+            depth += 1
+        elif char in ")]}":
+            depth -= 1
+        if char == "," and depth == 0:
+            parts.append("".join(current))
+            current = []
+        else:
+            current.append(char)
+    parts.append("".join(current))
+    return [part.strip() for part in parts if part.strip()]
+
+
+def test_every_segmented_control_sets_the_value_it_shows():
+    """A segmented control without a setter renders buttons that do nothing:
+    the Stats scope toggle shipped as `ui.segmented(items, 'statsScope')` and
+    the tab looked dead."""
+    for path in sorted(TEMPLATES.rglob("*.html")):
+        source = path.read_text(encoding="utf-8")
+        for match in _SEGMENTED_CALL.finditer(source):
+            arguments = _top_level_arguments(_call_arguments(source, match.end() - 1))
+            named = any(part.startswith("setter=") for part in arguments)
+            positional = len(arguments) >= 3 and not any("=" in part for part in arguments[:3])
+            assert named or positional, f"{path.name}: {match.group(0)}{arguments} has no setter"
+
+
 def test_empty_state_carries_icon_title_and_action():
     template = Environment(
         loader=FileSystemLoader(str(TEMPLATES)), autoescape=True

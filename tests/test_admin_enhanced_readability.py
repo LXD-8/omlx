@@ -100,12 +100,17 @@ def test_no_jinja_block_in_comment():
     assert BASE.count("{% block head %}") == 1
 
 
-def test_switch_below_theme_and_wired():
-    # Switch sits BELOW the Theme section (user requirement).
-    assert CHAT.index("chat.theme_label") < CHAT.index("chat.enhanced_readability")
-    assert "enhancedReadability" in CHAT
-    assert "setEnhancedReadability" in CHAT
-    assert "setEnhancedReadability(!enhancedReadability)" in CHAT
+def test_the_chat_sheet_keeps_to_the_chat():
+    """The console-wide switch lives in the navbar's theme menu and base.html
+    applies the stored preference to every page, so the chat sheet does not
+    repeat it: the chat's own settings stay chat settings."""
+    assert "chat.theme_label" in CHAT, "the theme step is still there"
+    assert "chat.enhanced_readability" not in CHAT
+    assert "setEnhancedReadability" not in CHAT
+    assert "ENHANCED_READABILITY_KEY" not in CHAT
+    # The preference still reaches the chat page.
+    assert "localStorage.getItem('omlx-enhanced-readability')" in BASE
+    assert "document.documentElement.setAttribute('data-enhanced-readability', '')" in BASE
 
 
 def test_dashboard_theme_menu_controls_same_readability_setting():

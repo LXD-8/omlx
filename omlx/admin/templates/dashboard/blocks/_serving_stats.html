@@ -6,9 +6,13 @@
     </div>
     <div class="flex flex-wrap items-center gap-2">
         <!-- Scope toggle -->
+        {#- The KPI cards read the scope out of `statsScope` themselves (the
+            payload for both scopes arrives in one poll), so the toggle only has
+            to set it — but it does have to set it. -#}
         {{ ui.segmented([('session', t('status.scope_session')),
                          ('alltime', t('status.scope_alltime'))],
-                        'statsScope') }}
+                        active='statsScope', setter="statsScope = '{value}'",
+                        aria_label=t('status.scope_label')) }}
         <!-- Clear button -->
         <div class="flex items-center gap-1.5">
             <button x-show="(statsScope === 'session' && !showClearStatsConfirm) || (statsScope === 'alltime' && !showClearAlltimeConfirm)"

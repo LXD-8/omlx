@@ -271,6 +271,26 @@ test('windowing mounts the visible slice plus overscan', () => {
     assert.deepEqual(logs.visibleRange(100, 300, 600, 0, 0), { start: 0, end: 100 }, 'a lost row height shows everything');
 });
 
+test('a long run of occurrences is windowed, and the rest counted', () => {
+    const occurrences = Array.from({ length: 20000 }, (_, i) => ({ time: 't' + i, requestId: '-' }));
+    const windowed = logs.occurrenceWindow(occurrences, logs.OCCURRENCE_WINDOW);
+    assert.equal(windowed.shown.length, logs.OCCURRENCE_WINDOW);
+    assert.equal(windowed.hidden, 20000 - logs.OCCURRENCE_WINDOW);
+    assert.equal(windowed.shown[0].time, 't0');
+    assert.equal(windowed.shown[windowed.shown.length - 1].time, 't' + (logs.OCCURRENCE_WINDOW - 1));
+    // A run shorter than the window hides nothing, and an empty one is safe.
+    assert.deepEqual(logs.occurrenceWindow([{ time: 'a', requestId: '-' }], 200), {
+        shown: [{ time: 'a', requestId: '-' }],
+        hidden: 0,
+    });
+    assert.deepEqual(logs.occurrenceWindow(null, 200), { shown: [], hidden: 0 });
+    assert.deepEqual(logs.occurrenceWindow([], 200), { shown: [], hidden: 0 });
+    // The list is never mutated.
+    const copy = JSON.parse(JSON.stringify(occurrences));
+    logs.occurrenceWindow(occurrences, 5);
+    assert.deepEqual(occurrences, copy);
+});
+
 // === The viewer itself ===
 // dashboard.js holds the Alpine state over these functions; driving it here is
 // what proves a poll patches the list rather than rebuilding it. Each test

@@ -69,8 +69,26 @@ def test_consecutive_repeats_collapse_behind_a_counter():
     assert "logs.repeat_tooltip" in EN
     # Every occurrence stays reachable, with its own timestamp.
     assert "occurrences" in LOGS_JS
-    assert "logSelectedRow.occurrences" in LOGS
+    assert "logOccurrences.shown" in LOGS
     assert "logs.detail.occurrences" in EN
+
+
+def test_a_long_run_of_repeats_is_windowed():
+    """One element per occurrence: a warning that repeats 20,000 times mounted
+    20,000 of them and froze the tab. The panel lists the first window and counts
+    the rest; the ×N badge still carries the full number."""
+    assert "OCCURRENCE_WINDOW" in LOGS_JS
+    assert "occurrenceWindow" in LOGS_JS
+    assert "logOccurrences" in DASHBOARD_JS
+    assert "logOccurrences.hidden" in LOGS
+    assert "logs.detail.occurrences_more" in EN
+    assert ".log-occurrences__more {" in COMPONENTS_CSS
+    # The windowed list scrolls in its own box: without one, 200 occurrences
+    # pushed the viewer off the page (the panel grew by ~4,000px).
+    assert 'class="log-occurrences__list"' in LOGS
+    box = COMPONENTS_CSS[COMPONENTS_CSS.index(".log-occurrences__list {"):]
+    box = box[: box.index("}")]
+    assert "max-height:" in box and "overflow-y: auto" in box
 
 
 def test_memory_guard_chips_and_inline_actions():

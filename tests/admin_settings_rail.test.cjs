@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // The Settings rail as it behaves in the dashboard: the section registry is
-// read from the document, a hash selects the right sub-tab, search filters the
-// rail, and the copy control produces the deep link. Run with:
+// read from the document, a hash selects the right sub-tab, and the copy
+// control produces the deep link. Run with:
 // node --test tests/admin_settings_rail.test.cjs
 const assert = require('assert/strict');
 const fs = require('fs');
@@ -14,45 +14,15 @@ const scrollState = { y: 0 };
 
 const REGISTRY = {
     global: [
-        {
-            id: 'settings-language',
-            title: 'Language',
-            description: 'Interface Language',
-            keywords: ['locale'],
-            badge: 'live',
-        },
-        {
-            id: 'settings-appearance',
-            title: 'Appearance',
-            description: 'Theme and text readability',
-            keywords: ['dark'],
-            badge: 'live',
-        },
-        {
-            id: 'settings-server',
-            title: 'Server',
-            description: 'Host',
-            keywords: ['port'],
-            badge: 'none',
-        },
+        { id: 'settings-language', title: 'Language', badge: 'live' },
+        { id: 'settings-appearance', title: 'Appearance', badge: 'live' },
+        { id: 'settings-server', title: 'Server', badge: 'none' },
     ],
     integrations: [
-        {
-            id: 'settings-int-websearch',
-            title: 'Web Search',
-            description: 'Search provider',
-            keywords: ['ddgs'],
-            badge: 'live',
-        },
+        { id: 'settings-int-websearch', title: 'Web Search', badge: 'live' },
     ],
     models: [
-        {
-            id: 'settings-models',
-            title: 'Model Settings',
-            description: 'Every discovered model',
-            keywords: ['sort'],
-            badge: 'live',
-        },
+        { id: 'settings-models', title: 'Model Settings', badge: 'live' },
     ],
 };
 
@@ -156,19 +126,6 @@ test('switching sub-tab swaps the rail to that tab\'s sections', () => {
     assert.equal(app.settingsSections.map(s => s.id).join(), 'settings-models');
 });
 
-test('search narrows the rail and drops the section list when nothing matches', () => {
-    const { app } = makeApp();
-    app.settingsAllSections = REGISTRY.global.slice();
-    app.settingsInitSections();
-    app.settingsSearch = 'dark';
-    app.settingsApplySearch();
-    assert.equal(app.settingsSections.map(s => s.id).join(), 'settings-appearance');
-    assert.equal(app.settingsActiveSection, 'settings-appearance');
-    app.settingsSearch = 'nothing-here';
-    app.settingsApplySearch();
-    assert.equal(app.settingsSections.length, 0);
-});
-
 test('a hash deep-links to the section on its own sub-tab', () => {
     const { app } = makeApp({ hash: '#settings-int-websearch' });
     assert.equal(app.settingsScrollToHash('#settings-int-websearch'), true);
@@ -231,7 +188,6 @@ test('the scroll watcher follows the section the reader is in', () => {
     }
     const panel = makeElement('panel-settings', 0);
     const { app, context, listeners } = makeApp({ elements });
-    app.settingsAllSections = REGISTRY.global.slice();
     app.settingsInitSections();
     context.document.getElementById = id => {
         if (id === 'settings-sections') return { textContent: JSON.stringify(REGISTRY) };
@@ -263,8 +219,14 @@ test('scrolling is skipped while the settings tab is hidden', () => {
 test('a hidden settings panel keeps the rail out of the sync', () => {
     const hidden = { getClientRects: () => [] };
     const { app, context } = makeApp();
-    context.document.getElementById = id => (id === 'panel-settings' ? hidden : null);
-    app.settingsAllSections = REGISTRY.global.slice();
+    context.document.getElementById = id => {
+        if (id === 'settings-sections') return { textContent: JSON.stringify(REGISTRY) };
+        if (id === 'panel-settings') return hidden;
+        return null;
+    };
+    app.settingsInitSections();
+    app.settingsActiveSection = 'settings-language';
     app.settingsWatchScroll();
-    assert.equal(app.settingsActiveSection, null, 'a panel that is not shown has no current section');
+    assert.equal(app.settingsActiveSection, 'settings-language',
+        'a panel that is not shown leaves the rail where it was');
 });

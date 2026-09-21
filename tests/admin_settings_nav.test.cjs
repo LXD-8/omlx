@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
-// The Settings rail's pure rules: search filtering, deep-link anchors and the
-// scroll position that decides which section is current. Run with:
+// The Settings rail's pure rules: deep-link anchors and the scroll position
+// that decides which section is current. Run with:
 // node --test tests/admin_settings_nav.test.cjs
 const assert = require('assert/strict');
 const fs = require('fs');
@@ -24,57 +24,10 @@ vm.runInContext(
 const nav = context.OMLXSettingsNav;
 
 const SECTIONS = [
-    {
-        id: 'settings-language',
-        title: 'Language',
-        description: 'Interface Language',
-        keywords: ['locale', '语言'],
-    },
-    {
-        id: 'settings-appearance',
-        title: 'Appearance',
-        description: 'Theme and text readability',
-        keywords: ['dark', '浅色'],
-    },
-    {
-        id: 'settings-server',
-        title: 'Server',
-        description: 'Host',
-        keywords: ['port', 'bind'],
-    },
+    { id: 'settings-language', title: 'Language' },
+    { id: 'settings-appearance', title: 'Appearance' },
+    { id: 'settings-server', title: 'Server' },
 ];
-
-test('an empty query keeps every section in rail order', () => {
-    assert.deepEqual(nav.filterSections(SECTIONS, '').map(s => s.id), SECTIONS.map(s => s.id));
-    assert.deepEqual(nav.filterSections(SECTIONS, '   ').map(s => s.id), SECTIONS.map(s => s.id));
-    assert.deepEqual(nav.filterSections(SECTIONS, null).map(s => s.id), SECTIONS.map(s => s.id));
-});
-
-test('the query matches title, description, keywords and id', () => {
-    assert.deepEqual(nav.filterSections(SECTIONS, 'server').map(s => s.id), ['settings-server']);
-    assert.deepEqual(nav.filterSections(SECTIONS, 'readability').map(s => s.id), ['settings-appearance']);
-    assert.deepEqual(nav.filterSections(SECTIONS, 'bind').map(s => s.id), ['settings-server']);
-    assert.deepEqual(nav.filterSections(SECTIONS, 'language').map(s => s.id), ['settings-language']);
-});
-
-test('matching ignores case and leading space', () => {
-    assert.deepEqual(nav.filterSections(SECTIONS, '  DARK ').map(s => s.id), ['settings-appearance']);
-});
-
-test('a CJK keyword matches literally', () => {
-    assert.deepEqual(nav.filterSections(SECTIONS, '语言').map(s => s.id), ['settings-language']);
-    assert.deepEqual(nav.filterSections(SECTIONS, '浅色').map(s => s.id), ['settings-appearance']);
-});
-
-test('the rail does not mutate the section list it filters', () => {
-    const copy = JSON.parse(JSON.stringify(SECTIONS));
-    nav.filterSections(SECTIONS, 'server');
-    assert.deepEqual(SECTIONS, copy);
-});
-
-test('nothing matches: the rail empties rather than showing a wrong section', () => {
-    assert.deepEqual(nav.filterSections(SECTIONS, 'zzzz'), []);
-});
 
 test('a section anchor is origin + path + hash', () => {
     assert.equal(
