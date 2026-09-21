@@ -77,7 +77,9 @@
     --container-form:            760px;
     --container-wide:            var(--measure-default);
     --topbar-height:             78px;
-    --sticky-offset:             143px;
+    --sub-tab-height:            53px;
+    --sticky-gap:                12px;
+    --sticky-offset:             calc(var(--topbar-height) + var(--sub-tab-height) + var(--sticky-gap));
     --measure-default:           1280px;
     --measure-wide:              1440px;
     --measure-wider:             1600px;

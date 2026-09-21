@@ -547,15 +547,13 @@
 
 /* === Server status header card === */
 
-.status-header__icon {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: var(--space-8);
-    height: var(--space-8);
-    border-radius: var(--radius-md);
-    background-color: var(--bg-tertiary);
-    color: var(--text-secondary);
+/* The oMLX mark beside the server's name: the same drawing the top bar uses,
+   at the size of the title it sits next to. No tile behind it and no rounded
+   square, so it reads as a logo rather than as the app's icon. */
+.status-header__mark {
+    width: var(--space-6);
+    height: var(--space-6);
+    flex: none;
 }
 
 .status-header__meta {
@@ -1331,7 +1329,7 @@
 
 .settings-rail {
     position: sticky;
-    /* Clears the top bar and the sub-tab switcher above it. */
+    /* Clears the top bar and the sub-tab row under it. */
     top: var(--sticky-offset);
     max-height: calc(100vh - var(--sticky-offset) - var(--space-6));
     overflow-y: auto;
@@ -1565,10 +1563,15 @@
 
 /* The sub-tab switcher pins under the top bar, so scrolling moves only the
    section cards on the right. */
-.settings-tabs {
+/* === Sub-tab row ===
+   The same row on Settings, Models and Bench: it pins under the top bar, so
+   scrolling moves only the content below it. The page scrolls the window, so
+   the offset is the top bar's own height -- which is also why <main> must not
+   carry `overflow: hidden` (see dashboard.html). */
+.page-tabs {
     position: sticky;
     top: var(--topbar-height);
     z-index: 30;
     background-color: var(--bg-primary);
-    padding-block: var(--space-2);
+    padding-block: var(--space-2) var(--space-3);
 }

@@ -135,10 +135,10 @@
 
         <!-- ============================ empty ============================ -->
         <section x-show="wizardState() === 'empty'" x-cloak
-                 class="bg-white border border-neutral-200 rounded-2xl overflow-hidden mb-6"
+                 class="card overflow-hidden mb-6"
                  data-cluster-v2-state="empty">
             <div class="p-5 sm:p-8 text-center max-w-xl mx-auto">
-                <div class="w-12 h-12 rounded-2xl bg-neutral-100 flex items-center justify-center mx-auto">
+                <div class="w-12 h-12 rounded-lg bg-surface-muted flex items-center justify-center mx-auto">
                     <i data-lucide="laptop" class="w-6 h-6 text-neutral-500"></i>
                 </div>
                 <h3 class="text-lg font-semibold text-neutral-900 mt-4">{{ t('cluster.v2.empty.title') }}</h3>
@@ -179,7 +179,7 @@
                                data-cluster-v2-manual-input>
                         <button type="button" @click="submitManualPeer()"
                                 :disabled="manualBusy"
-                                class="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-white bg-neutral-900 rounded-lg hover:bg-neutral-800 disabled:opacity-50 whitespace-nowrap"
+                                class="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-white bg-neutral-900 rounded-lg hover:bg-accent-hover disabled:opacity-50 whitespace-nowrap"
                                 data-cluster-v2-manual-submit>
                             <i data-lucide="plus" class="w-3.5 h-3.5"></i>
                             <span x-text="manualBusy ? window.t('cluster.v2.manual.checking') : window.t('cluster.v2.manual.add_show_code')"></span>
@@ -192,7 +192,7 @@
 
         <!-- ========================= discovering ========================= -->
         <section x-show="wizardState() === 'discovering'" x-cloak
-                 class="bg-white border border-neutral-200 rounded-2xl overflow-hidden mb-6"
+                 class="card overflow-hidden mb-6"
                  data-cluster-v2-state="discovering">
             <div class="p-5 sm:p-8 text-center max-w-xl mx-auto">
                 <div class="relative w-16 h-16 mx-auto">
@@ -225,7 +225,7 @@
                                data-cluster-v2-manual-input>
                         <button type="button" @click="submitManualPeer()"
                                 :disabled="manualBusy"
-                                class="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-white bg-neutral-900 rounded-lg hover:bg-neutral-800 disabled:opacity-50 whitespace-nowrap"
+                                class="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-white bg-neutral-900 rounded-lg hover:bg-accent-hover disabled:opacity-50 whitespace-nowrap"
                                 data-cluster-v2-manual-submit>
                             <i data-lucide="plus" class="w-3.5 h-3.5"></i>
                             <span x-text="manualBusy ? window.t('cluster.v2.manual.checking') : window.t('cluster.v2.manual.add_show_code')"></span>
@@ -273,7 +273,7 @@
                            data-cluster-v2-plan-add-mac-input>
                     <button type="button" @click="submitManualPeer({ beginJoin: false })"
                             :disabled="manualBusy"
-                            class="px-3 py-2 text-xs font-semibold text-white bg-neutral-900 rounded-lg hover:bg-neutral-800 disabled:opacity-40 whitespace-nowrap"
+                            class="px-3 py-2 text-xs font-semibold text-white bg-neutral-900 rounded-lg hover:bg-accent-hover disabled:opacity-40 whitespace-nowrap"
                             data-cluster-v2-plan-add-mac-submit>
                         <span x-text="manualBusy ? window.t('cluster.v2.manual.checking') : window.t('cluster.v2.manual.find_mac')"></span>
                     </button>
@@ -282,7 +282,7 @@
             </div>
             <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                 <template x-for="device in allDevices()" :key="device.node_id">
-                    <div class="rounded-2xl border bg-white p-4 transition-all hover:-translate-y-0.5 hover:shadow-md"
+                    <div class="card p-4 transition-all hover:-translate-y-0.5 hover:shadow-md"
                          :class="device.paired || device.is_self ? 'border-neutral-200' : 'border-neutral-900 ring-1 ring-neutral-900'"
                          data-cluster-v2-device-card>
                         <div class="flex items-start justify-between gap-3">
@@ -312,7 +312,7 @@
                         <div class="mt-4 flex items-center gap-2"
                              x-show="!device.is_self && !device.paired && device.state !== 'awaiting_approval'">
                             <button type="button" @click="beginPairing(device)"
-                                    class="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-neutral-900 rounded-lg hover:bg-neutral-800"
+                                    class="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-neutral-900 rounded-lg hover:bg-accent-hover"
                                     data-cluster-v2-pair-button>
                                 <i data-lucide="link-2" class="w-3.5 h-3.5"></i>
                                 {{ t('cluster.v2.device.pair') }}
@@ -351,7 +351,7 @@
                     </div>
                 </div>
                 <button type="button" @click="startChecks()"
-                        class="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-semibold text-white bg-neutral-900 rounded-lg hover:bg-neutral-800 whitespace-nowrap">
+                        class="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-semibold text-white bg-neutral-900 rounded-lg hover:bg-accent-hover whitespace-nowrap">
                     <i data-lucide="shield-check" class="w-3.5 h-3.5"></i>
                     {{ t('cluster.v2.device_card.run_checks') }}
                 </button>
@@ -360,7 +360,7 @@
 
         <!-- =========================== pairing =========================== -->
         <section x-show="wizardState() === 'pairing'" x-cloak
-                 class="bg-white border border-neutral-200 rounded-2xl overflow-hidden mb-6"
+                 class="card overflow-hidden mb-6"
                  data-cluster-v2-state="pairing" data-cluster-v2-pairing>
             <div class="p-5 sm:p-6 max-w-xl">
                 <!-- This Mac is the joiner: it shows the code, the other Mac approves. -->
@@ -456,7 +456,7 @@
                                            data-cluster-v2-pair-code>
                                     <button type="button" @click="submitPairApproval(device)"
                                             :disabled="pairing.busy"
-                                            class="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-white bg-neutral-900 rounded-lg hover:bg-neutral-800 disabled:opacity-50"
+                                            class="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-white bg-neutral-900 rounded-lg hover:bg-accent-hover disabled:opacity-50"
                                             data-cluster-v2-approve>
                                         <i data-lucide="check" class="w-3.5 h-3.5"></i>
                                         {{ t('cluster.v2.pairing.approve') }}
@@ -494,7 +494,7 @@
                                    data-cluster-v2-pair-code>
                             <button type="button" @click="submitPairApproval(pairing.target)"
                                     :disabled="pairing.busy"
-                                    class="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-white bg-neutral-900 rounded-lg hover:bg-neutral-800 disabled:opacity-50"
+                                    class="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-white bg-neutral-900 rounded-lg hover:bg-accent-hover disabled:opacity-50"
                                     data-cluster-v2-approve>
                                 <svg x-show="pairing.busy" class="animate-spin h-3.5 w-3.5" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
                                 <span x-text="pairing.busy ? window.t('cluster.v2.pairing.approving') : window.t('cluster.v2.pairing.approve_pair')"></span>
@@ -519,7 +519,7 @@
 
         <!-- =========================== checks ============================ -->
         <section x-show="wizardState() === 'checks'" x-cloak
-                 class="bg-white border border-neutral-200 rounded-2xl overflow-hidden mb-6"
+                 class="card overflow-hidden mb-6"
                  data-cluster-v2-state="checks" data-cluster-v2-checks>
             <div class="p-5 sm:p-6">
                 <div class="flex items-start justify-between gap-3">
@@ -587,7 +587,7 @@
                     </p>
                     <button type="button" @click="enterPlan()"
                             :disabled="!checksBlockingPass()"
-                            class="inline-flex items-center justify-center gap-2 px-4 py-2 text-xs font-semibold text-white bg-neutral-900 rounded-lg hover:bg-neutral-800 disabled:opacity-40 whitespace-nowrap"
+                            class="inline-flex items-center justify-center gap-2 px-4 py-2 text-xs font-semibold text-white bg-neutral-900 rounded-lg hover:bg-accent-hover disabled:opacity-40 whitespace-nowrap"
                             data-cluster-v2-continue-plan>
                         {{ t('cluster.v2.checks.continue') }}
                         <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
@@ -598,7 +598,7 @@
 
         <!-- ============================ plan ============================= -->
         <section x-show="wizardState() === 'plan'" x-cloak
-                 class="bg-white border border-neutral-200 rounded-2xl overflow-hidden mb-6"
+                 class="card overflow-hidden mb-6"
                  data-cluster-v2-state="plan" data-cluster-v2-plan>
             <div class="p-5 sm:p-6">
                 <div class="text-xs font-bold uppercase tracking-wider text-neutral-400">{{ t('cluster.v2.plan.title') }}</div>
@@ -660,7 +660,7 @@
                                     class="px-2.5 py-1 text-[12px] font-semibold transition-colors inline-flex items-center gap-1.5"
                                     :class="[
                                         planStrategy === option.key
-                                            ? 'bg-neutral-900 text-white'
+                                            ? 'bg-accent text-accent-fg'
                                             : 'text-neutral-600 hover:bg-neutral-50',
                                         option.key !== 'auto' ? 'border-l border-neutral-200' : '',
                                         option.disabled ? 'opacity-40 cursor-not-allowed' : '',
@@ -794,13 +794,13 @@
                                      data-cluster-v2-role-picker>
                                     <button type="button" @click="setNodeRole(device, 'workstation')"
                                             :class="nodeRole(device.node_id, !!device.is_self) === 'workstation'
-                                                ? 'bg-neutral-900 text-white'
+                                                ? 'bg-accent text-accent-fg'
                                                 : 'text-neutral-600 hover:bg-neutral-50'"
                                             class="px-2.5 py-1 text-[12px] font-semibold transition-colors"
                                             data-cluster-v2-role-workstation>{{ t('cluster.v2.plan.role_workstation') }}</button>
                                     <button type="button" @click="setNodeRole(device, 'headless')"
                                             :class="nodeRole(device.node_id, !!device.is_self) === 'headless'
-                                                ? 'bg-neutral-900 text-white'
+                                                ? 'bg-accent text-accent-fg'
                                                 : 'text-neutral-600 hover:bg-neutral-50'"
                                             class="px-2.5 py-1 text-[12px] font-semibold transition-colors border-l border-neutral-200"
                                             data-cluster-v2-role-headless>{{ t('cluster.v2.plan.role_headless') }}</button>
@@ -932,7 +932,7 @@
                             </div>
                             <button type="button" @click="activatePlan()"
                                     :disabled="activateBusy || !proposalCanProceed(planProposal)"
-                                    class="inline-flex items-center justify-center gap-2 px-4 py-2 text-xs font-semibold text-white bg-neutral-900 rounded-lg hover:bg-neutral-800 disabled:opacity-40 whitespace-nowrap"
+                                    class="inline-flex items-center justify-center gap-2 px-4 py-2 text-xs font-semibold text-white bg-neutral-900 rounded-lg hover:bg-accent-hover disabled:opacity-40 whitespace-nowrap"
                                     data-cluster-v2-activate>
                                 <svg x-show="activateBusy" class="animate-spin h-3.5 w-3.5" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
                                 <span x-text="activateBusy ? (stagingJob && !stagingJob.ready ? stagingButtonLabel() : window.t('cluster.v2.plan.activating')) : window.t('cluster.v2.plan.activate')"></span>
@@ -945,7 +945,7 @@
 
         <!-- =========================== active ============================ -->
         <section x-show="wizardState() === 'active'" x-cloak
-                 class="bg-white border border-neutral-200 rounded-2xl overflow-hidden mb-6"
+                 class="card overflow-hidden mb-6"
                  data-cluster-v2-state="active" data-cluster-v2-active>
             <div class="p-5 sm:p-6">
                 <div class="flex items-start justify-between gap-3">
@@ -1032,7 +1032,7 @@
                                             :data-cluster-v2-active-profile="option.key"
                                             class="px-2.5 py-1 text-[12px] font-semibold transition-colors border-l first:border-l-0 border-neutral-200 disabled:opacity-40"
                                             :class="executionReplan?.profile === option.key
-                                                ? 'bg-neutral-900 text-white'
+                                                ? 'bg-accent text-accent-fg'
                                                 : 'text-neutral-600 hover:bg-neutral-50'"
                                             x-text="option.label"></button>
                                 </template>
@@ -1051,7 +1051,7 @@
                                         class="px-2.5 py-1 text-[12px] font-semibold text-neutral-600 border border-neutral-200 rounded-lg hover:bg-neutral-50 disabled:opacity-40">{{ t('cluster.v2.common.cancel') }}</button>
                                 <button type="button" @click="applyExecutionProfileReplan()"
                                         :disabled="executionReplanBusy"
-                                        class="px-2.5 py-1 text-[12px] font-semibold text-white bg-neutral-900 rounded-lg hover:bg-neutral-800 disabled:opacity-40"
+                                        class="px-2.5 py-1 text-[12px] font-semibold text-white bg-neutral-900 rounded-lg hover:bg-accent-hover disabled:opacity-40"
                                         data-cluster-v2-serving-replan-apply>
                                     <span x-text="executionReplanBusy ? window.t('cluster.v2.active.applying') : window.t('cluster.v2.active.apply_replan')"></span>
                                 </button>
@@ -1155,7 +1155,7 @@
                                 <button type="button"
                                         @click="submitManualPeer({ beginJoin: false })"
                                         :disabled="manualBusy"
-                                        class="px-3 py-2 text-xs font-semibold text-white bg-neutral-900 rounded-lg hover:bg-neutral-800 disabled:opacity-40 whitespace-nowrap"
+                                        class="px-3 py-2 text-xs font-semibold text-white bg-neutral-900 rounded-lg hover:bg-accent-hover disabled:opacity-40 whitespace-nowrap"
                                         data-cluster-v2-membership-manual-submit>
                                     <span x-text="manualBusy ? window.t('cluster.v2.manual.checking') : window.t('cluster.v2.manual.find_mac')"></span>
                                 </button>
@@ -1216,7 +1216,7 @@
                                 </template>
                                 <button type="button" @click="previewMembershipExpansion()"
                                         :disabled="membershipBusy"
-                                        class="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-white bg-neutral-900 rounded-lg hover:bg-neutral-800 disabled:opacity-40"
+                                        class="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-white bg-neutral-900 rounded-lg hover:bg-accent-hover disabled:opacity-40"
                                         data-cluster-v2-membership-preview>
                                     <svg x-show="membershipBusy" class="animate-spin h-3.5 w-3.5" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
                                     <span x-text="membershipBusy ? window.t('cluster.v2.membership.measuring') : window.t('cluster.v2.membership.preview_reshard').replace('{count}', membershipActiveCount() + membershipCandidates().length)"></span>
@@ -1249,7 +1249,7 @@
                                 <div class="text-[12px] text-neutral-600">{{ t('cluster.v2.membership.apply_blurb') }}</div>
                                 <button type="button" @click="applyMembershipExpansion()"
                                         :disabled="membershipBusy || activateBusy || !proposalCanProceed(membershipProposal)"
-                                        class="px-3 py-2 text-xs font-semibold text-white bg-neutral-900 rounded-lg hover:bg-neutral-800 disabled:opacity-40 whitespace-nowrap"
+                                        class="px-3 py-2 text-xs font-semibold text-white bg-neutral-900 rounded-lg hover:bg-accent-hover disabled:opacity-40 whitespace-nowrap"
                                         data-cluster-v2-membership-apply>
                                     {{ t('cluster.v2.membership.add_reshard') }}
                                 </button>
@@ -1289,7 +1289,7 @@
                             x-show="['ready', 'configured', 'failed'].includes(deploymentRuntimeState(configuredDeployment()))"
                             @click="beginModelChange(configuredDeployment())"
                             :disabled="clusterLifecycleBusy"
-                            class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-neutral-900 rounded-lg hover:bg-neutral-800 disabled:opacity-40"
+                            class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-neutral-900 rounded-lg hover:bg-accent-hover disabled:opacity-40"
                             data-cluster-v2-change-model>
                         <i data-lucide="shuffle" class="w-3.5 h-3.5"></i>
                         {{ t('cluster.v2.active.change_model') }}
@@ -1310,7 +1310,7 @@
                             x-show="['failed', 'configured'].includes(deploymentRuntimeState(configuredDeployment()))"
                             @click="loadDeploymentWeights(configuredDeployment())"
                             :disabled="clusterLifecycleBusy"
-                            class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-neutral-900 rounded-lg hover:bg-neutral-800 disabled:opacity-40"
+                            class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-neutral-900 rounded-lg hover:bg-accent-hover disabled:opacity-40"
                             data-cluster-v2-load-weights>
                         <i data-lucide="play" class="w-3.5 h-3.5"></i>
                         <span x-text="deploymentRuntimeState() === 'failed' ? window.t('cluster.v2.active.retry_load') : window.t('cluster.v2.active.load_weights')"></span>
@@ -1376,7 +1376,7 @@
             <div x-show="advancedOpen" x-cloak
                  class="mt-3 grid grid-cols-1 xl:grid-cols-2 gap-3"
                  data-cluster-v2-advanced-panel>
-                <div class="rounded-2xl border border-neutral-200 bg-white p-5"
+                <div class="card p-5"
                      data-cluster-v2-cuda-enrollment>
                     <div class="flex items-start justify-between gap-3">
                         <div>
@@ -1414,7 +1414,7 @@
                     </label>
                     <button type="button" @click="generateCudaJoinCommand()"
                             :disabled="cudaJoin.loading"
-                            class="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-neutral-900 px-3 py-2 text-xs font-semibold text-white hover:bg-neutral-800 disabled:opacity-40"
+                            class="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-neutral-900 px-3 py-2 text-xs font-semibold text-white hover:bg-accent-hover disabled:opacity-40"
                             data-cluster-v2-generate-cuda-join>
                         <i data-lucide="key-round" class="w-3.5 h-3.5"></i>
                         <span x-text="cudaJoin.loading ? window.t('cluster.v2.cuda.generating') : (cudaJoin.command ? window.t('cluster.v2.cuda.generate_another') : window.t('cluster.v2.cuda.generate'))"></span>
@@ -1467,7 +1467,7 @@
                     <div x-show="cudaJoin.error" class="mt-3 text-xs text-red-600" x-text="cudaJoin.error"></div>
                 </div>
 
-                <div class="rounded-2xl border border-neutral-200 bg-white p-5"
+                <div class="card p-5"
                      data-cluster-v2-diagnostics>
                     <div class="text-xs font-bold uppercase tracking-wider text-neutral-400">{{ t('cluster.v2.diagnostics.title') }}</div>
                     <h3 class="text-sm font-semibold text-neutral-900 mt-1">{{ t('cluster.v2.diagnostics.save_report') }}</h3>

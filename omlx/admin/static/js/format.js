@@ -9,9 +9,11 @@
  * the console language, so a Chinese browser showed "1.9万" next to "1.1M".
  *
  * Rules, per locale:
- *   zh / zh-TW  below 10,000    exact, grouped ("9,999")
- *               below 10^8      万 / 萬 ("1.9万")
- *               10^8 and above  亿 / 億 ("1.2亿")
+ *   zh          below 10,000    exact, grouped ("9,999")
+ *               below 10^8      万 ("1.9万")
+ *               below 10^12     亿 ("1.2亿")
+ *               10^12 and above 万亿 ("1.2万亿")
+ *   zh-TW       the same ladder with 萬 / 億 / 兆
  *   every other locale           K / M / B / T, one decimal, ".0" dropped
  *
  * Parameter counts are a unit rather than a count (nobody writes "80亿" for an
@@ -22,6 +24,7 @@
 
     var WAN = 10000;
     var YI = 100000000;
+    var WANYI = 1000000000000;
     var DASH = '—';
 
     function resolveLocale(locale) {
@@ -60,7 +63,19 @@
         var out;
 
         if (resolved === 'zh' || resolved === 'zh-TW') {
-            out = magnitude >= WAN ? compact(magnitude, resolved, 'compact') : Math.round(magnitude).toLocaleString(resolved);
+            // Spelled out rather than left to Intl: engines disagree about the
+            // top of the Chinese ladder (some stop at 亿), and the console must
+            // read the same in every browser it is opened in.
+            var big = resolved === 'zh-TW' ? ['萬', '億', '兆'] : ['万', '亿', '万亿'];
+            if (magnitude >= WANYI) {
+                out = trimZero((magnitude / WANYI).toFixed(1)) + big[2];
+            } else if (magnitude >= YI) {
+                out = trimZero((magnitude / YI).toFixed(1)) + big[1];
+            } else if (magnitude >= WAN) {
+                out = trimZero((magnitude / WAN).toFixed(1)) + big[0];
+            } else {
+                out = Math.round(magnitude).toLocaleString(resolved);
+            }
         } else {
             out = magnitude >= 1000 ? compact(magnitude, resolved, 'compact') : String(Math.round(magnitude));
         }

@@ -56,7 +56,11 @@ def test_each_block_partial_renders_on_its_own():
 
 def test_server_status_header_card():
     header = STATUS[: STATUS.index("<!-- Layout toolbar")]
-    assert "status-header__icon" in header
+    # The mark is the oMLX logo the top bar draws, not an app icon in a tile:
+    # no rounded-square background, and it swaps with the theme.
+    assert "status-header__mark" in header
+    assert "navbar-logo-light.svg" in header and "navbar-logo-dark.svg" in header
+    assert "status-header__icon" not in header
     assert "{{ version }}" in header, "the header shows the running version"
     assert "ui.badge(t('status.header.running'), tone='green', dot=True)" in header
     assert "status.header.uptime" in header

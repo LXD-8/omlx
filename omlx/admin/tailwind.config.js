@@ -38,9 +38,13 @@ module.exports = {
           hover: 'var(--accent-fill-hover)',
           fg: 'var(--accent-fill-text)',
         },
+        // `DEFAULT` is the destructive *text* colour; `fill` is the destructive
+        // button's fill, the same token `.btn--destructive` paints with.
         danger: {
           DEFAULT: 'var(--text-danger)',
           bg: 'var(--bg-danger-hover)',
+          fill: 'var(--btn-danger)',
+          fg: 'var(--danger-fg)',
         },
         code: 'var(--code-bg)',
         // Apple system colours (tokens.json semantic.*), for status semantics.
@@ -50,6 +54,12 @@ module.exports = {
           green: 'var(--sys-green)',
           blue: 'var(--sys-blue)',
         },
+      },
+      boxShadow: {
+        // The two elevation tokens, so a panel in a template names its depth
+        // rather than inventing a Tailwind shadow.
+        card: 'var(--shadow-card)',
+        popover: 'var(--shadow-popover)',
       },
       animation: {
         'fade-in-up': 'fadeInUp 0.5s ease-out forwards',

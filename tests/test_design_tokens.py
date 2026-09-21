@@ -13,6 +13,7 @@ component stylesheet.
 import importlib.util
 import json
 import re
+import re
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -206,6 +207,36 @@ def test_base_uses_the_system_font_stack():
 
 
 # === Layout skeleton ===
+
+
+def test_the_sticky_layers_can_actually_stick():
+    """One sub-tab row, and the settings rail, pin below the top bar.
+
+    Both are `position: sticky`, so the page must not clip them: an
+    `overflow: hidden` on <main> makes it their scroll container, and neither
+    sticks -- which is what left the settings row 46pt lower than the same row
+    on Models until the clipping moved onto the decorations.
+    """
+    blocks = re.findall(r"\.settings-rail \{[^}]*\}", COMPONENTS_CSS)
+    assert any(
+        "position: sticky" in block and "top: var(--sticky-offset)" in block for block in blocks
+    ), "the rail clears the top bar and the sub-tab row"
+    tabs = re.findall(r"\.page-tabs \{[^}]*\}", COMPONENTS_CSS)
+    assert len(tabs) == 1, "one sub-tab row spec"
+    assert "position: sticky" in tabs[0]
+    assert "top: var(--topbar-height)" in tabs[0], "the row pins under the top bar"
+    assert _declares(
+        "--sticky-offset",
+        "calc(var(--topbar-height) + var(--sub-tab-height) + var(--sticky-gap))",
+    )
+    main_tag = DASHBOARD[DASHBOARD.index("<main") : DASHBOARD.index("<main") + 80].split(">")[0]
+    assert "overflow-hidden" not in main_tag, (
+        "<main> must not clip the sticky layers; the decorations clip themselves"
+    )
+    for name in ("_settings.html", "_models.html", "_bench.html"):
+        text = (ADMIN / "templates" / "dashboard" / name).read_text(encoding="utf-8")
+        assert "page-tabs" in text, f"{name} uses the shared sub-tab row"
+
 
 
 def test_one_gutter_and_one_shared_measure():

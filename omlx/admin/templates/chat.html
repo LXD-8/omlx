@@ -1007,7 +1007,7 @@
                     :class="{ 'bg-surface-muted': currentChatId === chat.id }">
                     <i data-lucide="message-square" class="w-4 h-4 flex-shrink-0" style="color: var(--text-muted);"></i>
                     <button type="button" x-show="isChatStreaming(chat.id)" @click.stop="stopChatStreaming(chat.id)"
-                        class="w-2 h-2 rounded-full flex-shrink-0 animate-pulse p-0 border-0 cursor-pointer"
+                        class="w-2 h-2 rounded-lg flex-shrink-0 animate-pulse p-0 border-0 cursor-pointer"
                         style="background: var(--accent);" title="{{ t('chat.stop_generating_tooltip') }}"></button>
                     <template x-if="renamingChatId === chat.id">
                         <div class="flex items-center gap-1 flex-1 min-w-0">
@@ -1097,7 +1097,7 @@
                 x-data="{ modelMenuOpen: false }" @click.outside="modelMenuOpen = false"
                 @keydown.escape="modelMenuOpen = false">
                 <button @click="modelMenuOpen = !modelMenuOpen" :title="window.t('chat.switch_model')"
-                    class="flex items-center gap-2 px-3 py-1.5 rounded-full border border-line bg-surface shadow-md text-xs font-medium hover:bg-surface-muted transition-colors"
+                    class="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-line bg-surface shadow-md text-xs font-medium hover:bg-surface-muted transition-colors"
                     style="color: var(--text-primary); max-width: 18rem;">
                     <i data-lucide="box" class="w-3.5 h-3.5 flex-shrink-0" style="color: var(--text-tertiary);"></i>
                     <span class="truncate min-w-0" x-text="(availableModels.find(m => m.id === currentModel)?.name) || currentModel"></span>
@@ -1127,7 +1127,7 @@
             </div>
             <!-- Active profile capsule: opens the drawer on its profile tab -->
             <button @click="openRightDrawer('profile')"
-                class="flex items-center gap-2 px-3 py-1.5 rounded-full border border-line bg-surface shadow-md text-xs font-medium hover:bg-surface-muted transition-colors"
+                class="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-line bg-surface shadow-md text-xs font-medium hover:bg-surface-muted transition-colors"
                 style="color: var(--text-primary); max-width: 14rem;"
                 :title="window.t('chat.drawer_title')">
                 <i data-lucide="user" class="w-3.5 h-3.5 flex-shrink-0" style="color: var(--text-tertiary);"></i>
@@ -1674,7 +1674,7 @@
             <div class="absolute left-0 right-0 z-20 flex justify-center pointer-events-none" style="top: -2.75rem;">
                 <button x-show="chatSettings.showScrollButton && !autoScrollEnabled && isCurrentChatStreaming()"
                     x-transition.opacity @click="forceScrollToBottom()" x-cloak
-                    class="pointer-events-auto flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-line bg-surface shadow-md text-xs font-medium hover:bg-surface-muted transition-colors"
+                    class="pointer-events-auto flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-line bg-surface shadow-md text-xs font-medium hover:bg-surface-muted transition-colors"
                     style="color: var(--text-primary);"
                     :title="window.t('chat.jump_to_latest')">
                     <i data-lucide="arrow-down" class="w-3.5 h-3.5"></i>
@@ -1877,7 +1877,7 @@
                         class="flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-aux font-semibold whitespace-nowrap transition-colors"
                         :class="rightSidebarTab === 'settings'
                             ? 'bg-neutral-200 dark:bg-neutral-700 text-neutral-900 dark:text-neutral-100'
-                            : 'text-neutral-500 hover:bg-neutral-100 dark:hover:bg-neutral-800'">
+                            : 'text-neutral-500 hover:bg-neutral-100 dark:hover:bg-accent-hover'">
                         <i data-lucide="settings" class="w-3 h-3"></i>
                         <span>{{ t('chat.model_tab') }}</span>
                     </button>
@@ -1885,7 +1885,7 @@
                         class="flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-aux font-semibold whitespace-nowrap transition-colors"
                         :class="rightSidebarTab === 'profile'
                             ? 'bg-neutral-200 dark:bg-neutral-700 text-neutral-900 dark:text-neutral-100'
-                            : 'text-neutral-500 hover:bg-neutral-100 dark:hover:bg-neutral-800'">
+                            : 'text-neutral-500 hover:bg-neutral-100 dark:hover:bg-accent-hover'">
                         <i data-lucide="user" class="w-3 h-3"></i>
                         <span>{{ t('chat.profile_tab') }}</span>
                     </button>
@@ -1893,7 +1893,7 @@
                         class="flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-aux font-semibold whitespace-nowrap transition-colors"
                         :class="rightSidebarTab === 'chat'
                             ? 'bg-neutral-200 dark:bg-neutral-700 text-neutral-900 dark:text-neutral-100'
-                            : 'text-neutral-500 hover:bg-neutral-100 dark:hover:bg-neutral-800'">
+                            : 'text-neutral-500 hover:bg-neutral-100 dark:hover:bg-accent-hover'">
                         <i data-lucide="sliders" class="w-3 h-3"></i>
                         <span>{{ t('chat.chat_tab') }}</span>
                     </button>
@@ -1923,7 +1923,7 @@
                                     class="flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer group transition-colors"
                                     :class="activePromptProfile === p.name ? 'bg-surface-muted' : 'hover:bg-surface-muted'">
                                     <span class="w-2 h-2 rounded-full flex-shrink-0"
-                                        :class="activePromptProfile === p.name ? 'bg-neutral-1000' : 'border border-line'"></span>
+                                        :class="activePromptProfile === p.name ? 'bg-accent' : 'border border-line'"></span>
                                     <span class="flex-1 text-xs font-medium truncate"
                                         style="color: var(--text-primary);" x-text="p.name"></span>
                                     <div class="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
@@ -2002,7 +2002,7 @@
                         :disabled="!activePromptProfile || !promptDirty"
                         class="flex items-center gap-1.5 px-4 py-2 rounded-lg text-[12px] font-semibold transition-all duration-200"
                         :class="promptDirty && activePromptProfile
-                            ? 'bg-neutral-900 text-white hover:bg-neutral-800 dark:bg-neutral-100 dark:text-neutral-900'
+                            ? 'bg-accent text-accent-fg hover:bg-accent-hover dark:bg-neutral-100 dark:text-neutral-900'
                             : 'bg-neutral-200 text-neutral-500 cursor-not-allowed'">
                         <i data-lucide="save" class="w-3 h-3"></i>
                         <span>{{ t('chat.save_settings') }}</span>
@@ -2337,7 +2337,7 @@
                 <div class="flex items-center justify-between mb-6">
                     <h3 class="text-lg font-bold" style="color: var(--text-primary);">{{ t('chat.chat_settings') }}</h3>
                     <button @click="showChatSettingsModal = false"
-                        class="p-2 hover:bg-surface-muted rounded-full transition-colors">
+                        class="p-2 hover:bg-surface-muted rounded-lg transition-colors">
                         <i data-lucide="x" class="w-5 h-5" style="color: var(--text-tertiary);"></i>
                     </button>
                 </div>
