@@ -428,6 +428,7 @@
   "settings.integrations.heading": "Integration Settings",
   "settings.integrations.description": "Configure document preprocessing and external tool integrations.",
   "settings.integrations.markitdown.section_label": "MarkItDown",
+  "settings.integrations.markitdown.subtitle": "Convierte adjuntos PDF, Word, PowerPoint y Excel a Markdown antes de que los vea el modelo.",
   "settings.integrations.markitdown.enabled": "Enable MarkItDown",
   "settings.integrations.markitdown.enabled_hint": "Preprocess supported file attachments before LLM requests.",
   "settings.integrations.markitdown.expose_model": "Show as model",

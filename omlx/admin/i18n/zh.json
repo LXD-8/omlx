@@ -428,6 +428,7 @@
   "settings.integrations.heading": "集成设置",
   "settings.integrations.description": "配置文档预处理和外部工具集成。",
   "settings.integrations.markitdown.section_label": "MarkItDown",
+  "settings.integrations.markitdown.subtitle": "在模型看到之前，把 PDF、Word、PowerPoint、Excel 附件转成 Markdown。",
   "settings.integrations.markitdown.enabled": "启用 MarkItDown",
   "settings.integrations.markitdown.enabled_hint": "在 LLM 请求前预处理支持的文件附件。",
   "settings.integrations.markitdown.expose_model": "作为模型显示",

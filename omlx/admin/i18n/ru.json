@@ -428,6 +428,7 @@
   "settings.integrations.heading": "Настройки интеграций",
   "settings.integrations.description": "Настройте предварительную обработку документов и интеграции с внешними инструментами.",
   "settings.integrations.markitdown.section_label": "MarkItDown",
+  "settings.integrations.markitdown.subtitle": "Преобразует вложения PDF, Word, PowerPoint и Excel в Markdown до передачи модели.",
   "settings.integrations.markitdown.enabled": "Включить MarkItDown",
   "settings.integrations.markitdown.enabled_hint": "Предварительно обрабатывать поддерживаемые вложения перед запросами к LLM.",
   "settings.integrations.markitdown.expose_model": "Показывать как модель",

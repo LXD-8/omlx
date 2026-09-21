@@ -842,6 +842,14 @@
                 // and keep the search in sync with it.
                 this.settingsInitSections();
                 this.$watch('settingsSearch', () => this.settingsApplySearch());
+
+                // Every modal in the console is a flag plus a <dialog>: keep the
+                // two in step here instead of relying on each template.
+                ['showHfMirrorModal', 'showModelSettingsModal', 'showGlobalResetNotice',
+                 'benchConfirm'].forEach((flag) => {
+                    this.$watch(flag, () => this.$nextTick(() => this.syncAllDialogs()));
+                });
+                this.$watch('settingsApply.open', () => this.$nextTick(() => this.syncAllDialogs()));
                 this.$watch('activeTab', () => {
                     this.settingsSearch = '';
                     this.settingsInitSections();
@@ -1284,6 +1292,31 @@
                     if (!this.uploadOqModelsLoaded) this.loadUploadOqModels();
                     this.loadUploadTasks();
                 }
+            },
+
+            // === Dialogs ===
+            // `<dialog>` + x-effect did not work: the dialog element sat outside
+            // Alpine's initialised tree (it never received a scope), so
+            // showModal() was never called and the buttons did nothing. The flags
+            // stay the single source of truth; this pushes them onto the element,
+            // which is what the platform actually needs.
+            syncDialog(id, open) {
+                const dialog = document.getElementById(id);
+                if (!dialog) return;
+                try {
+                    if (open && !dialog.open) dialog.showModal();
+                    else if (!open && dialog.open) dialog.close();
+                } catch (err) {
+                    console.error('dialog ' + id + ' failed:', err);
+                }
+            },
+
+            syncAllDialogs() {
+                this.syncDialog('hf-mirror-dialog', this.showHfMirrorModal);
+                this.syncDialog('model-settings-dialog', this.showModelSettingsModal);
+                this.syncDialog('settings-apply-dialog', Boolean(this.settingsApply && this.settingsApply.open));
+                this.syncDialog('global-reset-dialog', this.showGlobalResetNotice);
+                this.syncDialog('bench-confirm-dialog', Boolean(this.benchConfirm));
             },
 
            async checkForUpdate() {

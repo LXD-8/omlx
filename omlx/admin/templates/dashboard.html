@@ -60,7 +60,7 @@
     {{ ui.shortcut_overview(shortcuts) }}
 
     <!-- HF Mirror Settings Modal -->
-    <dialog x-effect="showHfMirrorModal ? $el.showModal() : $el.close()" x-cloak
+    <dialog id="hf-mirror-dialog"
          class="dashboard-dialog fixed inset-0 z-50 overflow-y-auto"
          role="dialog" aria-modal="true" aria-labelledby="hf-mirror-modal-title"
          @keydown.tab="trapDialogFocus($event)"

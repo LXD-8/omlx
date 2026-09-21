@@ -428,6 +428,7 @@
   "settings.integrations.heading": "통합 설정",
   "settings.integrations.description": "문서 전처리와 외부 도구 통합을 설정합니다.",
   "settings.integrations.markitdown.section_label": "MarkItDown",
+  "settings.integrations.markitdown.subtitle": "PDF, Word, PowerPoint, Excel 첨부를 Markdown으로 변환한 뒤 모델에 전달합니다.",
   "settings.integrations.markitdown.enabled": "MarkItDown 활성화",
   "settings.integrations.markitdown.enabled_hint": "지원되는 파일 첨부를 LLM 요청 전에 전처리합니다.",
   "settings.integrations.markitdown.expose_model": "모델로 표시",

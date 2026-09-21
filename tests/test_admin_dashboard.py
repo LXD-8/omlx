@@ -111,3 +111,20 @@ def test_status_tab_helpers_exist_and_are_pure():
     body = DASHBOARD_JS[DASHBOARD_JS.index("async unloadAllModels()"):][:600]
     assert "this.unloadModel(model.id)" in body
     assert "/api/" not in body, "no new endpoint"
+
+
+def test_every_template_keeps_its_divs_balanced():
+    """One stray </div> in a partial closes the page's Alpine root early, and
+    everything after it — the modals — lands outside the scope, so their buttons
+    do nothing. This is the guard for that class of bug."""
+    env = _env()
+    unbalanced = {}
+    for partial in sorted(BLOCKS.glob("_*.html")):
+        html = env.get_template(f"dashboard/blocks/{partial.name}").render()
+        unbalanced[partial.name] = html.count("<div") - html.count("</div>")
+    status = env.get_template("dashboard/_status.html").render()
+    unbalanced["_status.html"] = status.count("<div") - status.count("</div>")
+    dashboard = env.get_template("dashboard.html").render()
+    unbalanced["dashboard.html"] = dashboard.count("<div") - dashboard.count("</div>")
+    offenders = {name: value for name, value in unbalanced.items() if value != 0}
+    assert not offenders, f"unbalanced <div> in: {offenders}"

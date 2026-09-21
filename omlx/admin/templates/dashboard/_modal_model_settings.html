@@ -1,5 +1,5 @@
     <!-- Model Settings Modal -->
-    <dialog x-effect="showModelSettingsModal ? $el.showModal() : $el.close()" x-cloak
+    <dialog id="model-settings-dialog"
          class="dashboard-dialog fixed inset-0 z-50 overflow-y-auto"
          role="dialog" aria-modal="true" aria-labelledby="model-settings-modal-title"
          @keydown.tab="trapDialogFocus($event)"

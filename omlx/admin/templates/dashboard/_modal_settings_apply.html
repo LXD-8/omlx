@@ -1,5 +1,5 @@
     <!-- Settings snapshot modal: reset confirmation / omlx.ai candidates / pasted recipe -->
-    <dialog x-effect="settingsApply.open ? $el.showModal() : $el.close()" x-cloak
+    <dialog id="settings-apply-dialog"
          class="dashboard-dialog fixed inset-0 z-[60] overflow-y-auto"
          role="dialog" aria-modal="true" aria-labelledby="settings-apply-modal-title"
          @keydown.tab="trapDialogFocus($event)"

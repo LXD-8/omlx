@@ -1260,8 +1260,8 @@
 
 .settings-rail {
     position: sticky;
-    /* Clears the fixed top bar and its gutter. */
-    top: var(--space-10);
+    /* Clears the top bar and the sub-tab switcher above it. */
+    top: calc(var(--space-10) + var(--space-6) + var(--space-3));
     max-height: calc(100vh - var(--space-10));
     overflow-y: auto;
     padding: var(--space-4);
@@ -1293,7 +1293,10 @@
 }
 .settings-rail__input {
     width: 100%;
-    padding: var(--space-2) var(--space-2) var(--space-2) var(--space-8);
+    /* One space of padding, then the square icon box, then one more space:
+       the text starts one space after the icon box ends. */
+    padding: var(--space-2);
+    padding-inline-start: calc(var(--space-2) * 2 + var(--space-4));
     font-size: var(--fs-body);
     line-height: var(--lh-body);
     color: var(--text-primary);
@@ -1306,6 +1309,8 @@
     top: 50%;
     left: var(--space-2);
     transform: translateY(-50%);
+    width: var(--space-4);
+    height: var(--space-4);
     color: var(--text-tertiary);
     pointer-events: none;
 }
@@ -1476,4 +1481,14 @@
     line-height: var(--lh-body);
     color: var(--text-tertiary);
     text-align: center;
+}
+
+/* The sub-tab switcher pins under the top bar, so scrolling moves only the
+   section cards on the right. */
+.settings-tabs {
+    position: sticky;
+    top: calc(var(--space-10) + var(--space-3));
+    z-index: 30;
+    background-color: var(--bg-primary);
+    padding-block: var(--space-2);
 }

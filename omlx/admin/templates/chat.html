@@ -864,6 +864,22 @@
         z-index: 50;
     }
 
+    /* The right sidebar is part of the layout, not a transient overlay: on a
+       window with room for it, the chat column simply gives it the space. */
+    @media (min-width: 1100px) {
+        .chat-drawer {
+            position: static;
+            transform: none;
+            box-shadow: none;
+            height: 100%;
+            flex-shrink: 0;
+        }
+
+        .chat-drawer-scrim {
+            display: none;
+        }
+    }
+
     /* Timeline Rail */
     .timeline-rail-line {
         position: absolute;
@@ -1081,8 +1097,8 @@
         <!-- Sidebar Footer -->
         <div class="p-2 border-t border-line flex-shrink-0">
             <button @click="showChatSettingsModal = true"
-                class="w-full flex items-center gap-1.5 px-2 py-1 text-xs text-fg-tertiary hover:bg-surface-muted rounded">
-                <i data-lucide="settings" class="w-3 h-3"></i>
+                class="w-full flex items-center gap-1.5 px-2 py-1 text-body text-fg-secondary hover:bg-surface-muted rounded">
+                <i data-lucide="settings" class="w-4 h-4"></i>
                 {{ t('chat.chat_settings') }}
             </button>
         </div>
@@ -2645,10 +2661,11 @@
             BUILTIN_WEB_TOOL_ROUTES: { web_search: '/v1/web/search', fetch_url: '/v1/web/fetch' },
 
             // Right Sidebar State
-            // The drawer starts closed: the header carries the summary (model
-            // + active profile) and opens the drawer, so it no longer steals
-            // width from the transcript on wide screens.
-            rightSidebarOpen: false,
+            // The review asked for the profile/settings sidebar to be visible
+            // without asking for it: it starts open, and on a window with room
+            // for it the stylesheet lays it out as a column instead of an
+            // overlay (see .chat-drawer in the <style> block above).
+            rightSidebarOpen: window.innerWidth >= 1100,
             showRightToggle: window.innerWidth < 1200,
             modelSettingsDirty: false,
             speculativeEngine: 'none',

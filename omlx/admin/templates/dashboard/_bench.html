@@ -566,7 +566,7 @@
                      exclusive use, so the server unloads all resident models and
                      interrupts in-flight requests. Same <dialog> pattern as the
                      other console modals; focus starts on Cancel. -->
-                <dialog x-effect="benchConfirm ? $el.showModal() : $el.close()" x-cloak
+                <dialog id="bench-confirm-dialog"
                         class="dashboard-dialog fixed inset-0 z-[60] overflow-y-auto"
                         role="alertdialog" aria-modal="true"
                         aria-labelledby="bench-confirm-title" aria-describedby="bench-confirm-body"

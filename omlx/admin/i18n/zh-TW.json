@@ -428,6 +428,7 @@
   "settings.integrations.heading": "整合設定",
   "settings.integrations.description": "設定文件預處理與外部工具整合。",
   "settings.integrations.markitdown.section_label": "MarkItDown",
+  "settings.integrations.markitdown.subtitle": "在模型看到之前，把 PDF、Word、PowerPoint、Excel 附件轉成 Markdown。",
   "settings.integrations.markitdown.enabled": "啟用 MarkItDown",
   "settings.integrations.markitdown.enabled_hint": "在 LLM 請求前預處理支援的檔案附件。",
   "settings.integrations.markitdown.expose_model": "顯示為模型",

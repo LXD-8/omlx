@@ -87,7 +87,7 @@
 
             <div x-show="mainTab === 'settings'" class="page-wide" x-cloak role="tabpanel" id="panel-settings" aria-labelledby="tab-settings">
             <!-- Tab Navigation -->
-            <div class="mb-10 animate-fade-in-up">
+            <div class="settings-tabs mb-6 animate-fade-in-up">
                 {{ ui.segmented(tabs, 'activeTab', "setSettingsTab('{value}')",
                                 aria_label=t('settings.sections.label')) }}
             </div>
@@ -1317,7 +1317,7 @@
                                     aria-label="{{ t('settings.sections.copy_link') }}">
                                 <i data-lucide="link" class="w-3.5 h-3.5" aria-hidden="true"></i>
                             </button>{% endset %}
-                        {% call ui.card(icon='file-text', title=t('settings.integrations.markitdown.section_label'), header_actions=int_markitdown_actions | safe, attrs='settings-section', id="settings-int-markitdown") %}
+                        {% call ui.card(icon='file-text', title=t('settings.integrations.markitdown.section_label'), subtitle=t('settings.integrations.markitdown.subtitle'), header_actions=int_markitdown_actions | safe, attrs='settings-section', id="settings-int-markitdown") %}
                             <div class="divide-y divide-neutral-100">
                                 <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 px-4 sm:px-6 py-4">
                                     <div>
@@ -1936,7 +1936,7 @@
             </div>
             </div>
 
-            <dialog x-effect="showGlobalResetNotice ? $el.showModal() : $el.close()" x-cloak
+            <dialog id="global-reset-dialog"
                     class="dashboard-dialog fixed inset-0 z-[60] overflow-y-auto"
                     aria-modal="true" aria-labelledby="global-reset-title" aria-describedby="global-reset-message"
                     @keydown.tab="trapDialogFocus($event)" @cancel.prevent="cancelGlobalSettingsReset()">

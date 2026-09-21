@@ -178,7 +178,10 @@ def test_starting_a_benchmark_asks_through_the_shared_dialog():
     assert "<dialog" in BENCH
     dialog = _section(BENCH, "<!-- Destructive-action alert", "</dialog>")
     assert "dashboard-dialog" in dialog, "the console's existing dialog pattern"
-    assert 'x-effect="benchConfirm ? $el.showModal() : $el.close()"' in dialog
+    # The dialog is opened from JS (dashboard.js / syncDialog): <dialog> with
+    # x-effect never ran, because the element sits outside Alpine's scope.
+    assert 'id="bench-confirm-dialog"' in dialog
+    assert "syncDialog('bench-confirm-dialog'" in DASHBOARD_JS
     assert 'role="alertdialog"' in dialog
     assert 'aria-modal="true"' in dialog
     assert '@keydown.tab="trapDialogFocus($event)"' in dialog
