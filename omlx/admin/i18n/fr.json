@@ -399,8 +399,6 @@
   "settings.sections.models_desc": "Tous les modèles détectés avec leur taille, leur état et leurs réglages d'échantillonnage.",
   "settings.sections.integrations_desc": "Conversion de documents et recherche web pour les requêtes de chat.",
   "settings.sections.label": "Sections",
-  "settings.sections.search_placeholder": "Rechercher une section…",
-  "settings.sections.no_match": "Aucune section ne correspond",
   "settings.sections.copy_link": "Copier le lien vers cette section",
   "settings.sections.appearance": "Apparence",
   "settings.sections.appearance_desc": "Thème et lisibilité du texte de cette console.",

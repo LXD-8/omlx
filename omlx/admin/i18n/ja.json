@@ -399,8 +399,6 @@
   "settings.sections.models_desc": "検出されたすべてのモデルをサイズ・状態・サンプラー設定とともに表示します。",
   "settings.sections.integrations_desc": "チャットリクエストの文書変換とウェブ検索。",
   "settings.sections.label": "セクション",
-  "settings.sections.search_placeholder": "セクションを検索…",
-  "settings.sections.no_match": "一致するセクションがありません",
   "settings.sections.copy_link": "このセクションへのリンクをコピー",
   "settings.sections.appearance": "外観",
   "settings.sections.appearance_desc": "このコンソールのテーマと文字の読みやすさ。",
