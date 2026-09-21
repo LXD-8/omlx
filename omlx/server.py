@@ -7415,23 +7415,23 @@ async def stream_responses_api(
     reasoning_output_index: Optional[int] = None  # captured when reasoning opens
     msg_output_index: Optional[int] = None  # captured when message opens
 
-    # Build initial response object (in_progress, empty output). temperature
-    # and top_p come from kwargs, which carry the values resolved by
-    # get_sampling_params (defaults filled in), not request.temperature /
-    # request.top_p: the non-streaming body echoes the resolved values, so the
-    # streaming envelope must too or the two disagree whenever the client
-    # omitted a field.
-    initial_response = ResponseObject(
-        id=response_id,
-        model=request.model,
-        status="in_progress",
-        output=[],
-        tools=request.tools or [],
-        tool_choice=request.tool_choice or "auto",
+    # Build the opening snapshot from the same envelope builder as the terminal
+    # event, so response.created / response.in_progress echo every request field
+    # the terminal event does. temperature and top_p come from kwargs, which
+    # carry the values resolved by get_sampling_params (defaults filled in), not
+    # request.temperature / request.top_p: the non-streaming body echoes the
+    # resolved values, so the streaming envelope must too or the two disagree
+    # whenever the client omitted a field.
+    initial_response = build_response_object(
+        request,
+        response_id=response_id,
+        created_at=get_unix_timestamp(),
+        output_items=[],
+        usage=None,
+        truncated=False,
         temperature=kwargs.get("temperature"),
         top_p=kwargs.get("top_p"),
-        max_output_tokens=request.max_output_tokens,
-        previous_response_id=request.previous_response_id,
+        status="in_progress",
     )
     initial_data = initial_response.model_dump(exclude_none=True)
 

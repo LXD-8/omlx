@@ -985,6 +985,8 @@ class TestBuildOutputItems:
         assert env["reasoning"] == {"effort": "low"}
         assert env["temperature"] == 0.25
         assert env["top_p"] == 0.5
+        # The one request field the envelope used to drop on the floor.
+        assert env["truncation"] == "disabled"
         assert env["model"] == "m"
         assert env["id"] == "resp_test"
         assert env["created_at"] == 1
@@ -1037,7 +1039,36 @@ class TestBuildOutputItems:
 
         # A non-null truncation survives into both; a null one is only absent
         # from the streamed terminal, which is the documented key-set drift.
-        assert terminal.get("truncation") == body.get("truncation")
+        assert body["truncation"] == "disabled"
+        assert terminal["truncation"] == "disabled"
+
+    def test_build_response_object_echoes_the_truncation_mode(self):
+        """A request's truncation mode round-trips instead of staying null."""
+        default = build_response_object(
+            ResponsesRequest(model="m", input="hi"),
+            response_id="resp_test",
+            created_at=1,
+            output_items=[],
+            usage=None,
+            truncated=False,
+            temperature=None,
+            top_p=None,
+        )
+        # OpenAI's default for the field when the client sends nothing.
+        assert default.truncation == "disabled"
+        assert (
+            build_response_object(
+                ResponsesRequest(model="m", input="hi", truncation="disabled"),
+                response_id="resp_test",
+                created_at=1,
+                output_items=[],
+                usage=None,
+                truncated=False,
+                temperature=None,
+                top_p=None,
+            ).truncation
+            == "disabled"
+        )
 
     def test_build_response_object_marks_truncation(self):
         env = build_response_object(
