@@ -47,6 +47,20 @@ function usageHistory() {
                 if (this.request === request) this.loading = false;
             }
         },
+        // Hourly totals across the selected range, so the strip above the
+        // heatmap shows the shape of a day rather than a single date.
+        hourlyTotals() {
+            const totals = new Array(24).fill(0);
+            (this.data?.heatmap || []).forEach(day => {
+                (day.tokens || []).forEach((tokens, hour) => { totals[hour] += tokens || 0; });
+            });
+            return totals;
+        },
+        hourlyPeak() { return Math.max(1, ...this.hourlyTotals()); },
+        hourlyBarStyle(total) {
+            const ratio = total / this.hourlyPeak();
+            return `height: ${Math.max(2, Math.round(ratio * 100))}%; opacity: ${(0.25 + 0.75 * Math.sqrt(ratio)).toFixed(2)};`;
+        },
         shade(tokens) {
             return tokens ? `rgba(22, 163, 74, ${0.2 + 0.8 * Math.sqrt(tokens / this.peak)})` : 'rgba(128, 128, 128, 0.12)';
         },

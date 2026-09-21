@@ -324,3 +324,179 @@
     line-height: var(--lh-body);
     color: var(--text-tertiary);
 }
+
+/* === KPI card ===
+   Left-aligned: auxiliary label, 28pt figure, optional unit and a sparkline
+   that fills the bottom of the card. */
+
+.kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(var(--kpi-min-width), 1fr));
+    gap: var(--space-4);
+}
+
+.kpi {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+    padding: var(--space-5);
+    background-color: var(--bg-primary);
+    border: 1px solid var(--border-faint);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-card);
+}
+
+.kpi__label {
+    font-size: var(--fs-aux);
+    line-height: var(--lh-aux);
+    font-weight: 600;
+    color: var(--text-tertiary);
+}
+
+.kpi__figure {
+    display: flex;
+    align-items: baseline;
+    gap: var(--space-1);
+}
+
+.kpi__value {
+    font-size: var(--fs-kpi);
+    line-height: var(--lh-kpi);
+    font-weight: 600;
+    color: var(--text-primary);
+    font-variant-numeric: tabular-nums;
+}
+
+.kpi__unit {
+    font-size: var(--fs-body);
+    line-height: var(--lh-body);
+    color: var(--text-tertiary);
+}
+
+.kpi__spark {
+    display: block;
+    width: 100%;
+    height: var(--space-5);
+    margin-top: var(--space-2);
+    color: var(--sys-blue);
+}
+
+.kpi__spark path {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    vector-effect: non-scaling-stroke;
+}
+
+/* No sample yet: keep the slot so the grid does not reflow on first poll. */
+.kpi__spark--empty {
+    opacity: 0;
+}
+
+/* === Server status header card === */
+
+.status-header__icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: var(--space-8);
+    height: var(--space-8);
+    border-radius: var(--radius-md);
+    background-color: var(--bg-tertiary);
+    color: var(--text-secondary);
+}
+
+.status-header__meta {
+    font-size: var(--fs-aux);
+    line-height: var(--lh-aux);
+    color: var(--text-tertiary);
+}
+
+/* === Memory watermark bar ===
+   One track scaled to the hard limit, the measured footprint inside it, the
+   estimate that sits behind it, and the two guard marks. */
+
+.watermark {
+    position: relative;
+    height: var(--space-3);
+    border-radius: var(--radius-sm);
+    background-color: var(--bg-tertiary);
+    overflow: hidden;
+}
+
+.watermark__bar {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    border-radius: var(--radius-sm);
+}
+
+.watermark__bar--estimated {
+    background-color: color-mix(in srgb, var(--sys-blue) 22%, transparent);
+}
+
+.watermark__bar--actual {
+    background-color: var(--sys-blue);
+}
+
+.watermark__marker {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 1px;
+    background-color: var(--sys-orange);
+}
+
+.watermark__legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-4);
+    margin-top: var(--space-2);
+    font-size: var(--fs-aux);
+    line-height: var(--lh-aux);
+    color: var(--text-tertiary);
+}
+
+.watermark__swatch {
+    display: inline-block;
+    width: var(--space-2);
+    height: var(--space-2);
+    border-radius: var(--radius-sm);
+    margin-right: var(--space-1);
+    vertical-align: -1px;
+}
+
+.watermark__swatch--actual {
+    background-color: var(--sys-blue);
+}
+
+.watermark__swatch--estimated {
+    background-color: color-mix(in srgb, var(--sys-blue) 22%, transparent);
+}
+
+.watermark__swatch--marker {
+    width: 1px;
+    border-radius: 0;
+    background-color: var(--sys-orange);
+}
+
+/* === Hourly trend strip ===
+   One bar per hour, summing every day in the selected range; it sits above the
+   day/hour heatmap so both read against the same 24 columns. */
+
+.heat-strip {
+    display: grid;
+    grid-template-columns: var(--heat-label-column) repeat(24, minmax(0, 1fr));
+    gap: var(--space-1);
+    align-items: end;
+    height: var(--space-8);
+}
+
+.heat-strip__bar {
+    display: block;
+    border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+    background-color: var(--sys-green);
+}

@@ -140,6 +140,7 @@ TEMPLATE_LITERALS = [
     "medium",
     "oMLX",
     "thinking",
+    "tok/s",
     "true",
     "xhigh",
 ]

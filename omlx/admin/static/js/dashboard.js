@@ -376,6 +376,9 @@
             dashSaveError: '',
             dashPlacedIds: [],
             dashEditAvailable: true,
+            // Rolling samples for the KPI sparklines, one array per card.
+            kpiHistory: {requests: [], prompt: [], cached: [], cache: []},
+            kpiHistoryLimit: 40,
             selectedStatsModel: '',
             showClearStatsConfirm: false,
             showClearAlltimeConfirm: false,
@@ -3948,6 +3951,7 @@
                     if (response.ok) {
                         const data = await response.json();
                         this.stats = { ...this.stats, ...data };
+                        this.recordKpiHistory();
                     } else if (response.status === 401) {
                         window.location.href = '/admin';
                     }
@@ -3966,6 +3970,7 @@
                     if (alltimeResponse.ok) {
                         const alltimeData = await alltimeResponse.json();
                         this.alltimeStats = { ...this.alltimeStats, ...alltimeData };
+                        if (this.statsScope === 'alltime') this.recordKpiHistory();
                     }
                 } catch (err) {
                     console.error('Failed to load stats:', err);
@@ -4182,6 +4187,104 @@
 
             get activeModelsSoftMarkerStyle() {
                 return `left: ${this.activeModelsSoftPercent}%; width: 1px; background-color: rgba(64, 64, 64, 0.6);`;
+            },
+
+            /* --- Status header / KPI cards / memory watermark --- */
+
+            // The sparkline keeps its own history: the stats payload is a
+            // snapshot, and a single sample has no shape to draw.
+            recordKpiHistory() {
+                const snapshot = this.statsScope === 'alltime' ? this.alltimeStats : this.stats;
+                if (!snapshot) return;
+                const series = {
+                    requests: snapshot.total_requests,
+                    prompt: snapshot.total_prompt_tokens,
+                    cached: snapshot.total_cached_tokens,
+                    cache: snapshot.cache_efficiency,
+                };
+                Object.entries(series).forEach(([key, value]) => {
+                    if (typeof value !== 'number' || !isFinite(value)) return;
+                    const history = this.kpiHistory[key];
+                    history.push(value);
+                    if (history.length > this.kpiHistoryLimit) history.shift();
+                });
+            },
+
+            sparkPath(key) {
+                const history = this.kpiHistory[key] || [];
+                if (history.length < 2) return '';
+                const lowest = Math.min(...history);
+                const highest = Math.max(...history);
+                const span = highest - lowest;
+                const step = 100 / (history.length - 1);
+                return history
+                    .map((value, index) => {
+                        const x = (index * step).toFixed(2);
+                        // A flat series is drawn down the middle: pinning it to
+                        // the floor would read as "no samples".
+                        const y = (span === 0 ? 12 : 22 - ((value - lowest) / span) * 20).toFixed(2);
+                        return `${index === 0 ? 'M' : 'L'}${x},${y}`;
+                    })
+                    .join(' ');
+            },
+
+            sparkIsEmpty(key) {
+                return (this.kpiHistory[key] || []).length < 2;
+            },
+
+            // One track, scaled to the hard limit: the measured footprint, the
+            // estimate that sits behind it, and the two guard marks.
+            get memoryWatermark() {
+                const pressure = this.stats?.active_models?.memory_pressure;
+                const models = this.stats?.active_models?.models || [];
+                const hard = pressure?.hard_bytes || this.stats?.active_models?.model_memory_max || 0;
+                const actual = pressure?.enabled
+                    ? pressure.current_bytes
+                    : this.stats?.active_models?.model_memory_used || 0;
+                const soft = pressure?.soft_bytes || 0;
+                const estimated = models.reduce((total, model) => total + (model.estimated_size || 0), 0);
+                return {
+                    enabled: Boolean(pressure?.enabled) && hard > 0,
+                    hard,
+                    actual,
+                    soft,
+                    estimated,
+                    actualPercent: hard ? Math.min(100, (actual / hard) * 100) : 0,
+                    estimatedPercent: hard ? Math.min(100, (estimated / hard) * 100) : 0,
+                    softPercent: hard && soft ? Math.min(100, (soft / hard) * 100) : 0,
+                };
+            },
+
+            watermarkBarStyle(percent) {
+                return `width: ${percent}%;`;
+            },
+
+            watermarkMarkerStyle(percent) {
+                return `left: ${percent}%;`;
+            },
+
+            formatUptime(seconds) {
+                if (seconds == null || !isFinite(seconds)) return '—';
+                const total = Math.floor(seconds);
+                const days = Math.floor(total / 86400);
+                const hours = Math.floor((total % 86400) / 3600);
+                const minutes = Math.floor((total % 3600) / 60);
+                if (days > 0) return `${days}d ${hours}h`;
+                if (hours > 0) return `${hours}h ${minutes}m`;
+                return `${minutes}m`;
+            },
+
+            async unloadAllModels() {
+                const models = this.stats?.active_models?.models || [];
+                const loaded = models.filter(model => !model.is_loading);
+                if (!loaded.length) return;
+                if (!window.confirm(window.t('status.header.unload_all_confirm')
+                    .replace('{count}', String(loaded.length)))) {
+                    return;
+                }
+                for (const model of loaded) {
+                    await this.unloadModel(model.id);
+                }
             },
 
             activeModelsPressureLabel() {

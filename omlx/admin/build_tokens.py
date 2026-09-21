@@ -95,6 +95,8 @@ def _geometry_vars(tokens: dict) -> list[tuple[str, str]]:
         ("--gutter", f"{layout['gutter']}px"),
         ("--container-form", f"{layout['formMaxWidth']}px"),
         ("--container-wide", f"{layout['wideMaxWidth']}px"),
+        ("--kpi-min-width", f"{layout['kpiMinWidth']}px"),
+        ("--heat-label-column", f"{layout['heatLabelColumn']}px"),
     ]
     material = tokens["material"]
     pairs += [
