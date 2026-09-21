@@ -1,5 +1,6 @@
                 <!-- Context tab -->
                 <div x-show="benchTab === 'context'" x-cloak>
+                {% import "components/ui.html" as ui %}
                 <div class="animate-fade-in-up">
                     <!-- Header -->
                     <div class="mb-8">
@@ -35,18 +36,11 @@
                             <!-- Target context window -->
                             <div>
                                 <label class="block text-sm font-medium text-neutral-700 mb-2">{{ t('ctx_bench.config.target') }}</label>
-                                <div class="flex flex-wrap items-center gap-2">
-                                    <template x-for="t in ctxBenchTargetOptions()" :key="t">
-                                        <button
-                                            @click="ctxBenchTarget = t"
-                                            :disabled="ctxBenchRunning"
-                                            :class="ctxBenchTarget === t
-                                                ? 'bg-neutral-900 text-white'
-                                                : 'text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100 border border-neutral-200'"
-                                            class="px-4 py-1.5 rounded-full text-sm font-medium transition-all duration-200 disabled:opacity-50"
-                                            x-text="(t / 1024) + 'k'"></button>
-                                    </template>
-                                </div>
+                                {{ ui.segmented_each('ctxBenchTargetChoices()',
+                                                     active='ctxBenchTarget',
+                                                     setter='ctxBenchTarget = {value}',
+                                                     disabled='ctxBenchRunning',
+                                                     aria_label=t('ctx_bench.config.target')) }}
                                 <p class="text-xs text-neutral-500 mt-2">{{ t('ctx_bench.config.target_hint') }}</p>
                             </div>
 
@@ -89,7 +83,7 @@
 
                             <!-- Start button -->
                             <div class="flex justify-end">
-                                <button @click="startContextBenchmark()"
+                                <button @click="requestBenchConfirm('context')"
                                         :disabled="ctxBenchRunning || !ctxBenchModelId"
                                         class="px-5 py-2.5 bg-neutral-900 text-white text-sm font-medium rounded-xl hover:bg-neutral-800 transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2">
                                     <i data-lucide="play" class="w-4 h-4"></i>

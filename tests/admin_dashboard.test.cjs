@@ -208,3 +208,139 @@ test('an empty sampling field shows what it inherits', () => {
         context.window.t = previous;
     }
 });
+
+// === Benchmark presets and group helpers (PR 7) ===
+
+// The app lives in its own vm realm, so arrays it creates have a different
+// prototype than the ones here: copy through the outer realm before comparing.
+function selectedKeys(selection) {
+    const keys = Object.keys(selection.benchmarks).filter(key => selection.benchmarks[key]);
+    return keys.sort();
+}
+
+const catalogueKeys = Array.from(
+    app.accBenchmarkGroups.flatMap(group => group.benchmarks.map(b => b.key))
+).sort();
+
+test('every preset expands to a complete, non-empty selection', () => {
+    for (const preset of ['quick', 'standard', 'full']) {
+        const selection = app.accPresetSelection(preset);
+        assert.deepEqual(
+            Object.keys(selection.sampleSizes).sort(), catalogueKeys,
+            `${preset} must cover the whole catalogue`
+        );
+        assert.deepEqual(
+            Object.keys(selection.benchmarks).sort(), catalogueKeys,
+            `${preset} must decide every benchmark`
+        );
+        const selected = selectedKeys(selection);
+        assert.ok(selected.length > 0, `${preset} leaves the form empty`);
+        for (const key of selected) {
+            assert.ok(catalogueKeys.includes(key), `${preset} names an unknown benchmark`);
+            assert.ok(Number.isFinite(selection.sampleSizes[key]), `${preset}/${key} has no size`);
+        }
+    }
+});
+
+test('quick is a small subset, standard is the default set, full is everything', () => {
+    const quick = app.accPresetSelection('quick');
+    assert.deepEqual(selectedKeys(quick), ['arc_challenge', 'gsm8k', 'mmlu']);
+    assert.equal(quick.sampleSizes.mmlu, 100);
+    assert.equal(quick.sampleSizes.gsm8k, 100);
+
+    const standard = app.accPresetSelection('standard');
+    assert.deepEqual(selectedKeys(standard), ['humaneval', 'mmlu', 'truthfulqa']);
+    assert.equal(standard.sampleSizes.mmlu, 1000);
+
+    const full = app.accPresetSelection('full');
+    assert.deepEqual(selectedKeys(full), catalogueKeys);
+    assert.equal(Object.keys(full.benchmarks).length, catalogueKeys.length);
+    assert.equal(Object.values(full.sampleSizes).every(size => size === 0), true,
+        '0 means the benchmark\'s own full dataset');
+});
+
+test('an unknown preset falls back to the default instead of an empty form', () => {
+    const selection = app.accPresetSelection('nonsense');
+    assert.deepEqual(selectedKeys(selection), ['humaneval', 'mmlu', 'truthfulqa']);
+});
+
+test('applying a preset is recognisable as that preset', () => {
+    const benchmarks = { ...app.accBenchmarks };
+    const sampleSizes = { ...app.accSampleSizes };
+    app.accBenchmarks = { mmlu: true };
+    app.accSampleSizes = { mmlu: 30 };
+    for (const preset of ['quick', 'standard', 'full']) {
+        app.applyAccPreset(preset);
+        assert.equal(app.accActivePreset, preset, `${preset} must round-trip`);
+    }
+    app.applyAccPreset('quick');
+    app.accBenchmarks.mmlu = false;
+    assert.equal(app.accActivePreset, 'custom', 'a hand-picked selection is not a preset');
+    app.accBenchmarks = benchmarks;
+    app.accSampleSizes = sampleSizes;
+});
+
+test('the group Full option takes the whole group at full size', () => {
+    const benchmarks = { ...app.accBenchmarks };
+    const sampleSizes = { ...app.accSampleSizes };
+    const group = app.accBenchmarkGroups.find(g => g.key === 'math');
+    app.applyGroupFull(group);
+    for (const benchmark of group.benchmarks) {
+        assert.equal(app.accBenchmarks[benchmark.key], true);
+        assert.equal(app.accSampleSizes[benchmark.key], 0);
+    }
+    assert.equal(
+        app.accGroupSamples(group),
+        group.benchmarks.reduce((total, b) => total + b.fullSize, 0)
+    );
+    app.accBenchmarks = benchmarks;
+    app.accSampleSizes = sampleSizes;
+});
+
+test('a selected group counts its samples and falls back to the full dataset', () => {
+    const group = app.accBenchmarkGroups.find(g => g.key === 'math');
+    app.accBenchmarks = { gsm8k: true, mathqa: false };
+    app.accSampleSizes = { gsm8k: 100, mathqa: 0 };
+    assert.deepEqual(Array.from(app.accGroupSelected(group), b => b.key), ['gsm8k']);
+    assert.equal(app.accGroupSamples(group), 100);
+    app.accSampleSizes = { gsm8k: 0, mathqa: 0 };
+    assert.equal(app.accGroupSamples(group), group.benchmarks[0].fullSize);
+});
+
+test('the context target list is the reachable set with k labels', () => {
+    app.models = [{ id: 'm', model_context_length: 40000 }];
+    app.ctxBenchModelId = 'm';
+    const choices = Array.from(app.ctxBenchTargetChoices(), c => [c.value, c.label]);
+    assert.deepEqual(choices, [[16384, '16k'], [32768, '32k']]);
+    assert.deepEqual([...app.ctxBenchTargetOptions()], [16384, 32768]);
+});
+
+test('an external benchmark run skips the destructive confirmation', async () => {
+    app.accExternalEnabled = true;
+    let queued = 0;
+    app.addToAccQueue = async () => { queued += 1; };
+    app.requestBenchConfirm('accuracy');
+    assert.equal(queued, 1, 'an external endpoint never unloads local models');
+    assert.equal(app.benchConfirm, null);
+
+    app.benchExternalEnabled = true;
+    let started = 0;
+    app.startBenchmark = async () => { started += 1; };
+    app.requestBenchConfirm('throughput');
+    assert.equal(started, 1);
+    assert.equal(app.benchConfirm, null);
+});
+
+test('a local benchmark run waits for the confirmation', () => {
+    app.accExternalEnabled = false;
+    app.benchExternalEnabled = false;
+    let queued = 0;
+    app.addToAccQueue = async () => { queued += 1; };
+    app.requestBenchConfirm('accuracy');
+    assert.equal(queued, 0, 'nothing runs before the alert is confirmed');
+    assert.equal(app.benchConfirm, 'accuracy');
+    app.cancelBenchConfirm();
+    assert.equal(app.benchConfirm, null, 'cancel leaves nothing pending');
+    assert.equal(queued, 0);
+});
+

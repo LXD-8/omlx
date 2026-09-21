@@ -167,6 +167,18 @@
         cancelled: 'models.status.cancelled',
     };
 
+    // Benchmark presets. A preset is a complete map of benchmark -> samples,
+    // where 0 means "the benchmark's own full dataset", so applying one always
+    // leaves the form with a valid, non-empty selection. `quick` is a small
+    // but meaningful read (one knowledge, commonsense and math benchmark, 100
+    // questions each); `standard` is the console's default selection; `full` is
+    // built from the catalogue so a new benchmark joins it automatically.
+    const ACC_PRESETS = {
+        quick: { mmlu: 100, arc_challenge: 100, gsm8k: 100 },
+        standard: { mmlu: 1000, truthfulqa: 0, humaneval: 0 },
+    };
+    const ACC_PRESET_NAMES = ['quick', 'standard', 'full'];
+
     function dashboard() {
         // GridStack instance and helpers stay outside the reactive Alpine state.
         let dashGrid = null;
@@ -680,6 +692,10 @@
             benchTab: 'throughput',
             benchDropdown: false,
 
+            // Destructive-run confirmation: which benchmark run is waiting for
+            // the alert ('throughput' | 'accuracy' | 'context'), or null.
+            benchConfirm: null,
+
             // Context benchmark state
             ctxBenchModelId: '',
             ctxBenchTarget: 131072,
@@ -696,7 +712,9 @@
             accSampleSizes: { mmlu: 1000, mmlu_pro: 300, kmmlu: 300, cmmlu: 300, jmmlu: 300, hellaswag: 200, truthfulqa: 0, arc_challenge: 300, winogrande: 300, gsm8k: 100, mathqa: 300, humaneval: 0, mbpp: 200, livecodebench: 100, bbq: 300, safetybench: 300 },
             accBenchmarkGroups: [
                 {
+                    key: 'knowledge',
                     name: window.t('acc_bench.benchmarks.group_knowledge'),
+                    desc: window.t('acc_bench.benchmarks.group_knowledge_desc'),
                     benchmarks: [
                         { key: 'mmlu', label: 'MMLU', desc: window.t('acc_bench.benchmarks.mmlu_desc'), fullSize: 14042, sizes: [30, 50, 100, 200, 300, 500, 1000, 2000] },
                         { key: 'mmlu_pro', label: 'MMLU-Pro', desc: window.t('acc_bench.benchmarks.mmlu_pro_desc'), fullSize: 12032, sizes: [30, 50, 100, 200, 300, 500, 1000, 2000] },
@@ -706,7 +724,9 @@
                     ],
                 },
                 {
+                    key: 'commonsense',
                     name: window.t('acc_bench.benchmarks.group_commonsense'),
+                    desc: window.t('acc_bench.benchmarks.group_commonsense_desc'),
                     benchmarks: [
                         { key: 'hellaswag', label: 'HellaSwag', desc: window.t('acc_bench.benchmarks.hellaswag_desc'), fullSize: 10042, sizes: [30, 50, 100, 200, 300, 500, 1000, 2000] },
                         { key: 'arc_challenge', label: 'ARC-C', desc: window.t('acc_bench.benchmarks.arc_desc'), fullSize: 1172, sizes: [30, 50, 100, 200, 300] },
@@ -715,14 +735,18 @@
                     ],
                 },
                 {
+                    key: 'math',
                     name: window.t('acc_bench.benchmarks.group_math'),
+                    desc: window.t('acc_bench.benchmarks.group_math_desc'),
                     benchmarks: [
                         { key: 'gsm8k', label: 'GSM8K', desc: window.t('acc_bench.benchmarks.gsm8k_desc'), fullSize: 1319, sizes: [30, 50, 100, 200, 300] },
                         { key: 'mathqa', label: 'MathQA', desc: window.t('acc_bench.benchmarks.mathqa_desc'), fullSize: 2985, sizes: [30, 50, 100, 200, 300, 500, 1000] },
                     ],
                 },
                 {
+                    key: 'coding',
                     name: window.t('acc_bench.benchmarks.group_coding'),
+                    desc: window.t('acc_bench.benchmarks.group_coding_desc'),
                     benchmarks: [
                         { key: 'humaneval', label: 'HumanEval', desc: window.t('acc_bench.benchmarks.humaneval_desc'), fullSize: 164, sizes: [30, 50, 100] },
                         { key: 'mbpp', label: 'MBPP', desc: window.t('acc_bench.benchmarks.mbpp_desc'), fullSize: 500, sizes: [30, 50, 100, 200, 300] },
@@ -730,7 +754,9 @@
                     ],
                 },
                 {
+                    key: 'safety',
                     name: window.t('acc_bench.benchmarks.group_safety'),
+                    desc: window.t('acc_bench.benchmarks.group_safety_desc'),
                     benchmarks: [
                         { key: 'bbq', label: 'BBQ', desc: window.t('acc_bench.benchmarks.bbq_desc'), fullSize: 10864, sizes: [30, 50, 100, 200, 300, 500, 1000, 2000] },
                         { key: 'safetybench', label: 'SafetyBench', desc: window.t('acc_bench.benchmarks.safetybench_desc'), fullSize: 11435, sizes: [30, 50, 100, 200, 300, 500, 1000, 2000] },
@@ -4676,6 +4702,35 @@
                 return body;
             },
 
+            // ===== Destructive-run confirmation =====
+
+            // Starting a benchmark loads the selected model for exclusive use:
+            // the server unloads every resident model first and interrupts
+            // in-flight requests. That is confirmed through the shared <dialog>
+            // alert. A run against an external endpoint never touches the local
+            // engine, so it keeps the direct path.
+            requestBenchConfirm(kind) {
+                if (kind === 'accuracy' && this.accExternalEnabled) return this.addToAccQueue();
+                if (kind === 'throughput' && this.benchExternalEnabled) return this.startBenchmark();
+                this.benchConfirm = kind;
+            },
+
+            benchConfirmBody() {
+                return window.t('bench.confirm.body.' + this.benchConfirm);
+            },
+
+            confirmBenchRun() {
+                const kind = this.benchConfirm;
+                this.benchConfirm = null;
+                if (kind === 'throughput') this.startBenchmark();
+                else if (kind === 'accuracy') this.addToAccQueue();
+                else if (kind === 'context') this.startContextBenchmark();
+            },
+
+            cancelBenchConfirm() {
+                this.benchConfirm = null;
+            },
+
             // Benchmark functions
             async startBenchmark() {
                 if (this.benchExternalEnabled) {
@@ -5020,6 +5075,13 @@
                 if (!native) return all;
                 const filtered = all.filter(t => t <= native);
                 return filtered.length ? filtered : [all[0]];
+            },
+
+            // The same presets as a {value, label} list for the segmented
+            // control: the list cannot be built server-side because it depends
+            // on the selected model's native context length.
+            ctxBenchTargetChoices() {
+                return this.ctxBenchTargetOptions().map(t => ({ value: t, label: (t / 1024) + 'k' }));
             },
 
             // Keep the selected target inside the model's reachable presets.
@@ -5430,6 +5492,80 @@
                 } catch (err) {
                     console.error('Failed to load queue status:', err);
                 }
+            },
+
+            // ===== Accuracy benchmark selection =====
+
+            // The selection a preset stands for, expanded over the catalogue:
+            // every benchmark gets an entry so the form can never end up with
+            // nothing ticked, and benchmarks the preset does not mention keep
+            // whatever sample size they already had.
+            accPresetSelection(preset) {
+                let wanted = ACC_PRESETS[preset];
+                if (preset === 'full') {
+                    wanted = Object.fromEntries(this.accBenchmarkGroups.flatMap(
+                        group => group.benchmarks.map(b => [b.key, 0])
+                    ));
+                }
+                if (!wanted) wanted = ACC_PRESETS.standard;
+
+                const benchmarks = {};
+                const sampleSizes = {};
+                for (const group of this.accBenchmarkGroups) {
+                    for (const b of group.benchmarks) {
+                        const sampled = wanted[b.key];
+                        benchmarks[b.key] = sampled !== undefined;
+                        sampleSizes[b.key] = sampled !== undefined
+                            ? sampled
+                            : (this.accSampleSizes?.[b.key] ?? b.sizes[0]);
+                    }
+                }
+                return { benchmarks, sampleSizes };
+            },
+
+            applyAccPreset(preset) {
+                const { benchmarks, sampleSizes } = this.accPresetSelection(preset);
+                this.accBenchmarks = benchmarks;
+                this.accSampleSizes = sampleSizes;
+                this.accError = '';
+            },
+
+            // Which preset the current selection is, or 'custom' when the user
+            // has hand-picked something no preset describes.
+            get accActivePreset() {
+                for (const name of ACC_PRESET_NAMES) {
+                    const { benchmarks, sampleSizes } = this.accPresetSelection(name);
+                    const matches = Object.keys(benchmarks).every(key => (
+                        !!this.accBenchmarks[key] === benchmarks[key]
+                        && Number(this.accSampleSizes[key]) === Number(sampleSizes[key])
+                    ));
+                    if (matches) return name;
+                }
+                return 'custom';
+            },
+
+            accGroupSelected(group) {
+                return group.benchmarks.filter(b => this.accBenchmarks[b.key]);
+            },
+
+            // Selected samples in a group; 0 samples means the full dataset.
+            accGroupSamples(group) {
+                return this.accGroupSelected(group).reduce(
+                    (total, b) => total + (Number(this.accSampleSizes[b.key]) || b.fullSize), 0
+                );
+            },
+
+            // The group-level "Full" option: everything in this group, all of it.
+            applyGroupFull(group) {
+                const benchmarks = { ...this.accBenchmarks };
+                const sampleSizes = { ...this.accSampleSizes };
+                for (const b of group.benchmarks) {
+                    benchmarks[b.key] = true;
+                    sampleSizes[b.key] = 0;
+                }
+                this.accBenchmarks = benchmarks;
+                this.accSampleSizes = sampleSizes;
+                this.accError = '';
             },
 
             async addToAccQueue() {

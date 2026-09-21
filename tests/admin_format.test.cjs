@@ -8,7 +8,7 @@ const path = require('path');
 const { test } = require('node:test');
 
 const root = path.resolve(__dirname, '..');
-const { formatCount, formatCountExact, formatParams } = require(
+const { formatCount, formatCountExact, formatParams, formatMetric } = require(
     path.join(root, 'omlx/admin/static/js/format.js')
 );
 
@@ -74,4 +74,26 @@ test('parameter counts stay on the SI ladder in every language', () => {
     assert.equal(formatParams(1.5e12), '1.5T');
     assert.equal(formatParams(500e6), '500M');
     assert.equal(formatParams(null), '—');
+});
+
+// The chat footer used to print "0.0" for a speed that had not been measured,
+// because a fresh stats object holds zeros. A performance figure is now either
+// a measurement or an em dash — never a zero standing in for "no data".
+test('a metric without a measurement prints an em dash, not a zero', () => {
+    assert.equal(formatMetric(0), '—');
+    assert.equal(formatMetric('0'), '—');
+    assert.equal(formatMetric(null), '—');
+    assert.equal(formatMetric(undefined), '—');
+    assert.equal(formatMetric(''), '—');
+    assert.equal(formatMetric(NaN), '—');
+    assert.equal(formatMetric(Infinity), '—');
+    assert.equal(formatMetric(-1), '—');
+});
+
+test('a measured metric keeps its digits', () => {
+    assert.equal(formatMetric(12.3456), '12.3');
+    assert.equal(formatMetric(12.3456, 2), '12.35');
+    assert.equal(formatMetric(0.4), '0.4');
+    assert.equal(formatMetric('7.5'), '7.5');
+    assert.equal(formatMetric(1, 0), '1');
 });

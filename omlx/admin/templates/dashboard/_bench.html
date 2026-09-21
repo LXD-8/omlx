@@ -1,3 +1,4 @@
+            {% import "components/ui.html" as ui %}
             {% macro bench_th(label_key, tooltip_key, align='right') %}
             <th class="text-{{ align }} px-4 py-3 font-semibold text-neutral-600">
                 <div class="inline-flex items-center gap-1 {% if align == 'right' %}justify-end{% endif %}">
@@ -241,7 +242,7 @@
                             <!-- Run / Cancel Button -->
                             <div class="flex items-center gap-3 pt-2">
                                 <button x-show="!benchRunning"
-                                        @click="startBenchmark()"
+                                        @click="requestBenchConfirm('throughput')"
                                         :disabled="(benchExternalEnabled ? !externalConfigValid() : !benchModelId) || Object.values(benchPromptLengths).every(v => !v) || benchOtherActive !== null"
                                         :title="benchOtherActive ? window.t('bench.other_active.already_running') : ''"
                                         class="px-6 py-2.5 bg-neutral-900 text-white text-sm font-medium rounded-lg hover:bg-neutral-800 transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2">
@@ -559,7 +560,37 @@
                      x-cloak
                      x-text="benchTip?.text"
                      class="bench-tip-fixed"></div>
+
                 </div>
+
+                <!-- Destructive-action alert: every benchmark loads its model for
+                     exclusive use, so the server unloads all resident models and
+                     interrupts in-flight requests. Same <dialog> pattern as the
+                     other console modals; focus starts on Cancel. -->
+                <dialog x-effect="benchConfirm ? $el.showModal() : $el.close()" x-cloak
+                        class="dashboard-dialog fixed inset-0 z-[60] overflow-y-auto"
+                        role="alertdialog" aria-modal="true"
+                        aria-labelledby="bench-confirm-title" aria-describedby="bench-confirm-body"
+                        @keydown.tab="trapDialogFocus($event)"
+                        @cancel.prevent="cancelBenchConfirm()">
+                    <div class="fixed inset-0 bg-black/50" @click="cancelBenchConfirm()"></div>
+                    <div class="flex min-h-full items-center justify-center p-4">
+                        <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 text-center" @click.stop>
+                            <div class="alert-dialog__icon mx-auto mb-4">
+                                <i data-lucide="alert-triangle" class="w-7 h-7"></i>
+                            </div>
+                            <h4 id="bench-confirm-title" class="text-lg font-bold tracking-tight text-neutral-900"
+                                x-text="window.t('bench.confirm.title')"></h4>
+                            <p id="bench-confirm-body" class="text-sm text-neutral-600 mt-2" x-text="benchConfirmBody()"></p>
+                            <div class="flex justify-center gap-3 mt-6">
+                                {{ ui.button(t('bench.progress.cancel'), variant='secondary',
+                                             click='cancelBenchConfirm()', attrs='autofocus') }}
+                                {{ ui.button(t('bench.confirm.action'), variant='destructive',
+                                             click='confirmBenchRun()') }}
+                            </div>
+                        </div>
+                    </div>
+                </dialog>
 
                 <!-- Accuracy tab -->
                 {% include "dashboard/_bench_accuracy.html" %}

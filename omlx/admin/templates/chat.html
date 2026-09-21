@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% import "components/ui.html" as ui %}
 
 {% block title %}{{ t('chat.title') }}{% endblock %}
 
@@ -851,47 +852,16 @@
         border: 1px solid var(--border-faint);
     }
 
-    /* Right Sidebar styling */
-    .right-sidebar-width {
+    /* Right drawer (profile picker + model settings). The shared geometry
+       (.drawer / .drawer-scrim) lives in components.css; the width and the
+       stacking order are this page's own. */
+    .chat-drawer {
         width: 320px;
-        min-width: 320px;
+        z-index: 60;
     }
 
-    .right-sidebar-hidden {
-        width: 0 !important;
-        min-width: 0 !important;
-        overflow: hidden;
-        border-left: none !important;
-    }
-
-    .right-sidebar-transition {
-        transition: all 0.25s ease;
-    }
-
-    /* Mobile/tablet responsive for right sidebar */
-    @media (max-width: 1024px) {
-        .right-sidebar-width {
-            position: fixed;
-            right: 0;
-            z-index: 50;
-            height: 100%;
-        }
-
-        .right-sidebar-hidden {
-            transform: translateX(100%);
-            border-left: none !important;
-        }
-
-        .right-sidebar-overlay {
-            position: fixed;
-            inset: 0;
-            background: rgba(0, 0, 0, 0.5);
-            z-index: 40;
-        }
-
-        .right-sidebar-overlay.hidden {
-            display: none;
-        }
+    .chat-drawer-scrim {
+        z-index: 50;
     }
 
     /* Timeline Rail */
@@ -1128,7 +1098,7 @@
             <i data-lucide="menu" class="w-5 h-5"></i>
         </button>
 
-        <button @click="rightSidebarOpen = true" class="absolute p-1.5 bg-surface hover:bg-surface-muted rounded-lg border border-line z-[100] shadow-sm"
+        <button @click="openRightDrawer()" class="absolute p-1.5 bg-surface hover:bg-surface-muted rounded-lg border border-line z-[100] shadow-sm"
             style="top: 1rem; right: 1rem; color: var(--text-primary);"
             :title="window.t('chat.show_settings_tooltip')"
             x-show="showRightToggle">
@@ -1137,9 +1107,12 @@
 
         <!-- Messages area with rail -->
         <div class="flex-1 min-h-0 relative">
-            <!-- Floating model selector capsule (top-center; mirrors the sidebar model picker) -->
+            <!-- Header summary (top-centre): the model in use and the active
+                 profile, both of which the drawer can change. The summary stays
+                 here so the drawer can be closed without losing the state. -->
+            <div class="absolute top-3 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2 max-w-[90%]">
+            <!-- Model selector capsule (mirrors the drawer's model picker) -->
             <div x-show="currentModel && availableModels.length > 0" x-cloak
-                class="absolute top-3 left-1/2 -translate-x-1/2 z-20"
                 x-data="{ modelMenuOpen: false }" @click.outside="modelMenuOpen = false"
                 @keydown.escape="modelMenuOpen = false">
                 <button @click="modelMenuOpen = !modelMenuOpen" :title="window.t('chat.switch_model')"
@@ -1170,6 +1143,15 @@
                     </template>
                 </div>
                 </div>
+            </div>
+            <!-- Active profile capsule: opens the drawer on its profile tab -->
+            <button @click="openRightDrawer('profile')"
+                class="flex items-center gap-2 px-3 py-1.5 rounded-full border border-line bg-surface shadow-md text-xs font-medium hover:bg-surface-muted transition-colors"
+                style="color: var(--text-primary); max-width: 14rem;"
+                :title="window.t('chat.drawer_title')">
+                <i data-lucide="user" class="w-3.5 h-3.5 flex-shrink-0" style="color: var(--text-tertiary);"></i>
+                <span class="truncate min-w-0" x-text="activePromptProfile || window.t('chat.profile_default')"></span>
+            </button>
             </div>
             <!-- Messages Container -->
             <div class="absolute inset-0 overflow-y-auto overflow-x-hidden custom-scrollbar" id="messagesContainer">
@@ -1894,13 +1876,15 @@
         </div>
     </div>
 
-    <!-- Right Sidebar Overlay (mobile) -->
-    <div class="right-sidebar-overlay" :class="{ 'hidden': !rightSidebarOpen }" @click="rightSidebarOpen = false"
-        x-cloak></div>
+    <!-- Right drawer scrim (profile picker + model settings) -->
+    <div class="drawer-scrim chat-drawer-scrim" :class="{ 'drawer-scrim--closed': !rightSidebarOpen }"
+        @click="closeRightDrawer()" x-cloak></div>
 
-    <!-- Right Sidebar -->
-    <div class="right-sidebar-width h-full bg-surface border-l border-line flex flex-col right-sidebar-transition"
-        :class="{ 'right-sidebar-hidden': !rightSidebarOpen }" x-cloak>
+    <!-- Right Drawer: profile picker + model settings -->
+    <aside id="chat-settings-drawer" x-ref="rightDrawer" class="drawer chat-drawer"
+        :class="{ 'drawer--open': rightSidebarOpen }"
+        role="dialog" aria-modal="true" :aria-label="window.t('chat.drawer_title')"
+        @keydown.tab="trapDialogFocus($event)" tabindex="-1" x-cloak>
 
         <!-- Sidebar Header with tabs -->
         <div class="p-4 border-b border-line flex-shrink-0">
@@ -1931,11 +1915,12 @@
                         <span>{{ t('chat.chat_tab') }}</span>
                     </button>
                 </div>
-                <button @click="rightSidebarOpen = false"
-                    class="p-1 hover:bg-surface-alt rounded-lg transition-colors"
-                    title="{{ t('chat.close_settings_tooltip') }}">
-                    <i data-lucide="panel-right-close" class="w-4 h-4" style="color: var(--text-tertiary);"></i>
-                </button>
+                {#- Plain title/aria-label: the translated text goes in verbatim, so
+                    no Alpine binding (and no escaped quotes) is needed here. -#}
+                {% set close_label = t('chat.close_settings_tooltip') %}
+                {{ ui.button('', variant='ghost', icon='panel-right-close',
+                             click='closeRightDrawer()',
+                             attrs='title="' ~ close_label ~ '" aria-label="' ~ close_label ~ '"') }}
             </div>
         </div>
 
@@ -2301,7 +2286,7 @@
                         style="color: var(--text-tertiary);">{{ t('chat.stats.prefill') }}</span>
                     <div class="flex items-end justify-between">
                         <div class="text-sm font-semibold" style="color: var(--text-primary);"
-                            x-text="recentStats?.avg_prefill_tps ? Number(recentStats.avg_prefill_tps).toFixed(1) : '0.0'">
+                            x-text="window.formatMetric(recentStats?.avg_prefill_tps)">
                         </div>
                         <div class="text-[10px]" style="color: var(--text-primary);"
                             x-show="recentStats?.prompt_tokens > 0" x-text="recentStats.prompt_tokens + ' ' + window.t('chat.stats.token_suffix')"></div>
@@ -2312,7 +2297,7 @@
                         style="color: var(--text-tertiary);">{{ t('chat.stats.token_generation') }}</span>
                     <div class="flex items-end justify-between">
                         <div class="text-sm font-semibold" style="color: var(--text-primary);"
-                            x-text="recentStats?.avg_generation_tps ? Number(recentStats.avg_generation_tps).toFixed(1) : '0.0'">
+                            x-text="window.formatMetric(recentStats?.avg_generation_tps)">
                         </div>
                         <div class="text-[10px]" style="color: var(--text-primary);"
                             x-show="recentStats?.total_tokens > 0" x-text="recentStats.total_tokens + ' ' + window.t('chat.stats.token_suffix')"></div>
@@ -2323,7 +2308,7 @@
                         style="color: var(--text-tertiary);">{{ t('chat.stats.thinking') }}</span>
                     <div class="flex items-end justify-between">
                         <div class="text-sm font-semibold" style="color: var(--text-primary);"
-                            x-text="recentStats?.thinking_time ? Number(recentStats.thinking_time).toFixed(1) : '-'">
+                            x-text="window.formatMetric(recentStats?.thinking_time)">
                         </div>
                         <div class="text-[10px]" style="color: var(--text-primary);"
                             x-show="recentStats?.thinking_tokens > 0" x-text="recentStats.thinking_tokens + ' ' + window.t('chat.stats.token_suffix')">
@@ -2335,12 +2320,12 @@
                         style="color: var(--text-tertiary);">{{ t('chat.stats.duration') }}</span>
                     <div class="flex items-end justify-between">
                         <div class="text-sm font-semibold" style="color: var(--text-primary);"
-                            x-text="recentStats?.total_time ? Number(recentStats.total_time).toFixed(1) : '-'"></div>
+                            x-text="window.formatMetric(recentStats?.total_time)"></div>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
+    </aside>
 
     <!-- Image Modal -->
     <div x-show="imageModal.show" x-cloak class="image-modal" @click="closeImageModal()"
@@ -2430,37 +2415,55 @@
         </div>
     </div>
 
-    <!-- Keyboard Shortcuts Help -->
-    <div x-show="showShortcutsHelp" x-cloak x-transition.opacity
-        class="fixed inset-0 z-[200] flex items-center justify-center px-4"
-        style="background-color: rgba(0,0,0,0.6);" @click="showShortcutsHelp = false">
-        <div class="w-full max-w-sm rounded-2xl border border-line bg-surface shadow-2xl overflow-hidden" @click.stop>
-            <div class="flex items-center justify-between px-5 py-3.5 border-b border-line">
-                <h3 class="text-sm font-bold" style="color: var(--text-primary);">{{ t('chat.keyboard_shortcuts') }}</h3>
-                <button @click="showShortcutsHelp = false" class="p-1.5 -mr-1.5 hover:bg-surface-muted rounded-lg transition-colors">
-                    <i data-lucide="x" class="w-4 h-4" style="color: var(--text-tertiary);"></i>
-                </button>
-            </div>
-            <div class="px-5 py-4 space-y-3 text-sm" style="color: var(--text-primary);">
-                <div class="flex items-center justify-between gap-4">
-                    <span>{{ t('chat.shortcut_send') }}</span>
-                    <kbd class="text-[12px] px-2 py-1 rounded-md border border-line bg-surface-muted flex-shrink-0">{{ t('chat.shortcut_key_enter') }}</kbd>
+    <!-- Keyboard Shortcuts Help. Only the shortcuts the page really handles are
+         listed: Enter/Shift+Enter (composer), Esc (stop / close), ⌘K, ⇧⌘K and
+         ⌘/ (handleGlobalKeydown), plus "?" for the same sheet. -->
+    <dialog x-effect="showShortcutsHelp ? $el.showModal() : $el.close()" x-cloak
+        class="dashboard-dialog fixed inset-0 z-[200]"
+        role="dialog" aria-modal="true" aria-labelledby="chat-shortcuts-title"
+        @keydown.tab="trapDialogFocus($event)"
+        @cancel.prevent="showShortcutsHelp = false">
+        <div class="fixed inset-0 bg-black/50" @click="showShortcutsHelp = false"></div>
+        <div class="flex min-h-full items-center justify-center p-4">
+            <div class="relative w-full max-w-sm rounded-2xl border border-line bg-surface shadow-2xl overflow-hidden" @click.stop>
+                <div class="flex items-center justify-between px-5 py-3.5 border-b border-line">
+                    <h3 id="chat-shortcuts-title" class="text-base font-bold" style="color: var(--text-primary);">{{ t('chat.keyboard_shortcuts') }}</h3>
+                    {{ ui.button('', variant='ghost', icon='x', click='showShortcutsHelp = false',
+                                 attrs='aria-label="' ~ t('chat.keyboard_shortcuts') ~ '"') }}
                 </div>
-                <div class="flex items-center justify-between gap-4">
-                    <span>{{ t('chat.shortcut_newline') }}</span>
-                    <kbd class="text-[12px] px-2 py-1 rounded-md border border-line bg-surface-muted flex-shrink-0">{{ t('chat.shortcut_shift_enter') }}</kbd>
-                </div>
-                <div class="flex items-center justify-between gap-4">
-                    <span>{{ t('chat.shortcut_stop') }}</span>
-                    <kbd class="text-[12px] px-2 py-1 rounded-md border border-line bg-surface-muted flex-shrink-0">{{ t('chat.shortcut_key_esc') }}</kbd>
-                </div>
-                <div class="flex items-center justify-between gap-4">
-                    <span>{{ t('chat.shortcut_help') }}</span>
-                    <kbd class="text-[12px] px-2 py-1 rounded-md border border-line bg-surface-muted flex-shrink-0">?</kbd>
+                <div class="px-5 py-4 shortcut-list" style="color: var(--text-primary);">
+                    <div class="shortcut-row">
+                        <span>{{ t('chat.shortcut_send') }}</span>
+                        <span class="shortcut-row__keys"><kbd class="shortcut-row__key">{{ t('chat.shortcut_key_enter') }}</kbd></span>
+                    </div>
+                    <div class="shortcut-row">
+                        <span>{{ t('chat.shortcut_newline') }}</span>
+                        <span class="shortcut-row__keys"><kbd class="shortcut-row__key">{{ t('chat.shortcut_shift_enter') }}</kbd></span>
+                    </div>
+                    <div class="shortcut-row">
+                        <span>{{ t('chat.shortcut_stop') }}</span>
+                        <span class="shortcut-row__keys"><kbd class="shortcut-row__key">{{ t('chat.shortcut_key_esc') }}</kbd></span>
+                    </div>
+                    <div class="shortcut-row">
+                        <span>{{ t('chat.shortcut_close_drawer') }}</span>
+                        <span class="shortcut-row__keys"><kbd class="shortcut-row__key">{{ t('chat.shortcut_key_esc') }}</kbd></span>
+                    </div>
+                    <div class="shortcut-row">
+                        <span>{{ t('chat.shortcut_focus_search') }}</span>
+                        <span class="shortcut-row__keys"><kbd class="shortcut-row__key">⌘K</kbd></span>
+                    </div>
+                    <div class="shortcut-row">
+                        <span>{{ t('chat.shortcut_new_chat') }}</span>
+                        <span class="shortcut-row__keys"><kbd class="shortcut-row__key">⇧⌘K</kbd></span>
+                    </div>
+                    <div class="shortcut-row">
+                        <span>{{ t('chat.shortcut_help') }}</span>
+                        <span class="shortcut-row__keys"><kbd class="shortcut-row__key">⌘/</kbd><kbd class="shortcut-row__key">?</kbd></span>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
+    </dialog>
 
 </div>
 {% endblock %}
@@ -2492,6 +2495,10 @@
     const ENHANCED_READABILITY_KEY = 'omlx-enhanced-readability';
     const SYSTEM_PROMPT_STORAGE_KEY = 'omlx_chat_system_prompt';
     const PROMPT_PROFILES_STORAGE_KEY = 'omlx_chat_prompt_profiles';
+
+    // Where focus goes when the settings drawer closes. Kept out of the Alpine
+    // state on purpose: a DOM node does not belong in reactive data.
+    let drawerReturnFocus = null;
 
     function resolveChatUntitledLabel() {
         if (typeof window.t === 'function') {
@@ -2638,7 +2645,10 @@
             BUILTIN_WEB_TOOL_ROUTES: { web_search: '/v1/web/search', fetch_url: '/v1/web/fetch' },
 
             // Right Sidebar State
-            rightSidebarOpen: window.innerWidth >= 1200,
+            // The drawer starts closed: the header carries the summary (model
+            // + active profile) and opens the drawer, so it no longer steals
+            // width from the transcript on wide screens.
+            rightSidebarOpen: false,
             showRightToggle: window.innerWidth < 1200,
             modelSettingsDirty: false,
             speculativeEngine: 'none',
@@ -7326,7 +7336,11 @@
     handleGlobalKeydown(e) {
         const mod = e.metaKey || e.ctrlKey;
         if (e.key === 'Escape') {
+            // Topmost layer first: help sheet, image preview, chat settings, drawer.
             if (this.showShortcutsHelp) { this.showShortcutsHelp = false; return; }
+            if (this.imageModal?.show) return;  // the image modal owns its own Esc
+            if (this.showChatSettingsModal) return;  // ditto
+            if (this.rightSidebarOpen) { this.closeRightDrawer(); return; }
             if (!this._isTypingTarget(e) && this.isCurrentChatStreaming()) {
                 this.stopStreaming();
             }
@@ -7336,6 +7350,78 @@
         if (e.key === '?' && !this._isTypingTarget(e) && !mod) {
             e.preventDefault();
             this.showShortcutsHelp = true;
+            return;
+        }
+        if (!mod) return;
+        // ⌘/ toggles the shortcut overview.
+        if (e.key === '/') {
+            e.preventDefault();
+            this.showShortcutsHelp = !this.showShortcutsHelp;
+            return;
+        }
+        // ⌘K focuses the chat search, ⇧⌘K starts a new chat.
+        if (e.key === 'k' || e.key === 'K') {
+            e.preventDefault();
+            if (e.shiftKey) {
+                this.startNewChat();
+            } else {
+                this.focusChatSearch();
+            }
+        }
+    },
+
+    // ⌘K: the search field lives in the left sidebar, so open it first; with no
+    // chat history there is nothing to search, and the composer is the useful
+    // place for the caret.
+    focusChatSearch() {
+        this.sidebarOpen = true;
+        this.$nextTick(() => {
+            const input = this.$refs.chatSearchInput;
+            if (input && input.getClientRects().length) {
+                input.focus();
+                if (input.select) input.select();
+                return;
+            }
+            const composer = this.$refs.messageInput;
+            if (composer) composer.focus();
+        });
+    },
+
+    // Drawer focus management: remember where focus came from, move it into the
+    // panel, and hand it back when the drawer closes.
+    openRightDrawer(tab = null) {
+        if (tab) this.rightSidebarTab = tab;
+        drawerReturnFocus = document.activeElement;
+        this.rightSidebarOpen = true;
+        this.$nextTick(() => {
+            const panel = this.$refs.rightDrawer;
+            if (panel) panel.focus();
+        });
+    },
+
+    closeRightDrawer() {
+        this.rightSidebarOpen = false;
+        const previous = drawerReturnFocus;
+        drawerReturnFocus = null;
+        if (previous && typeof previous.focus === 'function') {
+            this.$nextTick(() => previous.focus());
+        }
+    },
+
+    // Keep Tab inside an open dialog/drawer: wrap at both ends, and pull focus
+    // back in when it sits on the container itself (index -1) or has escaped.
+    trapDialogFocus(event) {
+        const container = event.currentTarget;
+        const controls = Array.from(container.querySelectorAll(
+            'a[href], button, input, select, textarea, [tabindex]'
+        )).filter(el => el.tabIndex >= 0 && !el.matches(':disabled')
+            && el.getClientRects().length && getComputedStyle(el).visibility !== 'hidden');
+        const index = controls.indexOf(document.activeElement);
+        if (!controls.length || index < 0
+            || (event.shiftKey ? index <= 0 : index === controls.length - 1)) {
+            event.preventDefault();
+            const target = event.shiftKey ? controls.at(-1) : controls[0];
+            (target || container.querySelector('[autofocus]') || container).focus();
         }
     },
 

@@ -83,15 +83,28 @@
         return String(number);
     }
 
+    /* A measured performance figure (tok/s, seconds, …). Until something has
+       been measured it reads as an em dash, never "0.0": a fresh stats object
+       holds zeros, and "0.0 tok/s" states a measurement that was never taken.
+       Every metric cell in the console goes through this one function so a new
+       one cannot reintroduce the zero. */
+    function formatMetric(value, digits) {
+        var number = Number(value);
+        if (!isFinite(number) || number <= 0) return DASH;
+        return number.toFixed(digits === undefined ? 1 : digits);
+    }
+
     global.formatCount = formatCount;
     global.formatCountExact = formatCountExact;
     global.formatParams = formatParams;
+    global.formatMetric = formatMetric;
 
     if (typeof module !== 'undefined' && module.exports) {
         module.exports = {
             formatCount: formatCount,
             formatCountExact: formatCountExact,
             formatParams: formatParams,
+            formatMetric: formatMetric,
         };
     }
 })(typeof window !== 'undefined' ? window : globalThis);

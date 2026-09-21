@@ -581,6 +581,94 @@
     background-color: var(--sys-orange);
 }
 
+/* === Alert dialog ===
+   The macOS destructive-confirmation sheet: one symbol at the top, a centred
+   title, one paragraph and the two actions. The dialog chrome itself is
+   `dialog.dashboard-dialog` in base.html. */
+
+.alert-dialog__icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: var(--space-10);
+    height: var(--space-10);
+    margin-left: auto;
+    margin-right: auto;
+    border-radius: var(--radius-pill);
+    color: var(--sys-red);
+    background-color: color-mix(in srgb, var(--sys-red) 12%, transparent);
+}
+
+/* === Drawer (slide-over from one edge) ===
+   Geometry (width, z-index, the slide) belongs to the page that owns the
+   drawer; only the shared parts live here. */
+
+.drawer-scrim {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    background-color: color-mix(in srgb, var(--text-primary) 40%, transparent);
+}
+
+.drawer-scrim--closed {
+    display: none;
+}
+
+.drawer {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    flex-direction: column;
+    max-width: 100%;
+    background-color: var(--bg-primary);
+    border-left: 1px solid var(--border-faint);
+    box-shadow: var(--shadow-popover);
+    transform: translateX(100%);
+    transition: transform 0.25s ease;
+}
+
+.drawer--open {
+    transform: translateX(0);
+}
+
+/* === Keyboard shortcut list (the help sheet) === */
+
+.shortcut-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    font-size: var(--fs-body);
+    line-height: var(--lh-body);
+}
+
+.shortcut-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-4);
+}
+
+.shortcut-row__keys {
+    display: flex;
+    align-items: center;
+    gap: var(--space-1);
+    flex-shrink: 0;
+}
+
+.shortcut-row__key {
+    padding: var(--space-1) var(--space-2);
+    font-size: var(--fs-body);
+    font-family: var(--font-mono);
+    color: var(--text-secondary);
+    background-color: var(--bg-tertiary);
+    border: 1px solid var(--border-faint);
+    border-radius: var(--radius-sm);
+}
+
 /* === Hourly trend strip ===
    One bar per hour, summing every day in the selected range; it sits above the
    day/hour heatmap so both read against the same 24 columns. */
