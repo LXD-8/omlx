@@ -246,6 +246,14 @@
     padding: var(--space-5);
 }
 
+/* A card whose body is a list of rows that carry their own padding: the body
+   adds none, so a row's label starts where the header's title starts. Without
+   this the two insets stacked and every row sat one step (24pt) deeper than the
+   heading above it -- the MCP card in review 6. */
+.card__body:has(> .divide-y) {
+    padding: 0;
+}
+
 /* === Form row: label + description on the left, control on the right === */
 
 .form-row {
@@ -1411,19 +1419,20 @@
     color: var(--text-primary);
     background-color: var(--bg-tertiary);
 }
-/* macOS sidebar selection: the tint, not a grey plate. The label steps to the
-   tone that clears 4.5:1 on its own 12% tint (tests/test_admin_contrast.py). */
+/* Sidebar selection: a grey one step deeper than the rail itself, not a colour.
+   The console keeps blue for things you can act on, and where you are is not an
+   action (tests/test_admin_contrast.py measures the label on this tint). */
 .settings-rail__item--active {
-    color: var(--badge-blue-fg);
+    color: var(--text-primary);
     font-weight: 600;
-    background-color: color-mix(in srgb, var(--accent) 12%, transparent);
-    border-left-color: var(--accent);
+    background-color: color-mix(in srgb, var(--text-primary) 10%, transparent);
+    border-left-color: color-mix(in srgb, var(--text-primary) 45%, transparent);
     box-shadow: var(--shadow-card);
 }
 
 .settings-rail__item--active:hover {
-    color: var(--badge-blue-fg);
-    background-color: color-mix(in srgb, var(--accent) 16%, transparent);
+    color: var(--text-primary);
+    background-color: color-mix(in srgb, var(--text-primary) 14%, transparent);
 }
 .settings-rail__empty {
     margin-top: var(--space-3);
