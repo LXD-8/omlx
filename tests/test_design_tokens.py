@@ -37,7 +37,7 @@ TEMPLATES = sorted((ADMIN / "templates").rglob("*.html"))
 OWN_STYLESHEETS = [ADMIN / "static" / "css" / "dashboard.css", ADMIN / "static" / "css" / "components.css"]
 OWN_SCRIPTS = [
     ADMIN / "static" / "js" / name
-    for name in ("dashboard.js", "cluster_v2.js", "usage.js", "logs.js")
+    for name in ("cluster_v2.js", "dashboard.js", "logs.js", "settings_nav.js", "usage.js")
 ]
 SWIFT_SOURCES = sorted((ROOT / "apps" / "omlx-mac" / "Sources").rglob("*.swift"))
 
@@ -165,9 +165,20 @@ def test_enhanced_readability_floor_matches_the_token():
 # === The token layer owns colour ===
 
 
+def _without_at_rule_conditions(stylesheet: str) -> str:
+    """Drop `@media …` preludes, keeping their normal rules.
+
+    A media condition cannot read a `var()`, so a stacking breakpoint has to be
+    a literal there; it is generated as `--settings-rail-stack-below` and
+    tests/test_admin_settings.py pins the two together. Everything a media
+    query *contains* is still checked, because it is reached after the prelude.
+    """
+    return re.sub(r"@(?:media|container|supports)[^{}]*\{", "{", stylesheet)
+
+
 def test_components_use_tokens_only():
     assert not re.search(r"#[0-9a-fA-F]{3,8}\b", COMPONENTS_CSS), "literal colour in components.css"
-    sizes = set(re.findall(r"(\d+(?:\.\d+)?)px", COMPONENTS_CSS))
+    sizes = set(re.findall(r"(\d+(?:\.\d+)?)px", _without_at_rule_conditions(COMPONENTS_CSS)))
     assert sizes <= {"1"}, f"literal sizes in components.css: {sizes}"
     for value in re.findall(r"(?:font-size|padding|margin|gap|border-radius):[^;]+;", COMPONENTS_CSS):
         assert "var(--" in value or value.rstrip(";").endswith(": 0"), (

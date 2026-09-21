@@ -757,4 +757,149 @@
     .log-grid__module {
         display: none;
     }
+
+/* === Settings anchor rail ===
+   The settings page is one long scroll; the rail lists its sections and keeps
+   the current one marked. It lives inside the same 760pt form measure as the
+   content (rail + content must fit), and below the stacking width the two
+   columns stack so the rail cannot squeeze the form into a sliver.
+
+   Stacking width: the query below cannot read a token (CSS forbids var() in a
+   media condition), so its value is the literal form of the generated
+   --settings-rail-stack-below. tests/test_admin_settings.py pins the two
+   together, so editing tokens.json alone cannot desynchronise them. */
+
+.settings-layout {
+    display: grid;
+    grid-template-columns: var(--settings-rail-width) minmax(0, 1fr);
+    gap: var(--space-5);
+    align-items: start;
+}
+
+@media (max-width: 900px) {
+    .settings-layout {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .settings-rail {
+        position: static;
+        max-height: none;
+        overflow-y: visible;
+    }
+
+    .settings-rail__list {
+        flex-direction: row;
+        overflow-x: auto;
+    }
+}
+
+.settings-rail {
+    position: sticky;
+    /* Clears the fixed top bar and its gutter. */
+    top: var(--space-10);
+    max-height: calc(100vh - var(--space-10));
+    overflow-y: auto;
+    padding: var(--space-4);
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border-faint);
+    border-radius: var(--radius-lg);
+}
+
+.settings-rail__title {
+    font-size: var(--fs-aux);
+    line-height: var(--lh-aux);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-tertiary);
+}
+
+.settings-rail__search {
+    position: relative;
+    margin-top: var(--space-3);
+}
+
+.settings-rail__input {
+    width: 100%;
+    padding: var(--space-2) var(--space-2) var(--space-2) var(--space-8);
+    font-size: var(--fs-body);
+    line-height: var(--lh-body);
+    color: var(--text-primary);
+    background-color: var(--bg-primary);
+    border: 1px solid var(--border-normal);
+    border-radius: var(--radius-md);
+}
+
+.settings-rail__search-icon {
+    position: absolute;
+    top: 50%;
+    left: var(--space-2);
+    transform: translateY(-50%);
+    color: var(--text-tertiary);
+    pointer-events: none;
+}
+
+.settings-rail__clear {
+    position: absolute;
+    top: 50%;
+    right: var(--space-1);
+    transform: translateY(-50%);
+}
+
+.settings-rail__list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+    margin-top: var(--space-3);
+}
+
+.settings-rail__item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-2);
+    font-size: var(--fs-body);
+    line-height: var(--lh-body);
+    color: var(--text-secondary);
+    text-decoration: none;
+    border-left: 1px solid transparent;
+    border-radius: var(--radius-sm);
+}
+
+.settings-rail__item:hover {
+    color: var(--text-primary);
+    background-color: var(--bg-tertiary);
+}
+
+/* The active section while scrolling, and the anchor a deep link selected. */
+.settings-rail__item--active {
+    color: var(--text-primary);
+    font-weight: 600;
+    background-color: var(--bg-primary);
+    border-left-color: var(--btn-primary);
+    box-shadow: var(--shadow-card);
+}
+
+.settings-rail__empty {
+    margin-top: var(--space-3);
+    font-size: var(--fs-aux);
+    line-height: var(--lh-aux);
+    color: var(--text-tertiary);
+}
+
+/* A card that the rail can deep-link to and scroll smoothly into view. */
+.settings-section {
+    scroll-margin-top: var(--space-10);
+}
+
+.settings-anchor {
+    color: var(--text-tertiary);
+}
+
+.settings-anchor:hover {
+    color: var(--text-primary);
+}
+
+.settings-anchor--done {
+    color: var(--sys-green);
 }

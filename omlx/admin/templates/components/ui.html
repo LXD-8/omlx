@@ -33,10 +33,11 @@
 </span>
 {%- endmacro %}
 
-{#- Card: a content surface with an optional header. Body is the caller block. -#}
-{% macro card(title=None, subtitle=None, header_actions=None, attrs='') -%}
+{#- Card: a content surface with an optional header. Body is the caller block.
+    `id` gives the card a stable anchor (the settings rail deep-links to one). -#}
+{% macro card(title=None, subtitle=None, header_actions=None, attrs='', id=None) -%}
 {%- set body -%}{{ caller() }}{%- endset -%}
-<section class="card {{ attrs }}">
+<section class="card {{ attrs }}"{% if id %} id="{{ id }}"{% endif %}>
     {%- if title or header_actions %}
     <header class="card__header">
         <div>

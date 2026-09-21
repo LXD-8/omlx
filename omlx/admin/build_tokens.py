@@ -101,6 +101,8 @@ def _geometry_vars(tokens: dict) -> list[tuple[str, str]]:
         ("--log-level-column", f"{layout['logLevelColumn']}px"),
         ("--log-module-column", f"{layout['logModuleColumn']}px"),
         ("--log-row-height", f"{layout['logRowHeight']}px"),
+        ("--settings-rail-width", f"{layout['railWidth']}px"),
+        ("--settings-rail-stack-below", f"{layout['railStackBelow']}px"),
     ]
     material = tokens["material"]
     pairs += [
@@ -271,6 +273,7 @@ def render_swift(tokens: dict) -> str:
         f"        static let gutter: CGFloat = {cg(layout['gutter'])}",
         f"        static let form: CGFloat = {cg(layout['formMaxWidth'])}",
         f"        static let wide: CGFloat = {cg(layout['wideMaxWidth'])}",
+        f"        static let rail: CGFloat = {cg(layout['railWidth'])}",
         "    }",
         "",
         "    enum Material {",

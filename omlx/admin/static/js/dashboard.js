@@ -105,10 +105,27 @@
     // never shows a gap, small enough that 10 000 lines stay cheap.
     const LOG_OVERSCAN = 8;
 
+    // A settings section anchor, e.g. `settings-server`.
+    const SETTINGS_SECTION_ID = /^settings-[a-z][a-z-]*$/;
+
     // Default sort for the settings and manager model tables. Also the target
     // state for the "reset sort" action.
     const MODELS_SORT_DEFAULT = { by: 'id', order: 'asc' };
     const MANAGER_SORT_DEFAULT = { by: 'name', order: 'asc' };
+
+    // The Settings tab renders its section registry as JSON (so the titles come
+    // from the catalogue); both the rail and the deep-link handler read it from
+    // there rather than keeping a second copy in JavaScript.
+    function settingsSectionsByTab() {
+        const node = document.getElementById('settings-sections');
+        if (!node) return {};
+        try {
+            return JSON.parse(node.textContent) || {};
+        } catch (error) {
+            console.error('settings sections unreadable', error);
+            return {};
+        }
+    }
 
     function dashboard() {
         // GridStack instance and helpers stay outside the reactive Alpine state.
@@ -122,6 +139,16 @@
             activeTheme: 'light', // Will be updated by applyTheme
             systemThemeListener: null,
             enhancedReadability: localStorage.getItem(ENHANCED_READABILITY_KEY) === 'on',
+
+            // Settings rail: the section list is rendered into the document by
+            // the template (so its titles come from the catalogue) and read
+            // back here; `settingsSections` is the rail's current contents.
+            settingsSections: [],
+            settingsAllSections: [],
+            settingsSearch: '',
+            settingsActiveSection: null,
+            settingsCopiedAnchor: null,
+            _settingsScrollHandler: null,
 
             // Mobile menu
             mobileMenuOpen: false,
@@ -720,6 +747,15 @@
                     this.measureLogRowHeight();
                 });
 
+                // The rail's section list comes from the template; load it once
+                // and keep the search in sync with it.
+                this.settingsInitSections();
+                this.$watch('settingsSearch', () => this.settingsApplySearch());
+                this.$watch('activeTab', () => {
+                    this.settingsSearch = '';
+                    this.settingsInitSections();
+                });
+
                 this.$watch('globalSettings.server.host', (value) => {
                     if (!this.isLoopbackBindHost(value)) {
                         this.globalSettings.auth.skip_api_key_verification = false;
@@ -774,6 +810,128 @@
                         this.startStatsRefresh();
                     }
                 });
+
+                // A deep link into a settings section has to win over the tab
+                // the URL parameters would otherwise restore.
+                if (SETTINGS_SECTION_ID.test(window.location.hash.slice(1))) {
+                    this.settingsScrollToHash(window.location.hash.slice(1));
+                }
+            },
+
+            // === Settings rail =============================================
+
+            /** Read the template's section list into the rail's own state. */
+            settingsInitSections() {
+                const byTab = settingsSectionsByTab();
+                this.settingsAllSections = byTab[this.activeTab] || [];
+                this.settingsSections = this.settingsAllSections.slice();
+                const first = this.settingsAllSections[0];
+                this.settingsActiveSection = first ? first.id : null;
+            },
+
+            /** The first section a search term matches, or null. */
+            settingsFirstMatch() {
+                return this.settingsSections.length ? this.settingsSections[0].id : null;
+            },
+
+            settingsApplySearch() {
+                const query = this.settingsSearch;
+                this.settingsSections = window.OMLXSettingsNav.filterSections(
+                    this.settingsAllSections, query
+                );
+                const match = this.settingsFirstMatch();
+                if (!match) return;
+                this.settingsActiveSection = match;
+                if (String(query).trim()) this.settingsScrollToSection(match);
+            },
+
+            settingsScrollToSection(sectionId) {
+                const target = document.getElementById(sectionId);
+                if (!target) return;
+                // Never scroll for a tab the reader is not looking at.
+                const panel = document.getElementById('panel-settings');
+                if (panel && !panel.getClientRects().length) return;
+                if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                    target.scrollIntoView({ block: 'start' });
+                } else {
+                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            },
+
+            /** Follow a rail click: mark it, scroll, and keep it linkable. */
+            settingsGoToSection(sectionId) {
+                this.settingsActiveSection = sectionId;
+                this.$nextTick(() => this.settingsScrollToSection(sectionId));
+                window.history.replaceState({}, '', '#' + sectionId);
+            },
+
+            /**
+             * Deep link support: a `#settings-<section>` hash selects the
+             * settings tab the section lives on and scrolls to it.
+             */
+            settingsScrollToHash(hash) {
+                const sectionId = String(hash || '').replace(/^#/, '');
+                if (!SETTINGS_SECTION_ID.test(sectionId)) return false;
+                const byTab = settingsSectionsByTab();
+                let tab = 'global';
+                for (const [name, sections] of Object.entries(byTab)) {
+                    if (sections.some((section) => section.id === sectionId)) tab = name;
+                }
+                this.mainTab = 'settings';
+                this.activeTab = tab;
+                this.settingsSearch = '';
+                this.settingsInitSections();
+                this.settingsActiveSection = sectionId;
+                this.$nextTick(() => this.settingsScrollToSection(sectionId));
+                return true;
+            },
+
+            /** Follow the page while it scrolls: the rail says where you are. */
+            settingsWatchScroll() {
+                this.$nextTick(() => {
+                    const panel = document.getElementById('panel-settings');
+                    if (!panel) return;
+                    if (this._settingsScrollHandler) {
+                        window.removeEventListener('scroll', this._settingsScrollHandler);
+                        window.removeEventListener('resize', this._settingsScrollHandler);
+                    }
+                    const sync = () => {
+                        // The whole page scrolls; only the settings panel's own
+                        // sections take part, and only while it is the visible tab.
+                        if (!panel.getClientRects().length) return;
+                        const offsets = [];
+                        const sections = [];
+                        for (const section of this.settingsAllSections) {
+                            const el = document.getElementById(section.id);
+                            if (!el || !el.getClientRects().length) continue;
+                            // Viewport-relative tops, compared against a zero
+                            // scroll position: one frame per section, whatever
+                            // the page's own scroll offset is.
+                            offsets.push(el.getBoundingClientRect().top);
+                            sections.push(section);
+                        }
+                        if (!sections.length) return;
+                        this.settingsActiveSection = window.OMLXSettingsNav.activeSection(
+                            offsets, 0, sections
+                        );
+                    };
+                    this._settingsScrollHandler = sync;
+                    window.addEventListener('scroll', sync, { passive: true });
+                    window.addEventListener('resize', sync);
+                    sync();
+                });
+            },
+
+            /** Copy the deep link to a section, like the model-name button. */
+            settingsCopyAnchor(sectionId) {
+                const link = window.OMLXSettingsNav.sectionAnchor(
+                    window.location.origin, window.location.pathname, sectionId
+                );
+                this.copyToClipboard(link);
+                this.settingsCopiedAnchor = sectionId;
+                setTimeout(() => {
+                    if (this.settingsCopiedAnchor === sectionId) this.settingsCopiedAnchor = null;
+                }, 2000);
             },
 
             async handleMainTabChange(value) {
@@ -825,6 +983,10 @@
             },
 
             applyTabStateFromUrl() {
+                // A settings section anchor (`#settings-server`) is the most
+                // specific address there is, so it decides the tab pair.
+                if (this.settingsScrollToHash(window.location.hash)) return;
+
                 const params = new URLSearchParams(window.location.search);
                 const mainTab = params.get('tab');
                 const settingsTab = params.get('settingsTab');
@@ -908,7 +1070,6 @@
                 this.mainTab = 'settings';
                 this.syncTabStateToUrl();
             },
-
             setModelsTab(tab) {
                 if (!DASHBOARD_MODELS_TABS.has(tab)) return;
                 this.modelsTab = tab;

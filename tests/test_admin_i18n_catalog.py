@@ -25,7 +25,7 @@ LOCALES = sorted(path.stem for path in I18N.glob("*.json"))
 TEMPLATES = sorted((ADMIN / "templates").rglob("*.html"))
 OWN_SCRIPTS = [
     ADMIN / "static" / "js" / name
-    for name in ("dashboard.js", "cluster_v2.js", "usage.js", "format.js", "logs.js")
+    for name in ("cluster_v2.js", "dashboard.js", "format.js", "logs.js", "settings_nav.js", "usage.js")
 ]
 TRANSLATED_SOURCES = TEMPLATES + OWN_SCRIPTS
 
