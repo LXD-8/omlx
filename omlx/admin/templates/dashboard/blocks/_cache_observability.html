@@ -41,7 +41,7 @@
                          :style="'width: ' + runtimeSsdCachePercent + '%'"></div>
                 </div>
                 <span class="text-xs font-medium text-neutral-500 min-w-0 break-words"
-                      x-text="formatSizeBytes(stats.runtime_cache?.total_size_bytes || 0) + ' / ' + formatSizeBytes(stats.runtime_cache?.disk_max_bytes || 0) + ' · ' + formatNumber(stats.runtime_cache?.total_num_files || 0) + ' files'"></span>
+                      x-text="formatSizeBytes(stats.runtime_cache?.total_size_bytes || 0) + ' / ' + formatSizeBytes(stats.runtime_cache?.disk_max_bytes || 0) + ' · ' + window.t('status.runtime_cache.files_count').replace('{count}', window.formatCount(stats.runtime_cache?.total_num_files || 0))"></span>
                 <div class="flex items-center gap-1.5">
                     <button x-show="!showClearSsdCacheConfirm && (stats.runtime_cache?.total_num_files || 0) > 0"
                             @click="showClearSsdCacheConfirm = true"
@@ -109,7 +109,7 @@
                          :style="'width: ' + runtimeSsdCachePercent + '%'"></div>
                 </div>
                 <span class="text-xs font-medium text-neutral-500 whitespace-nowrap"
-                      x-text="formatSizeBytes(stats.runtime_cache?.total_size_bytes || 0) + ' / ' + formatSizeBytes(stats.runtime_cache?.disk_max_bytes || 0) + ' · ' + formatNumber(stats.runtime_cache?.total_num_files || 0) + ' files'"></span>
+                      x-text="formatSizeBytes(stats.runtime_cache?.total_size_bytes || 0) + ' / ' + formatSizeBytes(stats.runtime_cache?.disk_max_bytes || 0) + ' · ' + window.t('status.runtime_cache.files_count').replace('{count}', window.formatCount(stats.runtime_cache?.total_num_files || 0))"></span>
             </div>
             <div class="flex items-center gap-1.5">
                 <button x-show="!showClearSsdCacheConfirm && (stats.runtime_cache?.total_num_files || 0) > 0"
@@ -208,14 +208,14 @@
                             <template x-if="m.cache_tier === 'rank-prompt-snapshot'">
                                 <td class="px-3 py-2 text-right text-neutral-500"
                                     :colspan="stats.runtime_cache?.hot_cache_max_bytes > 0 ? 7 : 5"
-                                    x-text="window.t('cluster.badge.rank_cache') + ': ' + (((m.rank_prompt_cache?.hit_rate || 0) * 100).toFixed(1) + '%') + ' · ' + formatNumber(m.rank_prompt_cache?.entries || 0) + ' ' + window.t('cluster.badge.rank_cache_entries') + ' · ' + formatSizeBytes(m.rank_prompt_cache?.bytes || 0)"></td>
+                                    x-text="window.t('cluster.badge.rank_cache') + ': ' + (((m.rank_prompt_cache?.hit_rate || 0) * 100).toFixed(1) + '%') + ' · ' + window.formatCount(m.rank_prompt_cache?.entries || 0) + ' ' + window.t('cluster.badge.rank_cache_entries') + ' · ' + formatSizeBytes(m.rank_prompt_cache?.bytes || 0)"></td>
                             </template>
                             <template x-if="m.cache_tier !== 'rank-prompt-snapshot'">
                                 <td class="px-3 py-2 text-right" x-text="m.block_size ? (m.block_size + ' tks') : '-' "></td>
                             </template>
                             <template x-if="m.cache_tier !== 'rank-prompt-snapshot'">
                                 <td class="px-3 py-2 text-right">
-                                    <span x-show="!m.has_sub_block_cache" x-text="formatNumber(m.indexed_blocks || 0) + ' blocks'"></span>
+                                    <span x-show="!m.has_sub_block_cache" x-text="window.t('status.runtime_cache.blocks_count').replace('{count}', window.formatCount(m.indexed_blocks || 0))"></span>
                                     <span x-show="m.has_sub_block_cache" class="font-medium text-amber-600" x-text="m.indexed_blocks_display + ' tks'"></span>
                                 </td>
                             </template>
@@ -229,7 +229,7 @@
                                 </td>
                             </template>
                             <template x-if="m.cache_tier !== 'rank-prompt-snapshot'">
-                                <td class="px-3 py-2 text-right" x-text="formatNumber(m.num_files || 0)"></td>
+                                <td class="px-3 py-2 text-right" x-text="window.formatCount(m.num_files || 0)"></td>
                             </template>
                             <template x-if="m.cache_tier !== 'rank-prompt-snapshot'">
                                 <td class="px-3 py-2 text-right" x-text="formatSizeBytes(m.total_size_bytes || 0)"></td>

@@ -23,6 +23,9 @@
     <!-- Lucide Icons -->
     <script src="/admin/static/js/lucide.min.js"></script>
 
+    <!-- Number formatting (one implementation for every count in the console) -->
+    <script src="{{ static('js/format.js') }}"></script>
+
     <script>
         // Apply theme immediately to prevent flash of wrong theme
         (function() {
@@ -47,6 +50,10 @@
     </script>
 
     <script>
+        // The console's own language, not the browser's: number formatting and
+        // date formatting must follow this.
+        window.__omlxLang = "{{ current_lang }}";
+
         // i18n locale strings
         window._t = {{ locale_json | safe }};
         window.t = function(key) { return window._t[key] !== undefined ? window._t[key] : key; };

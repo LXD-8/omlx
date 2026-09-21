@@ -398,7 +398,7 @@
                                                             @click="copyWiredLimitCommand()"
                                                             :class="wiredLimitCopied ? 'text-green-500' : 'text-fg-tertiary hover:text-fg'"
                                                             class="transition-colors flex-shrink-0"
-                                                            :title="wiredLimitCopied ? 'Copied' : 'Copy'">
+                                                            :title="wiredLimitCopied ? window.t('app.copied') : window.t('app.copy')">
                                                         <i data-lucide="copy" class="w-3.5 h-3.5"></i>
                                                     </button>
                                                 </div>

@@ -4033,12 +4033,6 @@
                 }
             },
 
-            formatNumber(num) {
-                if (num >= 1000000000) return (num / 1000000000).toFixed(1) + 'B';
-                if (num >= 10000000) return (num / 1000000).toFixed(1) + 'M';
-                return num.toLocaleString();
-            },
-
             cacheObsCumulative(stats, selectedModel) {
                 const entries = stats.runtime_cache?.models || [];
                 if (entries.length === 0) return {};
@@ -4089,12 +4083,6 @@
                 return Math.max(0, Math.round(bytes)) + ' B';
             },
 
-            formatTokenCount(n) {
-                if (n >= 1000000) return (n / 1000000).toFixed(1) + 'M';
-                if (n >= 1000) return (n / 1000).toFixed(1) + 'k';
-                return String(n);
-            },
-
             formatDFlashSessionStats(totals) {
                 if (!totals || totals.requests <= 1) return '';
 
@@ -4140,7 +4128,7 @@
                 const parts = [];
                 if (activity.input_count != null) parts.push(activity.input_count + ' inputs');
                 if (activity.document_count != null) parts.push(activity.document_count + ' docs');
-                if (activity.token_count != null) parts.push(this.formatTokenCount(activity.token_count) + ' tok');
+                if (activity.token_count != null) parts.push(window.formatCount(activity.token_count) + ' tok');
                 if (activity.text_length != null) parts.push(activity.text_length + ' chars');
                 if (activity.chunk_count != null) parts.push(activity.chunk_count + ' chunks');
                 if (activity.output_bytes != null) parts.push(this.formatByteCount(activity.output_bytes));
@@ -6879,12 +6867,6 @@
                 return 'safe';
             },
 
-            formatDownloads(count) {
-                if (count >= 1000000) return (count / 1000000).toFixed(1) + 'M';
-                if (count >= 1000) return (count / 1000).toFixed(1) + 'K';
-                return count.toString();
-            },
-
             // Table sort helpers for Browse Models
             sortModels(list) {
                 const sortBy = this.hfTableSort;
@@ -7042,14 +7024,6 @@
             immediateSearch() {
                 clearTimeout(this.hfSearchDebounceTimer);
                 this.searchHFModels();
-            },
-
-            formatParamCount(params) {
-                if (!params) return null;
-                if (params >= 1e12) return (params / 1e12).toFixed(1) + 'T';
-                if (params >= 1e9) return (params / 1e9).toFixed(1) + 'B';
-                if (params >= 1e6) return (params / 1e6).toFixed(1) + 'M';
-                return params.toString();
             },
 
             // Search history

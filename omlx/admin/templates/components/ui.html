@@ -1,0 +1,87 @@
+{#-
+  Shared component macros — the web implementation of the specs in
+  static/css/components.css. Import once per page:
+
+      {% import "components/ui.html" as ui %}
+
+  Macros take already-localized text (call them with `t('…')`), and the Alpine
+  expressions the caller needs (`click`, `show`, `disabled`). Anything else can
+  be passed through `attrs`.
+-#}
+
+{#- Button: primary = the screen's one committed action, secondary = neutral,
+    ghost = row/toolbar action, destructive = system red. -#}
+{% macro button(label, variant='secondary', size='md', icon=None, click=None,
+                show=None, disabled=None, type='button', attrs='') -%}
+<button type="{{ type }}"
+        class="btn btn--{{ variant }}{% if size == 'sm' %} btn--sm{% endif %}{% if not label %} btn--icon{% endif %}"
+        {%- if click %} @click="{{ click }}"{% endif %}
+        {%- if show %} x-show="{{ show }}" x-cloak{% endif %}
+        {%- if disabled %} :disabled="{{ disabled }}"{% endif %}
+        {{ attrs | safe }}>
+    {%- if icon %}<i data-lucide="{{ icon }}" class="w-4 h-4"></i>{% endif %}
+    {%- if label %}<span>{{ label }}</span>{% endif %}
+</button>
+{%- endmacro %}
+
+{#- Status badge. `dot` adds the round leading dot macOS uses for live state. -#}
+{% macro badge(label, tone='neutral', dot=False, icon=None, attrs='') -%}
+<span class="badge badge--{{ tone }}" {{ attrs | safe }}>
+    {%- if dot %}<span class="badge__dot"></span>{% endif %}
+    {%- if icon %}<i data-lucide="{{ icon }}" class="w-3 h-3"></i>{% endif %}
+    {{- label -}}
+</span>
+{%- endmacro %}
+
+{#- Card: a content surface with an optional header. Body is the caller block. -#}
+{% macro card(title=None, subtitle=None, header_actions=None, attrs='') -%}
+{%- set body -%}{{ caller() }}{%- endset -%}
+<section class="card {{ attrs }}">
+    {%- if title or header_actions %}
+    <header class="card__header">
+        <div>
+            {%- if title %}<h3 class="card__title">{{ title }}</h3>{% endif %}
+            {%- if subtitle %}<p class="card__subtitle">{{ subtitle }}</p>{% endif %}
+        </div>
+        {%- if header_actions %}<div class="flex items-center gap-2">{{ header_actions }}</div>{% endif %}
+    </header>
+    {%- endif %}
+    <div class="card__body">{{ body }}</div>
+</section>
+{%- endmacro %}
+
+{#- Form row: label + description on the left, control (caller block) right. -#}
+{% macro form_row(label, description=None, badge=None, attrs='') -%}
+<div class="form-row {{ attrs }}">
+    <div class="form-row__label">
+        <span class="form-row__title">{{ label }}{% if badge %} {{ badge }}{% endif %}</span>
+        {%- if description %}<span class="form-row__desc">{{ description }}</span>{% endif %}
+    </div>
+    <div class="form-row__control">{{ caller() }}</div>
+</div>
+{%- endmacro %}
+
+{#- Segmented control. `items` is a list of (value, label) pairs; `active` is the
+    Alpine expression holding the current value and `setter` the expression that
+    assigns a new one ({value} is substituted). -#}
+{% macro segmented(items, active, setter, attrs='', aria_label=None) -%}
+<div class="segmented {{ attrs }}" role="tablist"{% if aria_label %} aria-label="{{ aria_label }}"{% endif %}>
+    {%- for value, label in items %}
+    <button type="button" role="tab"
+            class="segmented__item"
+            :class="{{ active }} === '{{ value }}' ? 'segmented__item--active' : ''"
+            :aria-selected="{{ active }} === '{{ value }}' ? 'true' : 'false'"
+            @click="{{ setter | replace('{value}', value) }}">{{ label }}</button>
+    {%- endfor %}
+</div>
+{%- endmacro %}
+
+{#- Empty state: icon, one line of explanation, optional action (caller block). -#}
+{% macro empty_state(icon, title, description=None) -%}
+<div class="empty-state">
+    <span class="empty-state__icon"><i data-lucide="{{ icon }}" class="w-6 h-6"></i></span>
+    <p class="empty-state__title">{{ title }}</p>
+    {%- if description %}<p class="empty-state__desc">{{ description }}</p>{% endif %}
+    {%- if caller %}<div class="empty-state__action">{{ caller() }}</div>{% endif %}
+</div>
+{%- endmacro %}

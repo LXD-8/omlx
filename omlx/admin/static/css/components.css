@@ -53,3 +53,274 @@
     align-items: center;
     gap: var(--space-2);
 }
+
+/* === Button ===
+   Primary = the screen's single committed action; secondary = neutral;
+   ghost = toolbar/row actions; destructive = system red. */
+
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    padding: var(--space-2) var(--space-4);
+    font-size: var(--fs-body);
+    line-height: var(--lh-body);
+    font-weight: 500;
+    border-radius: var(--radius-md);
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.btn:disabled,
+.btn[aria-disabled="true"] {
+    opacity: 0.5;
+    cursor: default;
+}
+
+.btn--primary {
+    background-color: var(--btn-primary);
+    color: var(--btn-primary-text);
+}
+
+.btn--primary:hover:not(:disabled) {
+    background-color: var(--btn-primary-hover);
+}
+
+.btn--secondary {
+    background-color: var(--bg-primary);
+    border-color: var(--border-normal);
+    color: var(--text-primary);
+}
+
+.btn--secondary:hover:not(:disabled) {
+    background-color: var(--bg-secondary);
+}
+
+.btn--ghost {
+    background-color: transparent;
+    color: var(--text-secondary);
+}
+
+.btn--ghost:hover:not(:disabled) {
+    background-color: var(--bg-tertiary);
+    color: var(--text-primary);
+}
+
+.btn--destructive {
+    background-color: var(--sys-red);
+    color: var(--danger-fg);
+}
+
+.btn--destructive:hover:not(:disabled) {
+    filter: brightness(0.92);
+}
+
+.btn--sm {
+    padding: var(--space-1) var(--space-3);
+    font-size: var(--fs-aux);
+}
+
+.btn--icon {
+    padding: var(--space-2);
+}
+
+/* === Badge === */
+
+.badge {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+    padding: 0 var(--space-2);
+    font-size: var(--fs-aux);
+    line-height: 1.6;
+    font-weight: 600;
+    border-radius: var(--radius-sm);
+    background-color: var(--bg-tertiary);
+    color: var(--text-secondary);
+    white-space: nowrap;
+}
+
+.badge__dot {
+    width: var(--space-1);
+    height: var(--space-1);
+    border-radius: var(--radius-pill);
+    background-color: currentColor;
+}
+
+.badge--green {
+    color: var(--sys-green);
+    background-color: color-mix(in srgb, var(--sys-green) 14%, transparent);
+}
+
+.badge--orange {
+    color: var(--sys-orange);
+    background-color: color-mix(in srgb, var(--sys-orange) 14%, transparent);
+}
+
+.badge--red {
+    color: var(--sys-red);
+    background-color: color-mix(in srgb, var(--sys-red) 14%, transparent);
+}
+
+.badge--blue {
+    color: var(--sys-blue);
+    background-color: color-mix(in srgb, var(--sys-blue) 14%, transparent);
+}
+
+/* === Card === */
+
+.card {
+    background-color: var(--bg-primary);
+    border: 1px solid var(--border-faint);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-card);
+    overflow: hidden;
+}
+
+.card__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+    padding: var(--space-4) var(--space-5);
+    background-color: var(--bg-secondary);
+    border-bottom: 1px solid var(--border-faint);
+}
+
+.card__title {
+    font-size: var(--fs-emphasis);
+    line-height: var(--lh-emphasis);
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.card__subtitle {
+    margin-top: var(--space-1);
+    font-size: var(--fs-aux);
+    line-height: var(--lh-aux);
+    color: var(--text-tertiary);
+}
+
+.card__body {
+    padding: var(--space-5);
+}
+
+/* === Form row: label + description on the left, control on the right === */
+
+.form-row {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--space-5);
+    padding: var(--space-4) 0;
+}
+
+.form-row + .form-row {
+    border-top: 1px solid var(--border-faint);
+}
+
+.form-row__label {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+    max-width: 60%;
+}
+
+.form-row__title {
+    font-size: var(--fs-body);
+    line-height: var(--lh-body);
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.form-row__desc {
+    font-size: var(--fs-aux);
+    line-height: var(--lh-aux);
+    color: var(--text-tertiary);
+}
+
+.form-row__control {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    flex-shrink: 0;
+}
+
+/* === Segmented control (macOS NSSegmentedControl) === */
+
+.segmented {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+    padding: var(--space-1);
+    background-color: var(--bg-tertiary);
+    border-radius: var(--radius-md);
+}
+
+.segmented__item {
+    padding: var(--space-1) var(--space-3);
+    font-size: var(--fs-body);
+    line-height: var(--lh-body);
+    font-weight: 500;
+    color: var(--text-secondary);
+    background-color: transparent;
+    border: 0;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.segmented__item:hover {
+    color: var(--text-primary);
+}
+
+.segmented__item--active {
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    box-shadow: var(--shadow-card);
+}
+
+/* === Empty state === */
+
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-10) var(--space-5);
+    text-align: center;
+}
+
+.empty-state__icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: var(--space-10);
+    height: var(--space-10);
+    border-radius: var(--radius-pill);
+    background-color: var(--bg-tertiary);
+    color: var(--text-tertiary);
+}
+
+.empty-state__title {
+    font-size: var(--fs-emphasis);
+    line-height: var(--lh-emphasis);
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.empty-state__action {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    margin-top: var(--space-2);
+}
+
+.empty-state__desc {
+    max-width: var(--container-form);
+    font-size: var(--fs-body);
+    line-height: var(--lh-body);
+    color: var(--text-tertiary);
+}

@@ -58,7 +58,7 @@
         <p class="text-xs font-bold uppercase tracking-widest text-neutral-400 mb-3">{{ t('status.stat.total_tokens') }}</p>
         <p class="font-bold tracking-tight text-neutral-900 transition-all"
            :class="getStatFontClass((statsScope === 'alltime' ? alltimeStats : stats).total_prompt_tokens)"
-           x-text="formatNumber((statsScope === 'alltime' ? alltimeStats : stats).total_prompt_tokens)"></p>
+           x-text="window.formatCount((statsScope === 'alltime' ? alltimeStats : stats).total_prompt_tokens)"></p>
     </div>
 
     <!-- Cached Tokens Served -->
@@ -66,7 +66,7 @@
         <p class="text-xs font-bold uppercase tracking-widest text-neutral-400 mb-3">{{ t('status.stat.cached_tokens') }}</p>
         <p class="font-bold tracking-tight text-neutral-900 transition-all"
            :class="getStatFontClass((statsScope === 'alltime' ? alltimeStats : stats).total_cached_tokens)"
-           x-text="formatNumber((statsScope === 'alltime' ? alltimeStats : stats).total_cached_tokens)"></p>
+           x-text="window.formatCount((statsScope === 'alltime' ? alltimeStats : stats).total_cached_tokens)"></p>
     </div>
 
     <!-- Cache Efficiency -->

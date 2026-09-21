@@ -579,7 +579,7 @@
                                                             <div class="md:hidden flex items-center gap-2 flex-wrap mt-0.5 text-xs text-neutral-400">
                                                                 <span x-show="model.params" x-cloak x-text="model.params_formatted + ' ' + window.t('models.browse.params_suffix')"></span>
                                                                 <span x-show="model.size > 0" x-cloak x-text="model.size_formatted"></span>
-                                                                <span x-text="'&#11015; ' + formatDownloads(model.downloads)"></span>
+                                                                <span x-text="'&#11015; ' + window.formatCount(model.downloads)"></span>
                                                                 <span x-text="'&#9829; ' + model.likes"></span>
                                                             </div>
                                                             <!-- Mobile: badge + download button on their own row -->
@@ -601,7 +601,7 @@
                                                             </div>
                                                         </td>
                                                         <td class="max-md:hidden px-4 py-3 text-xs text-neutral-500 whitespace-nowrap" x-text="model.size_formatted"></td>
-                                                        <td class="max-md:hidden px-4 py-3 text-xs text-neutral-500 whitespace-nowrap" x-text="formatDownloads(model.downloads)"></td>
+                                                        <td class="max-md:hidden px-4 py-3 text-xs text-neutral-500 whitespace-nowrap" x-text="window.formatCount(model.downloads)"></td>
                                                         <td class="max-md:hidden px-4 py-3 text-xs text-neutral-500 whitespace-nowrap" x-text="model.likes"></td>
                                                         <td class="max-md:hidden px-4 py-3">
                                                             <div class="flex justify-end items-center gap-2">
@@ -716,7 +716,7 @@
                                                                 <div class="md:hidden flex items-center gap-2 flex-wrap mt-0.5 text-xs text-neutral-400">
                                                                     <span x-show="model.params" x-cloak x-text="model.params_formatted + ' ' + window.t('models.browse.params_suffix')"></span>
                                                                     <span x-show="model.size > 0" x-cloak x-text="model.size_formatted"></span>
-                                                                    <span x-text="'&#11015; ' + formatDownloads(model.downloads)"></span>
+                                                                    <span x-text="'&#11015; ' + window.formatCount(model.downloads)"></span>
                                                                     <span x-text="'&#9829; ' + model.likes"></span>
                                                                 </div>
                                                                 <!-- Mobile: badge + download button on their own row -->
@@ -738,7 +738,7 @@
                                                                 </div>
                                                             </td>
                                                             <td class="max-md:hidden px-4 py-3 text-xs text-neutral-500 whitespace-nowrap" x-text="model.size > 0 ? model.size_formatted : '-'"></td>
-                                                            <td class="max-md:hidden px-4 py-3 text-xs text-neutral-500 whitespace-nowrap" x-text="formatDownloads(model.downloads)"></td>
+                                                            <td class="max-md:hidden px-4 py-3 text-xs text-neutral-500 whitespace-nowrap" x-text="window.formatCount(model.downloads)"></td>
                                                             <td class="max-md:hidden px-4 py-3 text-xs text-neutral-500 whitespace-nowrap" x-text="model.likes"></td>
                                                             <td class="max-md:hidden px-4 py-3">
                                                                 <div class="flex justify-end items-center gap-2">
@@ -1054,7 +1054,7 @@
                                                                 <div class="flex items-center gap-3 mt-0.5">
                                                                     <span x-show="model.size_formatted" x-cloak class="text-xs text-neutral-400" x-text="model.size_formatted"></span>
                                                                     <span x-show="model.params" x-cloak class="text-xs text-neutral-400" x-text="model.params_formatted + ' ' + window.t('models.browse.params_suffix')"></span>
-                                                                    <span class="text-xs text-neutral-400" x-text="'&#11015; ' + formatDownloads(model.downloads)"></span>
+                                                                    <span class="text-xs text-neutral-400" x-text="'&#11015; ' + window.formatCount(model.downloads)"></span>
                                                                     <span class="text-xs text-neutral-400" x-text="'&#9829; ' + model.likes"></span>
                                                                 </div>
                                                             </div>
@@ -1108,7 +1108,7 @@
                                                                 <div class="flex items-center gap-3 mt-0.5">
                                                                     <span x-show="model.size_formatted" x-cloak class="text-xs text-neutral-400" x-text="model.size_formatted"></span>
                                                                     <span x-show="model.params" x-cloak class="text-xs text-neutral-400" x-text="model.params_formatted + ' ' + window.t('models.browse.params_suffix')"></span>
-                                                                    <span class="text-xs text-neutral-400" x-text="'&#11015; ' + formatDownloads(model.downloads)"></span>
+                                                                    <span class="text-xs text-neutral-400" x-text="'&#11015; ' + window.formatCount(model.downloads)"></span>
                                                                     <span class="text-xs text-neutral-400" x-text="'&#9829; ' + model.likes"></span>
                                                                 </div>
                                                             </div>
@@ -1171,7 +1171,7 @@
                                                                     <div class="flex items-center gap-3 mt-0.5 flex-wrap">
                                                                         <span x-show="model.size_formatted" x-cloak class="text-xs text-neutral-400" x-text="model.size_formatted"></span>
                                                                         <span x-show="model.params" x-cloak class="text-xs text-neutral-400" x-text="model.params_formatted + ' ' + window.t('models.browse.params_suffix')"></span>
-                                                                        <span class="text-xs text-neutral-400" x-text="'&#11015; ' + formatDownloads(model.downloads)"></span>
+                                                                        <span class="text-xs text-neutral-400" x-text="'&#11015; ' + window.formatCount(model.downloads)"></span>
                                                                         <span class="text-xs text-neutral-400" x-text="'&#9829; ' + model.likes"></span>
                                                                     </div>
                                                                 </div>
@@ -2003,7 +2003,7 @@
                                             <h3 class="text-lg font-bold text-neutral-900 truncate" x-text="hfModelDetail.repo_id"></h3>
                                             <div class="flex items-center gap-3 mt-1.5 flex-wrap">
                                                 <span x-show="hfModelDetail.size > 0" class="text-xs text-neutral-500" x-text="hfModelDetail.size_formatted"></span>
-                                                <span class="text-xs text-neutral-500" x-text="'&#11015; ' + formatDownloads(hfModelDetail.downloads)"></span>
+                                                <span class="text-xs text-neutral-500" x-text="'&#11015; ' + window.formatCount(hfModelDetail.downloads)"></span>
                                                 <span class="text-xs text-neutral-500" x-text="'&#9829; ' + hfModelDetail.likes"></span>
                                                 <span x-show="hfModelDetail.params" x-cloak class="text-xs text-neutral-500" x-text="hfModelDetail.params_formatted + ' ' + window.t('models.browse.params_suffix')"></span>
                                                 <span x-show="hfModelDetail.pipeline_tag" x-cloak
@@ -2128,7 +2128,7 @@
                                             <div class="flex items-center gap-3 mt-1.5 flex-wrap">
                                                 <span x-show="msModelDetail.size_formatted" x-cloak class="text-xs text-neutral-500" x-text="msModelDetail.size_formatted"></span>
                                                 <span x-show="msModelDetail.params" x-cloak class="text-xs text-neutral-500" x-text="msModelDetail.params_formatted + ' ' + window.t('models.browse.params_suffix')"></span>
-                                                <span class="text-xs text-neutral-500" x-text="'&#11015; ' + formatDownloads(msModelDetail.downloads)"></span>
+                                                <span class="text-xs text-neutral-500" x-text="'&#11015; ' + window.formatCount(msModelDetail.downloads)"></span>
                                                 <span class="text-xs text-neutral-500" x-text="'&#9829; ' + msModelDetail.likes"></span>
                                             </div>
                                         </div>

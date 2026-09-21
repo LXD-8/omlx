@@ -8,6 +8,7 @@
 {% endblock %}
 
 {% block content %}
+{% import "components/ui.html" as ui %}
 <div class="min-h-screen bg-white flex flex-col" x-data="dashboard()" x-init="init()">
     <!-- Navigation Bar -->
     {% include "dashboard/_navbar.html" %}
