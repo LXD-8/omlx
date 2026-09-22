@@ -4891,7 +4891,6 @@ async def test_qwen_unrecoverable_sibling_is_not_success(api, valid_prefix, bad,
 
 
 @pytest.mark.asyncio
-@pytest.mark.asyncio
 async def test_responses_opening_snapshot_echoes_the_whole_envelope():
     """`response.created` must come from the envelope builder, not a subset copy.
 
