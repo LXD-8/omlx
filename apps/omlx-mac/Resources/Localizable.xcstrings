@@ -1049,7 +1049,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Each item shows prompt-processing and token-generation speed in the menu bar. Click one for details and a live graph."
+            "value" : "Each item shows prompt-processing and Token-generation speed in the menu bar. Click one for details and a live graph."
           }
         },
         "ru" : {
@@ -4007,7 +4007,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "tokens applied to Context Window"
+            "value" : "Tokens applied to Context Window"
           }
         },
         "zh-Hans" : {
@@ -4355,13 +4355,13 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "pp TPS"
+            "value" : "PP TPS"
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "pp TPS"
+            "value" : "PP TPS"
           }
         },
         "zh-Hans" : {
@@ -4403,13 +4403,13 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "tg TPS"
+            "value" : "TG TPS"
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "tg TPS"
+            "value" : "TG TPS"
           }
         },
         "zh-Hans" : {
@@ -4841,7 +4841,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Prompt tokens to feed for each single-request trial"
+            "value" : "Prompt Tokens to feed for each single-request trial"
           }
         },
         "ru" : {
@@ -4913,7 +4913,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Output tokens per single-request trial"
+            "value" : "Output Tokens per single-request trial"
           }
         },
         "ru" : {
@@ -5129,13 +5129,13 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "pp TPS"
+            "value" : "PP TPS"
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "pp TPS"
+            "value" : "PP TPS"
           }
         },
         "zh-Hans" : {
@@ -5177,13 +5177,13 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "tg TPS"
+            "value" : "TG TPS"
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "tg TPS"
+            "value" : "TG TPS"
           }
         },
         "zh-Hans" : {
@@ -5297,19 +5297,19 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
-            "value" : "pp %1$lld / tg %2$lld"
+            "value" : "PP %1$lld / TG %2$lld"
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "pp %1$lld / tg %2$lld"
+            "value" : "PP %1$lld / TG %2$lld"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "pp %1$lld / tg %2$lld"
+            "value" : "PP %1$lld / TG %2$lld"
           }
         }
       }
@@ -5465,19 +5465,19 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
-            "value" : "pp %lld"
+            "value" : "PP %lld"
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "pp %lld"
+            "value" : "PP %lld"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "pp %lld"
+            "value" : "PP %lld"
           }
         }
       }
@@ -14470,13 +14470,13 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Keep multi-token prediction heads in the quantized output"
+            "value" : "Keep multi-Token prediction heads in the quantized output"
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Сохранять головы multi-token prediction в квантованном результате"
+            "value" : "Сохранять головы multi-Token prediction в квантованном результате"
           }
         },
         "zh-Hans" : {
@@ -15810,7 +15810,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Validate a token to enable upload"
+            "value" : "Validate a Token to enable upload"
           }
         },
         "ru" : {
@@ -16338,7 +16338,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "HF token"
+            "value" : "HF Token"
           }
         },
         "ru" : {
@@ -18809,7 +18809,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Maximum prompt + completion tokens."
+            "value" : "Maximum prompt + completion Tokens."
           }
         },
         "ru" : {
@@ -19001,7 +19001,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Server-wide cap on generated tokens."
+            "value" : "Server-wide cap on generated Tokens."
           }
         },
         "ru" : {
@@ -19217,7 +19217,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Penalize repeated tokens."
+            "value" : "Penalize repeated Tokens."
           }
         },
         "ru" : {
@@ -20075,7 +20075,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Stores hourly per-model token totals in usage.sqlite3. Turning this off keeps existing history."
+            "value" : "Stores hourly per-model Token totals in usage.sqlite3. Turning this off keeps existing history."
           }
         },
         "ru" : {
@@ -20171,7 +20171,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Drafts several tokens per step with the model's built-in MTP head. Up to ~1.5x faster decoding for supported models."
+            "value" : "Drafts several Tokens per step with the model's built-in MTP head. Up to ~1.5x faster decoding for supported models."
           }
         },
         "ru" : {
@@ -20945,7 +20945,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Limit thinking tokens for reasoning models. Forces end of thinking when exceeded."
+            "value" : "Limit thinking Tokens for reasoning models. Forces end of thinking when exceeded."
           }
         },
         "ru" : {
@@ -20993,7 +20993,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Truncate large tool results (e.g. file reads) to a token limit"
+            "value" : "Truncate large tool results (e.g. file reads) to a Token limit"
           }
         },
         "ru" : {
@@ -21137,7 +21137,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Maximum tokens per request"
+            "value" : "Maximum Tokens per request"
           }
         },
         "ru" : {
@@ -21209,7 +21209,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Cap on generated tokens (empty = default)"
+            "value" : "Cap on generated Tokens (empty = default)"
           }
         },
         "ru" : {
@@ -21329,7 +21329,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Penalize tokens already present (−2 to 2)."
+            "value" : "Penalize Tokens already present (−2 to 2)."
           }
         },
         "ru" : {
@@ -21377,7 +21377,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Penalize repeated tokens (−2 to 2)."
+            "value" : "Penalize repeated Tokens (−2 to 2)."
           }
         },
         "ru" : {
@@ -22241,7 +22241,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Prompts at or above this token count switch to BatchedEngine. Empty = unlimited."
+            "value" : "Prompts at or above this Token count switch to BatchedEngine. Empty = unlimited."
           }
         },
         "ru" : {
@@ -22385,7 +22385,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
-            "value" : "Attention-sink tokens always kept in the window. Empty = dflash default (0)."
+            "value" : "Attention-sink Tokens always kept in the window. Empty = dflash default (0)."
           }
         },
         "ru" : {
@@ -22865,7 +22865,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Min prompt tokens to trigger (shorter prompts use full prefill)."
+            "value" : "Min prompt Tokens to trigger (shorter prompts use full prefill)."
           }
         },
         "ru" : {
@@ -23057,13 +23057,13 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Multi-token prediction for vision-language models via an assistant drafter."
+            "value" : "Multi-Token prediction for vision-language models via an assistant drafter."
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Multi-token prediction для vision-language моделей через assistant drafter."
+            "value" : "Multi-Token prediction для vision-language моделей через assistant drafter."
           }
         },
         "zh-Hans" : {
@@ -26234,7 +26234,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Note: Sub-block Cache means requests below one full block (for example <1024 tokens on some models) are cached in memory/paged cache but are not counted as indexed SSD blocks."
+            "value" : "Note: Sub-block Cache means requests below one full block (for example <1024 Tokens on some models) are cached in memory/paged cache but are not counted as indexed SSD blocks."
           }
         },
         "zh-Hans" : {
@@ -27856,7 +27856,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "00–23 hours · darker green means more tokens · repeated DST hours combine"
+            "value" : "00–23 hours · darker green means more Tokens · repeated DST hours combine"
           }
         },
         "ru" : {
@@ -27880,7 +27880,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
-            "value" : "%@ tokens"
+            "value" : "%@ Tokens"
           }
         },
         "ru" : {
@@ -27904,7 +27904,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
-            "value" : "%1$lld requests · %2$@ tok/s"
+            "value" : "%1$lld requests · %2$@ Tok/s"
           }
         },
         "ru" : {
@@ -27916,7 +27916,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%1$lld 个请求 · %2$@ tok/s"
+            "value" : "%1$lld 个请求 · %2$@ Tok/s"
           }
         }
       }
@@ -27952,7 +27952,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
-            "value" : "%1$@ %2$@:00 · %3$@ tokens"
+            "value" : "%1$@ %2$@:00 · %3$@ Tokens"
           }
         },
         "ru" : {
@@ -30142,7 +30142,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Best token generation (TG)"
+            "value" : "Best Token generation (TG)"
           }
         },
         "ko" : {
