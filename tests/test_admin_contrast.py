@@ -9,7 +9,7 @@ keeps the focus-ring part of this honest; this file does the palette.
 What is asserted:
 
 * **Text** — every text token against every surface the console puts text on
-  (page, group/inset, code block, the two control fills, the four tone badges).
+  (page, group/inset, code block, the two control fills, the six tone badges).
   Body copy is 10-17px in this console, so the 4.5:1 threshold applies to all
   of it; the large-text relaxation (3:1 at 18.66px bold / 24px) never applies
   and is not used to excuse anything.
@@ -19,7 +19,7 @@ What is asserted:
   and the settings rail's selected item: a grey one step deeper than the rail
   itself (``text.primary`` at 10% of itself over ``bgSecondary``), because where
   you are is not an action. The system blue stays the tint for things you can
-  act on; the four system colours stay status marks.
+  act on; the six system colours stay status marks.
 
 Not asserted, deliberately:
 
@@ -38,8 +38,8 @@ Not asserted, deliberately:
   bolder and the row carries the rail's left rule. The label's own contrast is
   asserted above.
 * The Apple system colours as marks: over the light page they measure green
-  2.22:1, orange 2.20:1, red 3.55:1 and blue 4.02:1, and 4.61-8.32:1 over the
-  dark one. They still paint dots, bars and fills; the *labels* on a tone badge
+  2.22:1, orange 2.20:1, red 3.55:1, blue 4.02:1, teal 2.57:1 and purple 4.13:1,
+  and 4.61-8.45:1 over the dark one. They still paint dots, bars and fills; the *labels* on a tone badge
   are the ``badge`` tokens below, which are held to 4.5:1.
 
 Every token this pass changed is pinned by ``test_the_fixed_pairs_used_to_fail``
@@ -64,7 +64,7 @@ BADGE_TINT_ALPHA = 0.14
 # What `color-mix(in srgb, var(--text-primary) 10%, transparent)` resolves to
 # over the rail's own surface: how the settings rail paints a selected section.
 SELECTION_TINT_ALPHA = 0.10
-TONES = ("green", "orange", "red", "blue")
+TONES = ("green", "orange", "red", "blue", "teal", "purple")
 APPEARANCES = ("light", "dark")
 
 
@@ -306,10 +306,10 @@ FIXED_IDS = [pair[0] for pair in FIXED_PAIRS]
 
 def test_the_pairing_table_covers_the_palette():
     # 6 text tokens x 3 surfaces x 2 themes, plus code (3), the two control
-    # fills, the four tones and the neutral badge, per theme.
-    assert len(TEXT_PAIRS) == len(APPEARANCES) * (6 * 3 + 3 + 2 + 4 + 1 + 3)
+    # fills, one per tone badge (`TONES`) and the neutral badge, per theme.
+    assert len(TEXT_PAIRS) == len(APPEARANCES) * (6 * 3 + 3 + 2 + len(TONES) + 1 + 3)
     assert len(NON_TEXT_PAIRS) == len(APPEARANCES) * 5
-    assert len(FIXED_PAIRS) == 2 + 2 + 1 + 4 + 2 + 2
+    assert len(FIXED_PAIRS) == 2 + 2 + 1 + len(TONES) + 2 + 2
 
 
 @pytest.mark.parametrize("label,foreground,background", TEXT_PAIRS, ids=TEXT_IDS)

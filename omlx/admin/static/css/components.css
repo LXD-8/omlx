@@ -156,6 +156,16 @@
     background-color: color-mix(in srgb, var(--sys-blue) 14%, transparent);
 }
 
+.badge--teal {
+    color: var(--badge-teal-fg);
+    background-color: color-mix(in srgb, var(--sys-teal) 14%, transparent);
+}
+
+.badge--purple {
+    color: var(--badge-purple-fg);
+    background-color: color-mix(in srgb, var(--sys-purple) 14%, transparent);
+}
+
 /* === Dual-value metric ===
    The measured figure is the one that matters; the estimate, limit or budget it
    is to be read against sits under it at the auxiliary size, never competing

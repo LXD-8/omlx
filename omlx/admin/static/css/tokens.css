@@ -45,6 +45,8 @@
     --badge-orange-fg:   #9a3412;
     --badge-red-fg:      #b91c1c;
     --badge-blue-fg:     #1d4ed8;
+    --badge-teal-fg:     #115e59;
+    --badge-purple-fg:   #6b21a8;
     --fs-aux:            12px;
     --fs-body:           14px;
     --fs-emphasis:       16px;
@@ -144,6 +146,8 @@
     --badge-orange-fg:   #ff9f0a;
     --badge-red-fg:      #ff7b72;
     --badge-blue-fg:     #409cff;
+    --badge-teal-fg:     #40c8e0;
+    --badge-purple-fg:   #c77dff;
 }
 
 html {

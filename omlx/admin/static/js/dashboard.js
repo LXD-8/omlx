@@ -6247,12 +6247,19 @@
                 return this.logRows.find(row => row.key === this.logSelectedKey) || null;
             },
 
+            // One colour per level, and one level per colour — the same six the
+            // app's LogPalette draws, so a WARNING reads the same in the window
+            // and in the browser. The HIG's rule is the reason CRITICAL is not
+            // another red: a colour that means two things means neither. TRACE
+            // stays the neutral badge; it is the quietest level, not a hue.
             logLevelTone(level) {
                 const rank = window.OmlxLogs.levelRank(level);
-                if (rank >= 4) return 'badge--red';
-                if (rank === 3) return 'badge--orange';
-                if (rank === 2) return 'badge--blue';
-                return '';
+                if (rank >= 5) return 'badge--purple';  // CRITICAL
+                if (rank === 4) return 'badge--red';    // ERROR
+                if (rank === 3) return 'badge--orange'; // WARNING
+                if (rank === 2) return 'badge--blue';   // INFO
+                if (rank === 1) return 'badge--teal';   // DEBUG
+                return '';                              // TRACE, and anything unknown
             },
 
             get logMemoryLabels() {
