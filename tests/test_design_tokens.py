@@ -192,6 +192,45 @@ def test_components_use_tokens_only():
         )
 
 
+def test_every_colour_token_reaches_the_stylesheet():
+    """A colour in tokens.json has to become a variable, or a rule that reads it
+    paints nothing. Naming the semantic colours one by one in the generator is
+    exactly how `teal` and `purple` reached the badge rules — and the app's
+    palette — while never reaching tokens.css: `color-mix()` with an undefined
+    variable is invalid, so those two tone badges rendered with no background at
+    all and only their foreground token made them look deliberate."""
+    tokens = json.loads((ADMIN / "tokens.json").read_text(encoding="utf-8"))
+    css = (ADMIN / "static" / "css" / "tokens.css").read_text(encoding="utf-8")
+    components = (ADMIN / "static" / "css" / "components.css").read_text(encoding="utf-8")
+
+    missing = []
+    for appearance in ("light", "dark"):
+        for name in tokens["semantic"][appearance]:
+            if name.startswith("_"):
+                continue
+            variable = "--accent" if name == "accent" else f"--sys-{name}"
+            if variable not in css:
+                missing.append(variable)
+        for tone in tokens["badge"][appearance]:
+            if not tone.startswith("_") and f"--badge-{tone}-fg" not in css:
+                missing.append(f"--badge-{tone}-fg")
+    assert not missing, f"tokens.json declares colours tokens.css never does: {sorted(set(missing))}"
+
+    # And the rules that read them exist and read something: every tone the
+    # badge spec has is a rule, and every variable inside it is declared.
+    for tone in tokens["badge"]["light"]:
+        if tone.startswith("_"):
+            continue
+        rule = f".badge--{tone} {{"
+        assert rule in components, f"{rule} is missing from components.css"
+        block = components[components.index(rule):]
+        block = block[: block.index("}")]
+        variables = re.findall(r"var\((--[a-z-]+)\)", block)
+        assert variables, f"{rule} reads no token at all"
+        for variable in variables:
+            assert variable in css, f"the {tone} badge reads {variable}, which tokens.css never declares"
+
+
 def test_base_loads_the_token_layer_before_page_styles():
     tailwind = BASE.index("css/tailwind.css")
     tokens = BASE.index("css/tokens.css")

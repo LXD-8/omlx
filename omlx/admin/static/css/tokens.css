@@ -22,10 +22,10 @@
     --link-color:        #0066cc;
     --btn-primary:       #171717;
     --btn-primary-text:  #ffffff;
-    --accent-fill:       #0071e3;
-    --accent-fill-hover: #0066cc;
+    --accent-fill:       #171717;
+    --accent-fill-hover: #262626;
     --accent-fill-text:  #ffffff;
-    --switch-on:         #248a3d;
+    --switch-on:         #000000;
     --switch-knob:       #ffffff;
     --btn-danger:        #dc2626;
     --bg-danger-hover:   rgba(239, 68, 68, 0.1);
@@ -37,6 +37,8 @@
     --sys-orange:        #ff9500;
     --sys-green:         #34c759;
     --sys-blue:          #007aff;
+    --sys-teal:          #30b0c7;
+    --sys-purple:        #af52de;
     --accent:            #007aff;
     --topbar-bg:         rgba(255, 255, 255, 0.72);
     --topbar-border:     rgba(15, 23, 42, 0.08);
@@ -123,10 +125,10 @@
     --link-color:        #2997ff;
     --btn-primary:       #e5e5e5;
     --btn-primary-text:  #18181b;
-    --accent-fill:       #0a6fd6;
-    --accent-fill-hover: #0a63c9;
-    --accent-fill-text:  #ffffff;
-    --switch-on:         #30d158;
+    --accent-fill:       #e5e5e5;
+    --accent-fill-hover: #d4d4d8;
+    --accent-fill-text:  #18181b;
+    --switch-on:         #a1a1aa;
     --switch-knob:       #ffffff;
     --btn-danger:        #dc2626;
     --bg-danger-hover:   rgba(239, 68, 68, 0.2);
@@ -138,6 +140,8 @@
     --sys-orange:        #ff9f0a;
     --sys-green:         #30d158;
     --sys-blue:          #0a84ff;
+    --sys-teal:          #40c8e0;
+    --sys-purple:        #bf5af2;
     --accent:            #0a84ff;
     --topbar-bg:         rgba(29, 29, 32, 0.72);
     --topbar-border:     rgba(255, 255, 255, 0.08);

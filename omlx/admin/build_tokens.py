@@ -77,10 +77,18 @@ def _theme_vars(tokens: dict, appearance: str) -> list[tuple[str, str]]:
         ("--focus-ring-color", control["focusRing"]),
         ("--focus-ring-width", f"{control['focusRingWidth']}px"),
         ("--code-bg", control["codeBg"]),
-        ("--sys-red", semantic["red"]),
-        ("--sys-orange", semantic["orange"]),
-        ("--sys-green", semantic["green"]),
-        ("--sys-blue", semantic["blue"]),
+    ]
+    # One variable per semantic colour, straight from the source: naming them
+    # one by one is how `teal` and `purple` reached `tokens.json`, the badge
+    # rules and the app's palette while never reaching this file, which left two
+    # tone badges painting an undefined colour (`color-mix` with no variable
+    # paints nothing) until a reader noticed the missing backgrounds.
+    pairs += [
+        (f"--sys-{name}", value)
+        for name, value in semantic.items()
+        if not name.startswith("_") and name != "accent"
+    ]
+    pairs += [
         ("--accent", semantic["accent"]),
         ("--topbar-bg", material["topBarBg"]),
         ("--topbar-border", material["topBarBorder"]),

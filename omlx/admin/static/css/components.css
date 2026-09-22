@@ -379,10 +379,12 @@
 }
 
 /* === Switch (the console's one on/off control) ===
-   Off is a neutral track, on is the system green the HIG fills a switch with.
-   The knob's position already carries the state, so the colour is a second
-   signal rather than the only one; the knob is a token colour because the app
-   draws its own.
+   Off is a neutral track; on is the near-black this control always had (the fill
+   the primary button wears too, so a switch that is on and a button that acts
+   read as the same weight). The knob's position already
+   carries the state, so the colour is a second signal rather than the only one;
+   the knob is white in both themes, and the dark appearance lifts the track one
+   grey step so an on switch is still a mark rather than a hole.
 
    One size, everywhere: 36x20 with a 16pt knob, which is the height of the
    badge the row beside it already carries. The console used to draw two, 44x24
