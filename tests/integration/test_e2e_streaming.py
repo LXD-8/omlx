@@ -5431,9 +5431,7 @@ async def test_stream_thinking_length_channels(api, with_tools):
             e["delta"] for e in events if e["type"] == "response.output_text.delta"
         )
         reasoning = "".join(
-            e["delta"]
-            for e in events
-            if e["type"] == "response.reasoning_summary_text.delta"
+            e["delta"] for e in events if e["type"] == "response.reasoning_text.delta"
         )
         final = next(
             e["response"] for e in events if e["type"] == "response.incomplete"

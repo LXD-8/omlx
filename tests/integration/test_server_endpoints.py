@@ -2545,7 +2545,8 @@ def test_nonstream_thinking_length_channels(client, mock_llm_engine, api):
             b["text"]
             for item in data["output"]
             if item["type"] == "reasoning"
-            for b in item["summary"]
+            for b in item["content"]
+            if b["type"] == "reasoning_text"
         )
     assert content == ""
     assert reasoning == "unfinished"
