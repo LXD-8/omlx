@@ -2216,7 +2216,7 @@
                                 <span class="text-xs font-medium truncate" style="color: var(--text-primary);"
                                     x-text="window.t('chat.allow_svg')"></span>
                             </div>
-                            <button type="button" role="switch" class="switch switch--sm"
+                            <button type="button" role="switch" class="switch"
                                 :class="{ 'switch--on': allowSvg }"
                                 :aria-checked="allowSvg ? 'true' : 'false'"
                                 :aria-label="window.t('chat.allow_svg')"
@@ -2238,7 +2238,7 @@
                                 <i data-lucide="arrow-down-to-line" class="w-4 h-4 shrink-0" style="color: var(--text-tertiary);"></i>
                                 <span class="text-xs font-medium truncate" style="color: var(--text-primary);" x-text="window.t('chat.show_jump_button')"></span>
                             </div>
-                            <button type="button" role="switch" class="switch switch--sm"
+                            <button type="button" role="switch" class="switch"
                                 :class="{ 'switch--on': chatSettings.showScrollButton }"
                                 :aria-checked="chatSettings.showScrollButton ? 'true' : 'false'"
                                 :aria-label="window.t('chat.show_jump_button')"

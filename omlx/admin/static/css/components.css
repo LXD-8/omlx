@@ -115,13 +115,20 @@
 
 /* === Badge === */
 
+/* One box for a row's chrome: the same height as the switch beside it, and a
+   padding small enough that a dot and a two-character label fill exactly the
+   switch's width — so a status column and a control column read as one row.
+   Longer labels keep their natural width; the height stays. */
 .badge {
     display: inline-flex;
     align-items: center;
+    justify-content: center;
+    vertical-align: middle;
     gap: var(--space-1);
-    padding: 0 var(--space-2);
+    height: calc(var(--space-5) - var(--space-1));
+    padding: 0 var(--space-1);
     font-size: var(--fs-aux);
-    line-height: 1.6;
+    line-height: 1.4;
     font-weight: 600;
     border-radius: var(--radius-sm);
     background-color: var(--bg-tertiary);
@@ -379,32 +386,33 @@
 }
 
 /* === Switch (the console's one on/off control) ===
-   Off is a neutral track, on is the system green the HIG fills a switch with.
-   The knob's position already carries the state, so the colour is a second
-   signal rather than the only one; the knob is a token colour because the app
-   draws its own. Sizes are the two the markup used before it was a component:
-   44x24 with a 20pt knob, and 36x20 with a 16pt one. */
+   Off is a neutral track; on is the near-black this control always had (the fill
+   the primary button wears too, so a switch that is on and a button that acts
+   read as the same weight). The knob's position already carries the state, so the
+   colour is a second signal rather than the only one; the knob is a token colour
+   because the app draws its own.
+
+   One size, everywhere: 36x20 with a 16pt knob, which is the height of the
+   badge the row beside it already carries. The console used to draw two, 44x24
+   in the settings cards and 36x16 in the tables, the chat sheet and the upload
+   sheet, so the same control was a different control depending on where it
+   stood, and the small one stood shorter than its own row's badge. */
 
 /* The track is a rounded rectangle with a length and a height, not a capsule:
-   the corner is one control step, so the switch reads as a switch at both
-   sizes. The knob is the same corner, one hairline tighter (concentric). */
+   the corner is one control step. The knob is the same corner, one hairline
+   tighter (concentric). */
 .switch {
     position: relative;
     flex: none;
-    width: calc(var(--space-8) - var(--space-1));
-    height: var(--space-5);
+    vertical-align: middle;
+    width: calc(var(--space-8) - var(--space-2));
+    height: calc(var(--space-5) - var(--space-1));
     padding: 0;
     background-color: var(--bg-tertiary);
     border: 1px solid var(--border-normal);
     border-radius: var(--radius-sm);
     cursor: pointer;
     transition: background-color var(--duration-normal) ease, border-color var(--duration-normal) ease;
-}
-
-.switch--sm {
-    width: calc(var(--space-8) - var(--space-3));
-    height: var(--space-4);
-    margin-top: var(--space-1);
 }
 
 .switch--on {
@@ -428,22 +436,16 @@
     position: absolute;
     top: 1px;
     left: 1px;
-    width: calc(var(--space-5) - var(--space-1));
-    height: calc(var(--space-5) - var(--space-1));
+    width: var(--space-4);
+    height: var(--space-4);
     background-color: var(--switch-knob);
     border-radius: calc(var(--radius-sm) - 1px);
     box-shadow: var(--shadow-card);
     transition: transform var(--duration-normal) ease;
 }
 
-.switch--sm .switch__knob {
-    width: var(--space-3);
-    height: var(--space-3);
-}
-
-/* One travel for both sizes: the small track is one step narrower *and* its
-   knob is one step smaller, so the knob lands one hairline from the far edge
-   either way (the small switch used to stop short of it by one step). */
+/* The knob starts one hairline inside the left edge and lands one hairline
+   inside the right one: 40 - 2 borders - 16 knob - 2 insets = 20. */
 .switch--on .switch__knob {
     transform: translateX(calc(var(--space-5) - var(--space-1)));
 }
