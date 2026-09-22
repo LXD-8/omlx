@@ -92,12 +92,12 @@
     <div class="grid grid-cols-1 sm:grid-cols-2 sm:divide-x divide-neutral-100">
         <div class="p-6">
             <p class="kpi__label mb-1">{{ t('status.speed.prompt_processing') }}</p>
-            <p class="kpi__figure"><span class="kpi__value" x-effect="window.omlxCountUp($el, kpiValue('avg_prefill_tps'), {decimals: 1})"></span><span class="kpi__unit">tok/s</span></p>
+            <p class="kpi__figure"><span class="kpi__value" x-effect="window.omlxCountUp($el, kpiValue('avg_prefill_tps'), {decimals: 1})"></span><span class="kpi__unit">Tok/s</span></p>
             <p class="status-header__meta mt-1">{{ t('status.speed.prompt_processing_note') }}</p>
         </div>
         <div class="p-6">
             <p class="kpi__label mb-1">{{ t('status.speed.token_generation') }}</p>
-            <p class="kpi__figure"><span class="kpi__value" x-effect="window.omlxCountUp($el, kpiValue('avg_generation_tps'), {decimals: 1})"></span><span class="kpi__unit">tok/s</span></p>
+            <p class="kpi__figure"><span class="kpi__value" x-effect="window.omlxCountUp($el, kpiValue('avg_generation_tps'), {decimals: 1})"></span><span class="kpi__unit">Tok/s</span></p>
         </div>
     </div>
 </div>

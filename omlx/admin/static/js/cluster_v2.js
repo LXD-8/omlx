@@ -135,7 +135,7 @@ function clusterV2Wizard() {
         'cluster.v2.strategy.hint.auto':
             'oMLX picks the split that fits this model and your link',
         'cluster.v2.strategy.hint.tensor':
-            'Every Mac works on every token — needs a fast link',
+            'Every Mac works on every Token — needs a fast link',
         'cluster.v2.strategy.hint.pipeline':
             'Each Mac holds a different slice of the layers',
         'cluster.v2.strategy.tensor_needs_two':
@@ -805,7 +805,7 @@ function clusterV2Wizard() {
         formatRequestRate(rate) {
             const value = Number(rate);
             if (!Number.isFinite(value) || value <= 0) return '—';
-            return `${value.toFixed(value >= 100 ? 0 : 1)} tok/s`;
+            return `${value.toFixed(value >= 100 ? 0 : 1)} Tok/s`;
         },
 
         requestPrefillRate(request) {
@@ -2242,8 +2242,8 @@ function clusterV2Wizard() {
 
         contextReservationLabel(tokens) {
             const value = Math.max(1, Number(tokens) || 0);
-            if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(2).replace(/\.00$/, '')}M tokens`;
-            return `${Math.round(value / 1024)}K tokens`;
+            if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(2).replace(/\.00$/, '')}M Tokens`;
+            return `${Math.round(value / 1024)}K Tokens`;
         },
 
         setTargetContextTokens(value) {

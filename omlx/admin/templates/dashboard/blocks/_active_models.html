@@ -210,11 +210,11 @@
                                 </div>
                                 <span class="text-[12px] text-neutral-600 font-medium w-8 text-right" x-text="(pp.total > 0 ? Math.round(pp.processed / pp.total * 100) : 0) + '%'"></span>
                                 <span class="text-[12px] text-neutral-700 font-medium" x-show="pp.detail" x-text="pp.detail"></span>
-                                <span class="text-[12px] text-neutral-400" x-text="window.formatCount(pp.processed) + ' / ' + window.formatCount(pp.total) + ' tok'"></span>
+                                <span class="text-[12px] text-neutral-400" x-text="window.formatCount(pp.processed) + ' / ' + window.formatCount(pp.total) + ' Tok'"></span>
                                 <span x-show="pp.scored_tokens || pp.selected_tokens" class="text-[12px] text-neutral-400" x-text="'(' + (pp.scored_tokens ? window.t('status.active_models.draft_scored').replace('{count}', window.formatCount(pp.scored_tokens)) : '') + (pp.scored_tokens && pp.selected_tokens ? ' · ' : '') + (pp.selected_tokens ? window.t('status.active_models.selected_tokens').replace('{count}', window.formatCount(pp.selected_tokens)) + (pp.keep_percent != null ? ' (' + pp.keep_percent + '%)' : '') : '') + ')'"></span>
                                 <span x-show="pp.elapsed != null" class="text-[12px] text-neutral-400" x-text="formatDurationShort(pp.elapsed)"></span>
                                 <span x-show="pp.speed > 0" class="text-[12px] text-neutral-400"
-                                      x-text="'(' + pp.speed.toFixed(0) + ' tok/s' + (pp.eta != null ? ', ' + (pp.eta >= 60 ? Math.floor(pp.eta / 60) + 'm ' + Math.round(pp.eta % 60) + 's' : Math.round(pp.eta) + 's') + ' · ' + window.t('status.active_models.remaining').replace('{duration}', pp.eta >= 60 ? Math.floor(pp.eta / 60) + 'm ' + Math.round(pp.eta % 60) + 's' : Math.round(pp.eta) + 's') : '') + ')'"></span>
+                                      x-text="'(' + pp.speed.toFixed(0) + ' Tok/s' + (pp.eta != null ? ', ' + (pp.eta >= 60 ? Math.floor(pp.eta / 60) + 'm ' + Math.round(pp.eta % 60) + 's' : Math.round(pp.eta) + 's') + ' · ' + window.t('status.active_models.remaining').replace('{duration}', pp.eta >= 60 ? Math.floor(pp.eta / 60) + 'm ' + Math.round(pp.eta % 60) + 's' : Math.round(pp.eta) + 's') : '') + ')'"></span>
                             </div>
                         </template>
                     </div>
@@ -229,9 +229,9 @@
                                     <span class="w-2 h-2 rounded-full flex-shrink-0 bg-green-400 animate-pulse"></span>
                                     <span class="text-[12px] text-green-600 font-medium" x-text="window.t('status.active_models.generating')"></span>
                                 </span>
-                                <span class="text-[12px] text-neutral-400 w-16 whitespace-nowrap ml-2" x-text="window.formatCount(gen.generated_tokens || 0) + ' tok'"></span>
+                                <span class="text-[12px] text-neutral-400 w-16 whitespace-nowrap ml-2" x-text="window.formatCount(gen.generated_tokens || 0) + ' Tok'"></span>
                                 <span x-show="gen.tokens_per_second > 0" class="text-[12px] text-neutral-400 w-20 whitespace-nowrap"
-                                      x-text="gen.tokens_per_second.toFixed(1) + ' tok/s'"></span>
+                                      x-text="gen.tokens_per_second.toFixed(1) + ' Tok/s'"></span>
                                 <span x-show="gen.last_activity_age_seconds >= 3" class="text-[12px] text-neutral-400 whitespace-nowrap" x-text="formatActivityAge(gen.last_activity_age_seconds)"></span>
                                 <span x-show="gen.elapsed_seconds != null" class="text-[12px] text-neutral-400 whitespace-nowrap"
                                       x-text="formatDurationShort(gen.elapsed_seconds)"></span>

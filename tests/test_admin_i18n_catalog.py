@@ -140,7 +140,7 @@ TEMPLATE_LITERALS = [
     "medium",
     "oMLX",
     "thinking",
-    "tok/s",
+    "Tok/s",
     "true",
     "xhigh",
 ]
@@ -218,6 +218,53 @@ UNTRANSLATED_BASELINE = {
     "zh-TW": 516,
     "zh": 7,
 }
+
+
+# Keys whose "token" is a credential rather than a count: an Hugging Face or
+# ModelScope write token is a key, so its label keeps its case.
+CREDENTIAL_KEYS = {
+    "models.downloader.hf_token",
+    "models.downloader.ms_token",
+    "models.downloader.token_warning",
+    "models.uploader.hf_token_label",
+    "models.uploader.hf_token_placeholder",
+    "models.uploader.invalid_token",
+    "settings.integrations.websearch.brave_api_key_hint",
+}
+
+# `tok/s`, `t/s`, `tok`, `token`, `tokens`: the copy writes them with a capital
+# T wherever they mean the model's tokens, in every locale that uses the Latin
+# word (the CJK and Cyrillic catalogues mostly use their own noun).
+LOWERCASE_TOKEN = re.compile(r"\b(tok/s|t/s|tok|token|tokens)\b")
+
+
+# The units that live in the markup and the scripts rather than in the
+# catalogue: KPI suffixes, table cells, the bench text export and the heatmap's
+# aria-label. A lower-case one of these is the same mistake in a different file.
+LOWERCASE_TOKEN_UNITS = (
+    "' tok/s'", "' tok'", "' tokens'", ">tok/s<", ">tok<",
+    "prompt tok/s", "}M tokens`", "}K tokens`", "tok/s</span>",
+)
+
+
+def test_the_markup_draws_token_units_with_a_capital():
+    for path in TRANSLATED_SOURCES:
+        text = path.read_text(encoding="utf-8")
+        for shape in LOWERCASE_TOKEN_UNITS:
+            assert shape not in text, f"{path.name} still writes {shape!r}"
+
+
+def test_token_words_are_capitalised():
+    for locale in LOCALES:
+        catalogue = json.loads((I18N / f"{locale}.json").read_text(encoding="utf-8"))
+        offenders = [
+            key
+            for key, value in catalogue.items()
+            if key not in CREDENTIAL_KEYS
+            and isinstance(value, str)
+            and LOWERCASE_TOKEN.search(value)
+        ]
+        assert not offenders, f"{locale}.json writes token words in lower case: {offenders[:6]}"
 
 
 def test_no_locale_falls_further_behind():

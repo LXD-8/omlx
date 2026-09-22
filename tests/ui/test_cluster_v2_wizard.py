@@ -989,8 +989,8 @@ process.stdout.write(JSON.stringify({
     assert result["active"] == {
         "ids": [41, 42],
         "phases": ["prefill", "decode"],
-        "prefill": ["812 tok/s", "905 tok/s"],
-        "decode": ["—", "44.3 tok/s"],
+        "prefill": ["812 Tok/s", "905 Tok/s"],
+        "decode": ["—", "44.3 Tok/s"],
         "count": "2 active",
     }
     assert result["completed"] == {

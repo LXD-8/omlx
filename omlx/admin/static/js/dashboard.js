@@ -2763,7 +2763,7 @@
                     && recommendation.processing_tps !== undefined;
                 const speed = Number(recommendation.processing_tps || 0).toFixed(1);
                 const speedSuffix = measured
-                    ? ` · ${speed} prompt tok/s`
+                    ? ` · ${speed} prompt Tok/s`
                     : '';
                 if (!recommendation.enabled) {
                     return window.t('js.ane_tune.winner_gpu_only') + speedSuffix;
@@ -3647,8 +3647,8 @@
 
             settingsApplyStats(item) {
                 if (!item || item.pp_tps == null) return '';
-                const parts = [`PP ${Number(item.pp_tps).toFixed(1)} tok/s`];
-                if (item.tg_tps != null) parts.push(`TG ${Number(item.tg_tps).toFixed(1)} tok/s`);
+                const parts = [`PP ${Number(item.pp_tps).toFixed(1)} Tok/s`];
+                if (item.tg_tps != null) parts.push(`TG ${Number(item.tg_tps).toFixed(1)} Tok/s`);
                 if (item.memory_gb != null) parts.push(`${item.memory_gb} GB`);
                 if (item.quantization) parts.push(item.quantization);
                 if (item.omlx_version) parts.push(`oMLX ${item.omlx_version}`);
@@ -4572,7 +4572,7 @@
                 const parts = [];
                 if (activity.input_count != null) parts.push(activity.input_count + ' inputs');
                 if (activity.document_count != null) parts.push(activity.document_count + ' docs');
-                if (activity.token_count != null) parts.push(window.formatCount(activity.token_count) + ' tok');
+                if (activity.token_count != null) parts.push(window.formatCount(activity.token_count) + ' Tok');
                 if (activity.text_length != null) parts.push(activity.text_length + ' chars');
                 if (activity.chunk_count != null) parts.push(activity.chunk_count + ' chunks');
                 if (activity.output_bytes != null) parts.push(this.formatByteCount(activity.output_bytes));
@@ -5397,10 +5397,10 @@
                             rpad(this.benchSingleTestLabel(r), 32),
                             pad(this.benchFmtNum(r.ttft_ms, 1), 10),
                             pad(this.benchFmtNum(r.tpot_ms, 2), 10),
-                            pad(this.benchFmtNum(r.processing_tps, 1, ' tok/s'), 12),
-                            pad(this.benchFmtNum(r.gen_tps, 1, ' tok/s'), 12),
+                            pad(this.benchFmtNum(r.processing_tps, 1, ' Tok/s'), 12),
+                            pad(this.benchFmtNum(r.gen_tps, 1, ' Tok/s'), 12),
                             pad(r.e2e_latency_s.toFixed(3), 10),
-                            pad(r.total_throughput.toFixed(1) + ' tok/s', 12),
+                            pad(r.total_throughput.toFixed(1) + ' Tok/s', 12),
                             pad(this.benchFormatMemory(r.peak_memory_bytes), 10),
                         ];
                         lines.push(row.join('  '));
@@ -5420,10 +5420,10 @@
                     if (baseline) {
                         const row = [
                             rpad('1x', 8),
-                            pad(this.benchFmtNum(baseline.gen_tps, 1, ' tok/s'), 12),
+                            pad(this.benchFmtNum(baseline.gen_tps, 1, ' Tok/s'), 12),
                             pad('1.00x', 8),
-                            pad(this.benchFmtNum(baseline.processing_tps, 1, ' tok/s'), 12),
-                            pad(this.benchFmtNum(baseline.processing_tps, 1, ' tok/s'), 12),
+                            pad(this.benchFmtNum(baseline.processing_tps, 1, ' Tok/s'), 12),
+                            pad(this.benchFmtNum(baseline.processing_tps, 1, ' Tok/s'), 12),
                             pad(this.benchFmtNum(baseline.ttft_ms, 1), 10),
                             pad(baseline.e2e_latency_s.toFixed(3), 10),
                         ];
@@ -5433,10 +5433,10 @@
                         const speedup = this.benchGetSpeedup(r);
                         const row = [
                             rpad(r.batch_size + 'x', 8),
-                            pad(this.benchFmtNum(r.tg_tps, 1, ' tok/s'), 12),
+                            pad(this.benchFmtNum(r.tg_tps, 1, ' Tok/s'), 12),
                             pad(speedup !== null ? speedup.toFixed(2) + 'x' : window.t('bench.results.text_export.not_available'), 8),
-                            pad(this.benchFmtNum(r.pp_tps, 1, ' tok/s'), 12),
-                            pad(this.benchFmtNum(this.benchPpPerReq(r), 1, ' tok/s'), 12),
+                            pad(this.benchFmtNum(r.pp_tps, 1, ' Tok/s'), 12),
+                            pad(this.benchFmtNum(this.benchPpPerReq(r), 1, ' Tok/s'), 12),
                             pad(this.benchFmtNum(r.avg_ttft_ms, 1), 10),
                             pad(r.e2e_latency_s.toFixed(3), 10),
                         ];
