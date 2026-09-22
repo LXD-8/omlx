@@ -37,6 +37,8 @@
     --sys-orange:        #ff9500;
     --sys-green:         #34c759;
     --sys-blue:          #007aff;
+    --sys-teal:          #30b0c7;
+    --sys-purple:        #af52de;
     --accent:            #007aff;
     --topbar-bg:         rgba(255, 255, 255, 0.72);
     --topbar-border:     rgba(15, 23, 42, 0.08);
@@ -45,6 +47,8 @@
     --badge-orange-fg:   #9a3412;
     --badge-red-fg:      #b91c1c;
     --badge-blue-fg:     #1d4ed8;
+    --badge-teal-fg:     #115e59;
+    --badge-purple-fg:   #6b21a8;
     --fs-aux:            12px;
     --fs-body:           14px;
     --fs-emphasis:       16px;
@@ -136,6 +140,8 @@
     --sys-orange:        #ff9f0a;
     --sys-green:         #30d158;
     --sys-blue:          #0a84ff;
+    --sys-teal:          #40c8e0;
+    --sys-purple:        #bf5af2;
     --accent:            #0a84ff;
     --topbar-bg:         rgba(29, 29, 32, 0.72);
     --topbar-border:     rgba(255, 255, 255, 0.08);
@@ -144,6 +150,8 @@
     --badge-orange-fg:   #ff9f0a;
     --badge-red-fg:      #ff7b72;
     --badge-blue-fg:     #409cff;
+    --badge-teal-fg:     #40c8e0;
+    --badge-purple-fg:   #c77dff;
 }
 
 html {

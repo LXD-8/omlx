@@ -13,6 +13,7 @@ aggregator and the windowing math are covered by tests/admin_logs.test.cjs.
 """
 
 import json
+import re
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -53,11 +54,23 @@ def test_the_raw_textarea_is_gone():
     assert "filteredLogContent" not in DASHBOARD_JS
 
 
-def test_level_badges_use_the_shared_palette():
-    body = DASHBOARD_JS[DASHBOARD_JS.index("logLevelTone(level)") :][:400]
-    assert "badge--red" in body
-    assert "badge--orange" in body
-    assert "badge--blue" in body
+def test_each_level_has_its_own_badge_tone():
+    """Six levels, six tones: a level that shares a colour with another level
+    states nothing. The order is the severity order the parser ranks with, and
+    the app draws the same six (LogPalette in LogsScreen.swift)."""
+    body = DASHBOARD_JS[DASHBOARD_JS.index("logLevelTone(level)") :][:800]
+    tones = re.findall(r"return '(badge--[a-z]+)'", body)
+    assert tones == [
+        "badge--purple",  # CRITICAL
+        "badge--red",     # ERROR
+        "badge--orange",  # WARNING
+        "badge--blue",    # INFO
+        "badge--teal",    # DEBUG
+    ], "one tone per ranked level, worst first"
+    assert len(set(tones)) == len(tones), "two levels may not share a tone"
+    assert "return ''" in body, "TRACE keeps the neutral badge"
+    for tone in tones:
+        assert f".{tone} {{" in COMPONENTS_CSS, tone
     assert "levelRank" in LOGS_JS, "the ranking comes from the parser module"
 
 
