@@ -583,7 +583,32 @@
     background-color: color-mix(in srgb, var(--text-primary) 14%, transparent);
 }
 
-.watermark__bar--actual {
+/* The fill reads the same three thresholds the enforcer does, in the console's
+   own status colours: under the soft guard, at it, and at the hard ceiling. */
+.watermark__bar--actual.meter--ok {
+    background-color: var(--sys-green);
+}
+
+.watermark__bar--actual.meter--warn {
+    background-color: var(--sys-orange);
+}
+
+.watermark__bar--actual.meter--over {
+    background-color: var(--sys-red);
+}
+
+/* Two limits, two shapes: the guard is dashed, the ceiling is solid and carries
+   a caret above the track, so they are told apart by shape and not by colour
+   alone. Both are one control step wide (`--focus-ring-width`) and stand
+   on their semantic colour. */
+/* The two zones the track carries besides the fill: the band between the soft
+   guard and the hard limit is the guarded zone, and everything above the hard
+   limit is memory no model may be given. They sit behind the fill. */
+.watermark__bar--guard {
+    background-color: color-mix(in srgb, var(--text-primary) 32%, transparent);
+}
+
+.watermark__bar--unavailable {
     background-color: var(--text-primary);
 }
 
@@ -591,8 +616,42 @@
     position: absolute;
     top: 0;
     bottom: 0;
-    width: 1px;
+    border-left-width: var(--focus-ring-width);
+    border-left-style: solid;
+}
+
+.watermark__marker--soft {
+    border-left-style: dashed;
+    border-left-color: var(--sys-orange);
+}
+
+.watermark__marker--hard {
+    border-left-color: var(--sys-red);
+}
+
+.watermark__marker--hard::after {
+    content: "";
+    position: absolute;
+    left: calc(var(--focus-ring-width) / -2 - var(--space-1) / 2);
+    top: calc(var(--space-1) * -1);
+    width: var(--space-1);
+    height: var(--space-1);
+    background-color: var(--sys-red);
+    transform: rotate(45deg);
+}
+
+/* The active-models pressure bar is the same meter, smaller: the same tones, on
+   its own track, with the soft guard marked the same way. */
+.pressure__bar.meter--ok {
+    background-color: var(--sys-green);
+}
+
+.pressure__bar.meter--warn {
     background-color: var(--sys-orange);
+}
+
+.pressure__bar.meter--over {
+    background-color: var(--sys-red);
 }
 
 .watermark__legend {
@@ -623,9 +682,21 @@
 }
 
 .watermark__swatch--marker {
-    width: 1px;
+    width: 0;
+    height: var(--space-2);
     border-radius: 0;
-    background-color: var(--sys-orange);
+    border-left-width: var(--focus-ring-width);
+    border-left-style: solid;
+    background-color: transparent;
+}
+
+.watermark__swatch--soft {
+    border-left-style: dashed;
+    border-left-color: var(--sys-orange);
+}
+
+.watermark__swatch--hard {
+    border-left-color: var(--sys-red);
 }
 
 /* === Alert dialog ===

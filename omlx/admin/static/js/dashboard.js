@@ -4611,21 +4611,35 @@
                 return Math.min(100, (mp.soft_bytes / mp.hard_bytes) * 100);
             },
 
-            get activeModelsPressureBarColor() {
-                const pct = this.activeModelsPressurePercent;
-                if (pct >= 90) return '#ef4444';
-                if (pct >= 80) return '#f97316';
-                if (pct >= 70) return '#f59e0b';
-                if (pct >= 60) return '#facc15';
-                return '#22c55e';
+            /* One gauge, three bands, measured against the hard limit — the
+               number the enforcer actually refuses a load at: green under 70 %,
+               amber to 90 %, red from 90 %, which is the three-state ramp a
+               memory gauge is read with (Apple's own memory-pressure gauge and
+               Grafana's thresholds use the same shape). The colours live in the
+               stylesheet (`--sys-green` / `--sys-orange` / `--sys-red`), so the
+               pressure bar, the watermark bar and the marks cannot drift apart. */
+            memoryTone(percent) {
+                if (percent >= 90) return 'meter--over';
+                if (percent >= 70) return 'meter--warn';
+                return 'meter--ok';
             },
 
             get activeModelsPressureBarStyle() {
-                return `width: ${this.activeModelsPressurePercent}%; height: 100%; display: block; background-color: ${this.activeModelsPressureBarColor};`;
+                return `width: ${this.activeModelsPressurePercent}%;`;
             },
 
+            get activeModelsTone() {
+                return this.memoryTone(this.activeModelsPressurePercent);
+            },
+
+            // The soft guard: a dashed mark, so it is never mistaken for the
+            // hard ceiling at the end of the same track.
             get activeModelsSoftMarkerStyle() {
-                return `left: ${this.activeModelsSoftPercent}%; width: 1px; background-color: rgba(64, 64, 64, 0.6);`;
+                return `left: ${this.activeModelsSoftPercent}%;`;
+            },
+
+            get watermarkTone() {
+                return this.memoryTone(this.memoryWatermark.actualOfLimit);
             },
 
             /* --- Status header / KPI cards / memory watermark --- */
@@ -4637,8 +4651,10 @@
                 return snapshot ? snapshot[field] : undefined;
             },
 
-            // One track, scaled to the hard limit: the measured footprint, the
-            // estimate that sits behind it, and the two guard marks.
+            // One track, scaled to the memory the machine has: what is in use, the
+            // estimate behind it, the guarded zone between the soft guard and the
+            // hard limit, and the part above the hard limit no model may use.
+            // `actualOfLimit` is the only ratio the colour reads.
             get memoryWatermark() {
                 const pressure = this.stats?.active_models?.memory_pressure;
                 const models = this.stats?.active_models?.models || [];
@@ -4648,20 +4664,31 @@
                     : this.stats?.active_models?.model_memory_used || 0;
                 const soft = pressure?.soft_bytes || 0;
                 const estimated = models.reduce((total, model) => total + (model.estimated_size || 0), 0);
+                const machine = this.stats?.system?.total_memory_bytes || 0;
+                const scale = Math.max(machine, hard, 1);
+                const at = (bytes) => Math.min(100, (bytes / scale) * 100);
                 return {
                     enabled: Boolean(pressure?.enabled) && hard > 0,
                     hard,
                     actual,
                     soft,
                     estimated,
-                    actualPercent: hard ? Math.min(100, (actual / hard) * 100) : 0,
-                    estimatedPercent: hard ? Math.min(100, (estimated / hard) * 100) : 0,
-                    softPercent: hard && soft ? Math.min(100, (soft / hard) * 100) : 0,
+                    actualPercent: at(actual),
+                    estimatedPercent: at(estimated),
+                    softPercent: soft ? at(soft) : 0,
+                    hardPercent: at(hard),
+                    guardWidth: soft && hard > soft ? at(hard) - at(soft) : 0,
+                    unavailableWidth: Math.max(0, 100 - at(hard)),
+                    actualOfLimit: hard ? (actual / hard) * 100 : 0,
                 };
             },
 
             watermarkBarStyle(percent) {
                 return `width: ${percent}%;`;
+            },
+
+            watermarkBarStyleAt(startPercent, widthPercent) {
+                return `left: ${startPercent}%; width: ${widthPercent}%;`;
             },
 
             watermarkMarkerStyle(percent) {

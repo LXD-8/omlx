@@ -8,8 +8,8 @@
         </div>
         <div class="flex flex-col gap-1.5 w-full min-w-0">
             <div class="w-full h-2.5 bg-neutral-200 rounded-full overflow-hidden relative shrink-0">
-                <div class="rounded-full transition-all duration-300"
-                     :style="activeModelsPressureBarStyle"></div>
+                <div class="pressure__bar rounded-full transition-all duration-300"
+                     :class="activeModelsTone" :style="activeModelsPressureBarStyle"></div>
                 <div x-show="stats.active_models.memory_pressure && stats.active_models.memory_pressure.enabled && activeModelsSoftPercent > 0"
                      x-cloak
                      class="absolute inset-y-0"
@@ -29,8 +29,8 @@
             <!-- Memory progress bar -->
             <div class="flex items-center gap-2">
                 <div class="w-36 h-2.5 bg-neutral-200 rounded-full overflow-hidden relative shrink-0">
-                    <div class="rounded-full transition-all duration-300"
-                         :style="activeModelsPressureBarStyle"></div>
+                    <div class="pressure__bar rounded-full transition-all duration-300"
+                         :class="activeModelsTone" :style="activeModelsPressureBarStyle"></div>
                     <div x-show="stats.active_models.memory_pressure && stats.active_models.memory_pressure.enabled && activeModelsSoftPercent > 0"
                          x-cloak
                          class="absolute inset-y-0"
@@ -52,18 +52,26 @@
             <span class="status-header__meta" x-text="formatSizeBytes(memoryWatermark.actual) + ' / ' + formatSizeBytes(memoryWatermark.hard)"></span>
         </div>
         <div class="watermark">
+            <div class="watermark__bar watermark__bar--guard"
+                 :style="watermarkBarStyleAt(memoryWatermark.softPercent, memoryWatermark.guardWidth)"></div>
+            <div class="watermark__bar watermark__bar--unavailable"
+                 :style="watermarkBarStyleAt(memoryWatermark.hardPercent, memoryWatermark.unavailableWidth)"></div>
             <div class="watermark__bar watermark__bar--estimated"
                  :style="watermarkBarStyle(memoryWatermark.estimatedPercent)"></div>
             <div class="watermark__bar watermark__bar--actual"
+                 :class="watermarkTone"
                  :style="watermarkBarStyle(memoryWatermark.actualPercent)"></div>
-            <div class="watermark__marker" x-show="memoryWatermark.softPercent > 0"
+            <div class="watermark__marker watermark__marker--soft" x-show="memoryWatermark.softPercent > 0"
                  :style="watermarkMarkerStyle(memoryWatermark.softPercent)"></div>
+            <div class="watermark__marker watermark__marker--hard" x-show="memoryWatermark.hard > 0"
+                 :style="watermarkMarkerStyle(memoryWatermark.hardPercent)"
+                 :title="window.t('status.memory.hard')"></div>
         </div>
         <div class="watermark__legend">
             <span><span class="watermark__swatch watermark__swatch--actual"></span>{{ t('status.memory.actual') }} <span class="tabular-nums" x-text="formatSizeBytes(memoryWatermark.actual)"></span></span>
             <span><span class="watermark__swatch watermark__swatch--estimated"></span>{{ t('status.memory.estimated') }} <span class="tabular-nums" x-text="formatSizeBytes(memoryWatermark.estimated)"></span></span>
-            <span x-show="memoryWatermark.softPercent > 0"><span class="watermark__swatch watermark__swatch--marker"></span>{{ t('status.memory.soft') }} <span class="tabular-nums" x-text="formatSizeBytes(memoryWatermark.soft)"></span></span>
-            <span><span class="watermark__swatch watermark__swatch--marker"></span>{{ t('status.memory.hard') }} <span class="tabular-nums" x-text="formatSizeBytes(memoryWatermark.hard)"></span></span>
+            <span x-show="memoryWatermark.softPercent > 0"><span class="watermark__swatch watermark__swatch--marker watermark__swatch--soft"></span>{{ t('status.memory.soft') }} <span class="tabular-nums" x-text="formatSizeBytes(memoryWatermark.soft)"></span></span>
+            <span><span class="watermark__swatch watermark__swatch--marker watermark__swatch--hard"></span>{{ t('status.memory.hard') }} <span class="tabular-nums" x-text="formatSizeBytes(memoryWatermark.hard)"></span></span>
         </div>
     </div>
     <div class="divide-y divide-neutral-100">

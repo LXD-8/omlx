@@ -19,6 +19,10 @@ from pathlib import Path
 
 import jinja2
 
+ADMIN_DIR = Path(__file__).resolve().parents[1] / "omlx" / "admin"
+COMPONENTS_CSS = (ADMIN_DIR / "static" / "css" / "components.css").read_text(encoding="utf-8")
+DASHBOARD_JS = (ADMIN_DIR / "static" / "js" / "dashboard.js").read_text(encoding="utf-8")
+
 ROOT = Path(__file__).resolve().parents[1]
 ADMIN = ROOT / "omlx" / "admin"
 DASH = ADMIN / "templates" / "dashboard"
@@ -152,3 +156,49 @@ def test_every_template_keeps_its_divs_balanced():
     unbalanced["dashboard.html"] = dashboard.count("<div") - dashboard.count("</div>")
     offenders = {name: value for name, value in unbalanced.items() if value != 0}
     assert not offenders, f"unbalanced <div> in: {offenders}"
+
+def test_the_memory_meter_reads_through_the_enforcers_thresholds():
+    """The meter's colour is not a decorative ramp: it follows the two limits the
+    enforcer itself defines — fine under the soft guard, the guard's colour at it,
+    the ceiling's at the hard limit — and the two limits are told apart by shape
+    (dashed guard, solid ceiling with a caret), never by colour alone."""
+    tones = {
+        "ok": "--sys-green",
+        "warn": "--sys-orange",
+        "over": "--sys-red",
+    }
+    for tone, colour in tones.items():
+        for rule in (f".watermark__bar--actual.meter--{tone}", f".pressure__bar.meter--{tone}"):
+            assert rule in COMPONENTS_CSS, rule
+            body = COMPONENTS_CSS[COMPONENTS_CSS.index(rule + " {"):]
+            body = body[: body.index("}")]
+            assert f"background-color: var({colour})" in body, (rule, body)
+
+    # Two marks, two shapes, and each on its own status colour.
+    soft = COMPONENTS_CSS[COMPONENTS_CSS.index(".watermark__marker--soft {"):]
+    soft = soft[: soft.index("}")]
+    hard = COMPONENTS_CSS[COMPONENTS_CSS.index(".watermark__marker--hard {"):]
+    hard = hard[: hard.index("}")]
+    assert "border-left-style: dashed" in soft and "var(--sys-orange)" in soft
+    assert "border-left-style: solid" not in soft
+    assert "var(--sys-red)" in hard and "dashed" not in hard
+    assert ".watermark__marker--hard::after" in COMPONENTS_CSS, "the ceiling carries a caret"
+
+    # The bands are 70 % and 90 % of the hard limit, and the JS owns no palette.
+    assert "memoryTone(percent)" in DASHBOARD_JS
+    assert "if (percent >= 90) return 'meter--over';" in DASHBOARD_JS
+    assert "if (percent >= 70) return 'meter--warn';" in DASHBOARD_JS
+    assert "actualOfLimit" in DASHBOARD_JS, "the colour reads the ratio to the hard limit"
+
+    # The track is scaled to the machine's memory, so the two zones have a place:
+    # the guarded band between soft and hard, and everything above the hard limit.
+    assert "system?.total_memory_bytes" in DASHBOARD_JS
+    assert "guardWidth" in DASHBOARD_JS and "unavailableWidth" in DASHBOARD_JS
+    for rule in (".watermark__bar--guard", ".watermark__bar--unavailable"):
+        assert rule in COMPONENTS_CSS, rule
+    assert "color-mix(in srgb, var(--text-primary) 32%, transparent)" in COMPONENTS_CSS
+    unavailable = COMPONENTS_CSS[COMPONENTS_CSS.index(".watermark__bar--unavailable {"):]
+    assert "background-color: var(--text-primary)" in unavailable[: unavailable.index("}")]
+    for hex in ("#ef4444", "#f97316", "#f59e0b", "#facc15", "#22c55e", "rgba(64, 64, 64"):
+        assert hex not in DASHBOARD_JS, f"{hex} is a hand-picked colour in the meter"
+
