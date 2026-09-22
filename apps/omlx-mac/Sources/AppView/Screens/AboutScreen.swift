@@ -53,7 +53,7 @@ private struct HeroCard: View {
                 Text(String(localized: "common.app_name",
                             defaultValue: "oMLX",
                             comment: "Product name shown as the About screen title"))
-                    .font(.omlxText(22, weight: .semibold))
+                    .font(.omlxText(24, weight: .semibold))
                     .foregroundStyle(theme.text)
                 Text(String(localized: "about.hero.tagline",
                             defaultValue: "Local AI, no more waiting on your Mac.",
@@ -63,7 +63,7 @@ private struct HeroCard: View {
                 Text(String(localized: "about.hero.version",
                             defaultValue: "Version \(version) · build \(build)",
                             comment: "Version + build line on the About screen hero card; placeholders are the bundle short version string and bundle version"))
-                    .font(.omlxMono(11))
+                    .font(.omlxMono(12))
                     .foregroundStyle(theme.textTertiary)
             }
             Spacer(minLength: 8)
@@ -155,13 +155,13 @@ private struct LicenseSection: View {
                         Text(String(localized: "about.license.name",
                                     defaultValue: "Apache License 2.0",
                                     comment: "Name of the open-source license shown on the About screen"))
-                            .font(.omlxText(13, weight: .medium))
+                            .font(.omlxText(14, weight: .medium))
                             .foregroundStyle(theme.text)
                     }
                     Text(String(localized: "about.license.notice",
                                 defaultValue: "Copyright © oMLX contributors. Licensed under the Apache License, Version 2.0. See the LICENSE file in the repository for the full text.",
                                 comment: "Copyright + license notice paragraph on the About screen"))
-                        .font(.omlxText(11.5))
+                        .font(.omlxText(12))
                         .foregroundStyle(theme.textSecondary)
                         .fixedSize(horizontal: false, vertical: true)
                 }

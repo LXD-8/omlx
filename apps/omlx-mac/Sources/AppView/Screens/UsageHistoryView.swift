@@ -95,7 +95,7 @@ struct UsageHistoryView: View {
                                             defaultValue: "\(row.requests) requests · \(speed(row.generationTps)) tok/s",
                                             comment: "Per-model request count and output speed; placeholders are a count and a formatted tokens-per-second value"))
                                     .foregroundStyle(.secondary)
-                            }.font(.omlxMono(11))
+                            }.font(.omlxMono(12))
                         }
                     }
                 }
@@ -165,8 +165,8 @@ struct UsageHistoryView: View {
 
     private func tile(_ label: String, _ value: Int) -> some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text(label).font(.omlxText(11)).foregroundStyle(.secondary)
-            Text(compact(value)).font(.omlxMono(20))
+            Text(label).font(.omlxText(12)).foregroundStyle(.secondary)
+            Text(compact(value)).font(.omlxMono(18))
         }
         .frame(maxWidth: .infinity, alignment: .leading).padding(12)
         .background(.quaternary.opacity(0.3), in: RoundedRectangle(cornerRadius: 10))
@@ -178,23 +178,23 @@ struct UsageHistoryView: View {
             Text(String(localized: "status.usage.heatmap.title",
                         defaultValue: "Token Usage by Day and Hour",
                         comment: "Heading above the usage history day/hour heatmap"))
-                .font(.omlxText(13))
+                .font(.omlxText(14))
             Text(String(localized: "status.usage.heatmap.note",
                         defaultValue: "00–23 hours · darker green means more tokens · repeated DST hours combine",
                         comment: "Legend text under the usage heatmap heading"))
-                .font(.omlxText(11)).foregroundStyle(.secondary)
+                .font(.omlxText(12)).foregroundStyle(.secondary)
             HStack(spacing: 3) {
                 Text("").frame(width: 78)
                 ForEach(0..<24) { hour in
                     Text(hour % 3 == 0 ? String(format: "%02d", hour) : "")
-                        .font(.omlxMono(9)).frame(maxWidth: .infinity)
+                        .font(.omlxMono(DesignTokens.FontSize.aux)).frame(maxWidth: .infinity)
                 }
             }
             ScrollView {
                 LazyVStack(spacing: 3) {
                     ForEach(days.reversed()) { day in
                         HStack(spacing: 3) {
-                            Text(day.date).font(.omlxMono(10)).frame(width: 78, alignment: .leading)
+                            Text(day.date).font(.omlxMono(12)).frame(width: 78, alignment: .leading)
                             ForEach(0..<24) { hour in
                                 // The server always emits 24 cells; guard anyway so a
                                 // short array can never index out of range.

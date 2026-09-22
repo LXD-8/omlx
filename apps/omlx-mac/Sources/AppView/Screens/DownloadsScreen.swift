@@ -153,7 +153,7 @@ private struct SourceSwitcher: View {
                 Text(String(localized: "downloads.source.ms_unavailable",
                             defaultValue: "ModelScope SDK unavailable in this build",
                             comment: "Note shown under the source switcher when the ModelScope SDK isn't installed"))
-                    .font(.omlxText(10.5))
+                    .font(.omlxText(12))
                     .foregroundStyle(.secondary)
             }
         }
@@ -251,16 +251,16 @@ private struct AddFromHFSection: View {
             Text(String(localized: "downloads.mirror.label",
                         defaultValue: "Mirror:",
                         comment: "Inline label preceding the mirror host on the Downloads screen"))
-                .font(.omlxText(11))
+                .font(.omlxText(12))
                 .foregroundStyle(theme.textTertiary)
             Text(mirrorHost)
-                .font(.omlxMono(11))
+                .font(.omlxMono(12))
                 .foregroundStyle(theme.textSecondary)
             if mirrorIsCustom {
                 Text(String(localized: "downloads.mirror.custom",
                             defaultValue: "custom",
                             comment: "Badge shown next to the mirror host when the user has configured a custom endpoint"))
-                    .font(.omlxText(10, weight: .medium))
+                    .font(.omlxText(12, weight: .medium))
                     .foregroundStyle(theme.blueDot)
                     .padding(.horizontal, 5)
                     .padding(.vertical, 1)
@@ -407,16 +407,16 @@ private struct AddFromMSSection: View {
             Text(String(localized: "downloads.mirror.label",
                         defaultValue: "Mirror:",
                         comment: "Inline label preceding the mirror host on the Downloads screen"))
-                .font(.omlxText(11))
+                .font(.omlxText(12))
                 .foregroundStyle(theme.textTertiary)
             Text(mirrorHost)
-                .font(.omlxMono(11))
+                .font(.omlxMono(12))
                 .foregroundStyle(theme.textSecondary)
             if mirrorIsCustom {
                 Text(String(localized: "downloads.mirror.custom",
                             defaultValue: "custom",
                             comment: "Badge shown next to the mirror host when the user has configured a custom endpoint"))
-                    .font(.omlxText(10, weight: .medium))
+                    .font(.omlxText(12, weight: .medium))
                     .foregroundStyle(theme.blueDot)
                     .padding(.horizontal, 5)
                     .padding(.vertical, 1)
@@ -503,7 +503,7 @@ private struct SearchDropdown: View {
                     Text(String(localized: "downloads.search.loading",
                                 defaultValue: "Searching…",
                                 comment: "Placeholder shown inside the autocomplete dropdown while a search is in flight"))
-                        .font(.omlxText(11))
+                        .font(.omlxText(12))
                         .foregroundStyle(theme.textTertiary)
                     Spacer()
                 }
@@ -575,7 +575,7 @@ private struct SearchDropdown: View {
                     .truncationMode(.middle)
                 if let detail = secondaryLine(m) {
                     Text(detail)
-                        .font(.omlxText(10.5))
+                        .font(.omlxText(12))
                         .foregroundStyle(theme.textTertiary)
                         .lineLimit(1)
                 }
@@ -586,7 +586,7 @@ private struct SearchDropdown: View {
             // this row Button so its tap doesn't fall through to onPick).
             if !isHovered, let downloads = m.downloads, downloads > 0 {
                 Text(formatNumber(downloads))
-                    .font(.omlxMono(10.5))
+                    .font(.omlxMono(12))
                     .foregroundStyle(theme.textTertiary)
                     .padding(.trailing, 12)
             }
@@ -645,7 +645,7 @@ private struct ActiveDownloadsSection: View {
                                 Text(String(localized: "downloads.progress.bytes",
                                             defaultValue: "\(Int(task.progress))% · \(formatBytes(task.downloadedSize)) of \(formatBytes(task.totalSize))",
                                             comment: "Per-row progress line during downloads. Placeholders: percent, bytes downloaded, total bytes"))
-                                    .font(.omlxMono(11))
+                                    .font(.omlxMono(12))
                                     .foregroundStyle(theme.textSecondary)
                                 Button {
                                     if task.statusEnum == .pending || task.statusEnum == .downloading {
@@ -667,7 +667,7 @@ private struct ActiveDownloadsSection: View {
                                 StatusChip(task: task)
                                 if !task.error.isEmpty {
                                     Text(task.error)
-                                        .font(.omlxMono(10.5))
+                                        .font(.omlxMono(12))
                                         .foregroundStyle(theme.redDot)
                                         .lineLimit(2)
                                 }
@@ -849,12 +849,12 @@ private struct SuggestedSection: View {
                                      gradient: SquircleGradient.models)
                             VStack(alignment: .leading, spacing: 2) {
                                 Text(m.repoId)
-                                    .font(.omlxText(13, weight: .medium))
+                                    .font(.omlxText(14, weight: .medium))
                                     .foregroundStyle(theme.text)
                                     .lineLimit(1)
                                     .truncationMode(.tail)
                                 Text(secondaryLine(for: m))
-                                    .font(.omlxMono(11))
+                                    .font(.omlxMono(12))
                                     .foregroundStyle(theme.textSecondary)
                                     .lineLimit(1)
                                     .truncationMode(.middle)

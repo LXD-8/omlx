@@ -478,20 +478,20 @@ private struct WelcomeIntroBody: View {
                 Text(String(localized: "welcome.header.title",
                             defaultValue: "oMLX",
                             comment: "Main heading shown on the Welcome wizard"))
-                    .font(.omlxDisplay(48, weight: .semibold))
+                    .font(.omlxDisplay(32, weight: .semibold))
                     .foregroundStyle(WelcomeStyle.text)
                     .multilineTextAlignment(.center)
                     .fixedSize(horizontal: false, vertical: true)
                 Text(String(localized: "welcome.header.subtitle",
                             defaultValue: "Local AI, no more waiting.",
                             comment: "Short tagline under the Welcome wizard's main heading"))
-                    .font(.omlxDisplay(25, weight: .semibold))
+                    .font(.omlxDisplay(24, weight: .semibold))
                     .foregroundStyle(WelcomeStyle.text)
                     .multilineTextAlignment(.center)
                 Text(String(localized: "welcome.header.tagline",
                             defaultValue: "macOS-native MLX server with smart caching.\nClaude Code, OpenClaw, and Cursor respond in 5 seconds, not 90.",
                             comment: "Sub-tagline under the Welcome wizard's main heading"))
-                    .font(.omlxText(15))
+                    .font(.omlxText(16))
                     .foregroundStyle(WelcomeStyle.muted)
                     .multilineTextAlignment(.center)
                     .lineSpacing(5)
@@ -536,7 +536,7 @@ private struct WelcomeSetupBody: View {
                 Text(String(localized: "welcome.intro",
                             defaultValue: "Choose where models live, pick a port, and create the API key you'll use from apps and the web dashboard.",
                             comment: "Intro paragraph at the top of the Welcome wizard's setup body"))
-                    .font(.omlxText(13))
+                    .font(.omlxText(14))
                     .foregroundStyle(WelcomeStyle.muted)
                     .multilineTextAlignment(.center)
                     .lineSpacing(2)
@@ -582,7 +582,7 @@ private struct WelcomeSetupBody: View {
                             Text(vm.modelDir.isEmpty
                                  ? AppConfig.defaultModelDir(forBasePath: vm.basePath)
                                  : vm.modelDir)
-                                .font(.omlxMono(11))
+                                .font(.omlxMono(12))
                                 .foregroundStyle(WelcomeStyle.muted)
                                 .lineLimit(1)
                                 .truncationMode(.middle)
@@ -652,7 +652,7 @@ private struct WelcomeSetupBody: View {
                 Text(String(localized: "welcome.hint.settings_path",
                             defaultValue: "Settings are stored in ~/.omlx/settings.json.",
                             comment: "Hint line under the API key section pointing to settings.json"))
-                    .font(.omlxText(11))
+                    .font(.omlxText(12))
                     .foregroundStyle(WelcomeStyle.faint)
                     .frame(maxWidth: .infinity, alignment: .center)
             }
@@ -682,7 +682,7 @@ private struct WelcomeCompleteBody: View {
                 Text(String(localized: "welcome.complete.title",
                             defaultValue: "All set!",
                             comment: "Heading on the Welcome completion page"))
-                    .font(.omlxDisplay(30, weight: .semibold))
+                    .font(.omlxDisplay(32, weight: .semibold))
                     .foregroundStyle(WelcomeStyle.text)
                 Text(String(localized: "welcome.complete.description",
                             defaultValue: "oMLX is running locally at http://127.0.0.1:\(vm.portText). Open the web dashboard to download your first model, manage settings, and connect your coding tools.",
@@ -731,7 +731,7 @@ private struct WelcomeFooter: View {
 
             if let error = vm.lastError {
                 Text(error)
-                    .font(.omlxText(11.5))
+                    .font(.omlxText(12))
                     .foregroundStyle(Color(nsColor: .systemRed))
                     .lineLimit(2)
                     .multilineTextAlignment(.trailing)
@@ -815,7 +815,7 @@ private struct WelcomeCTA: View {
                         .controlSize(.small)
                 }
                 Text(title)
-                    .font(.omlxText(13, weight: .medium))
+                    .font(.omlxText(14, weight: .medium))
                     .lineLimit(1)
                     .minimumScaleFactor(0.86)
                 if let systemImage {
@@ -881,7 +881,7 @@ private struct WelcomeNotice: View {
                 .frame(width: 24, height: 24)
             VStack(alignment: .leading, spacing: 3) {
                 Text(title)
-                    .font(.omlxText(13, weight: .semibold))
+                    .font(.omlxText(14, weight: .semibold))
                     .foregroundStyle(WelcomeStyle.text)
                 Text(text)
                     .font(.omlxText(12))
@@ -922,10 +922,10 @@ private struct SettingRow<Content: View>: View {
                 .frame(width: 22)
             VStack(alignment: .leading, spacing: 2) {
                 Text(title)
-                    .font(.omlxText(13, weight: .medium))
+                    .font(.omlxText(14, weight: .medium))
                     .foregroundStyle(WelcomeStyle.text)
                 Text(subtitle)
-                    .font(.omlxText(11.5))
+                    .font(.omlxText(12))
                     .foregroundStyle(WelcomeStyle.faint)
                     .lineLimit(2)
                     .fixedSize(horizontal: false, vertical: true)

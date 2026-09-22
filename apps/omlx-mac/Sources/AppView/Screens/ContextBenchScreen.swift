@@ -238,7 +238,7 @@ private struct WarningCallout: View {
                 Text(String(localized: "bench.context.warning.body",
                             defaultValue: "This benchmark can take a long time — verification prefills a real prompt at the measured size, which may take many minutes for large models. All loaded models are unloaded when it starts, interrupting active requests. When it finishes, the result is automatically applied to the model's Context Window setting.",
                             comment: "Body of the warning callout above the Context Bench start button"))
-                    .font(.omlxText(11))
+                    .font(.omlxText(12))
                     .foregroundStyle(theme.textSecondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -305,7 +305,7 @@ private struct ResultSection: View {
             FreeRow {
                 HStack(alignment: .firstTextBaseline, spacing: 6) {
                     Text(result.appliedTokens.formatted())
-                        .font(.omlxText(26, weight: .bold))
+                        .font(.omlxText(24, weight: .bold))
                         .foregroundStyle(theme.text)
                         .monospacedDigit()
                     Text(String(localized: "bench.context.result.tokens_label",

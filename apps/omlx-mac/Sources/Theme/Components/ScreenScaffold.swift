@@ -23,15 +23,15 @@ struct ScreenHeader: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
             Text(eyebrow)
-                .font(.omlxText(11, weight: .semibold))
+                .font(.omlxText(12, weight: .semibold))
                 .foregroundStyle(theme.textSecondary)
                 .textCase(.uppercase)
                 .kerning(0.6)
             Text(title)
-                .font(.omlxText(20, weight: .semibold))
+                .font(.omlxText(18, weight: .semibold))
                 .foregroundStyle(theme.text)
             Text(subtitle)
-                .font(.omlxText(11.5))
+                .font(.omlxText(12))
                 .foregroundStyle(theme.textSecondary)
                 .fixedSize(horizontal: false, vertical: true)
         }
@@ -77,7 +77,7 @@ struct MessageBanner: View {
                 .font(.system(size: 11))
                 .padding(.top, 1)
             Text(text)
-                .font(.omlxText(11.5))
+                .font(.omlxText(12))
                 .foregroundStyle(theme.text)
                 .fixedSize(horizontal: false, vertical: true)
             Spacer(minLength: 0)
@@ -104,7 +104,7 @@ struct HintLine: View {
                 .font(.system(size: 11))
                 .foregroundStyle(theme.textTertiary)
             Text(text)
-                .font(.omlxText(11))
+                .font(.omlxText(12))
                 .foregroundStyle(theme.textTertiary)
                 .fixedSize(horizontal: false, vertical: true)
         }
@@ -140,7 +140,7 @@ struct FooterBar<Actions: View>: View {
                 }
                 if let error, hasError {
                     Text(error)
-                        .font(.omlxText(11))
+                        .font(.omlxText(12))
                         .foregroundStyle(theme.redDot)
                 }
             }

@@ -204,11 +204,11 @@ struct MemoryStatsPanel: View {
                 .fill(color)
                 .frame(width: 8, height: 8)
             Text(label)
-                .font(.omlxText(11.5))
+                .font(.omlxText(12))
                 .foregroundStyle(theme.textSecondary)
             Spacer()
             Text(SystemMetricsPoller.formatBytesAsGiB(bytes) + " GB")
-                .font(.omlxMono(11.5))
+                .font(.omlxMono(12))
                 .foregroundStyle(theme.text)
         }
     }
@@ -279,7 +279,7 @@ private struct StatsPanelHeader: View {
 
     var body: some View {
         Text(title.uppercased())
-            .font(.omlxText(10, weight: .bold))
+            .font(.omlxText(12, weight: .bold))
             .kerning(1)
             .foregroundStyle(theme.accent)
             .frame(maxWidth: .infinity, alignment: .center)
@@ -293,7 +293,7 @@ private struct StatsPanelCaption: View {
 
     var body: some View {
         Text(window.isEmpty ? text : "\(text) · \(window)")
-            .font(.omlxText(9.5))
+            .font(.omlxText(DesignTokens.FontSize.aux))
             .foregroundStyle(theme.textTertiary)
     }
 }

@@ -108,14 +108,14 @@ private struct ActiveModelsSection: View {
                                     .foregroundStyle(theme.textSecondary)
                             }
                             Text(m.displayTitle)
-                                .font(.omlxText(13, weight: .medium))
+                                .font(.omlxText(14, weight: .medium))
                                 .foregroundStyle(theme.text)
                                 .lineLimit(1)
                                 .truncationMode(.middle)
                             Spacer(minLength: 8)
                             ActiveBadge(model: m)
                             Text(m.estimatedSizeFormatted ?? formatBytes(m.estimatedSize))
-                                .font(.omlxMono(11))
+                                .font(.omlxMono(12))
                                 .foregroundStyle(theme.textSecondary)
                                 .frame(minWidth: 60, alignment: .trailing)
                             Button {
@@ -197,7 +197,7 @@ private struct LibrarySection: View {
                         Text(String(localized: "models.library.empty.sub",
                                     defaultValue: "Use the Downloads screen to fetch a model from Hugging Face.",
                                     comment: "Empty-state subtitle directing the user to the Downloads screen"))
-                            .font(.omlxText(11))
+                            .font(.omlxText(12))
                             .foregroundStyle(theme.textTertiary)
                     }
                     .frame(maxWidth: .infinity, alignment: .center)
@@ -228,14 +228,14 @@ private struct LibrarySection: View {
                             VStack(alignment: .leading, spacing: 2) {
                                 HStack(spacing: 4) {
                                     Text(m.displayTitle)
-                                        .font(.omlxText(13, weight: .medium))
+                                        .font(.omlxText(14, weight: .medium))
                                         .foregroundStyle(theme.text)
                                         .lineLimit(1)
                                         .truncationMode(.tail)
                                     CopyIconButton(value: m.id)
                                 }
                                 Text("\(m.id) · \(m.estimatedSizeFormatted ?? formatBytes(m.estimatedSize))")
-                                    .font(.omlxMono(11))
+                                    .font(.omlxMono(12))
                                     .foregroundStyle(theme.textSecondary)
                                     .lineLimit(1)
                                     .truncationMode(.middle)

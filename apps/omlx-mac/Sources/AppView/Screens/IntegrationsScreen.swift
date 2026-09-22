@@ -178,7 +178,7 @@ private struct ClaudeSetupCommandSection: View {
                          : String(localized: "integrations.setup.advanced.local",
                                   defaultValue: "Points the real `claude` binary at your local oMLX server.",
                                   comment: "Explanation of the advanced env recipe in local mode"))
-                        .font(.omlxText(11.5))
+                        .font(.omlxText(12))
                         .foregroundStyle(theme.textSecondary)
                     CommandBlock(command: vm.claudeEnvRecipe)
                 }
@@ -209,7 +209,7 @@ private struct CommandBlock: View {
                 Text(caption ?? String(localized: "integrations.command.terminal_caption",
                                        defaultValue: "$ Terminal",
                                        comment: "Caption above each shell command block"))
-                    .font(.omlxText(10, weight: .semibold))
+                    .font(.omlxText(12, weight: .semibold))
                     .foregroundStyle(theme.textTertiary)
                     .textCase(.uppercase)
                     .kerning(0.6)
@@ -359,7 +359,7 @@ private struct IntegrationRow: View {
             VStack(alignment: .leading, spacing: 8) {
                 HStack(spacing: 12) {
                     Text(name)
-                        .font(.omlxText(13, weight: .medium))
+                        .font(.omlxText(14, weight: .medium))
                         .foregroundStyle(theme.text)
                     Spacer(minLength: 12)
                     Popup(
@@ -378,7 +378,7 @@ private struct IntegrationRow: View {
                                 .foregroundStyle(theme.textSecondary)
                             if let profileSublabel {
                                 Text(profileSublabel)
-                                    .font(.omlxText(11))
+                                    .font(.omlxText(12))
                                     .foregroundStyle(theme.textTertiary)
                             }
                         }

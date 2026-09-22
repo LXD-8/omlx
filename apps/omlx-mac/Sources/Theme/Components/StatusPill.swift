@@ -28,7 +28,7 @@ struct StatusPill: View {
                 .frame(width: 6, height: 6)
             if !compact {
                 Text(cfg.label)
-                    .font(.omlxText(11, weight: .medium))
+                    .font(.omlxText(12, weight: .medium))
                     .foregroundStyle(cfg.text)
             }
         }

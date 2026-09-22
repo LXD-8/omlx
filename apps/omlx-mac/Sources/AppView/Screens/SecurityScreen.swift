@@ -345,10 +345,10 @@ private struct SubKeysSection: View {
                                               defaultValue: "(unnamed)",
                                               comment: "Fallback display name for a sub-key with no name set")
                                      : sub.name)
-                                    .font(.omlxText(13, weight: .medium))
+                                    .font(.omlxText(14, weight: .medium))
                                     .foregroundStyle(theme.text)
                                 Text(formatCreatedAt(sub.createdAt))
-                                    .font(.omlxText(11))
+                                    .font(.omlxText(12))
                                     .foregroundStyle(theme.textTertiary)
                             }
                             Spacer(minLength: 8)
