@@ -1513,8 +1513,8 @@ final class ModelSettingsScreenVM {
     nonisolated static func candidateStats(pp: Double?, tg: Double?, memoryGb: Int? = nil,
                                            quantization: String?, omlxVersion: String?) -> String {
         var parts: [String] = []
-        if let pp { parts.append(String(format: "PP %.1f tok/s", pp)) }
-        if let tg { parts.append(String(format: "TG %.1f tok/s", tg)) }
+        if let pp { parts.append(String(format: "PP %.1f Tok/s", pp)) }
+        if let tg { parts.append(String(format: "TG %.1f Tok/s", tg)) }
         if let memoryGb { parts.append("\(memoryGb) GB") }
         if let quantization, !quantization.isEmpty { parts.append(quantization) }
         if let omlxVersion, !omlxVersion.isEmpty { parts.append("oMLX \(omlxVersion)") }
