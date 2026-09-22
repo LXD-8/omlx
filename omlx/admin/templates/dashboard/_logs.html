@@ -41,7 +41,7 @@
                             <div class="log-field">
                                 <button type="button" role="switch" :aria-checked="logAutoScroll ? 'true' : 'false'"
                                         @click="logAutoScroll = !logAutoScroll"
-                                        class="switch switch--sm" :class="logAutoScroll ? 'switch--on' : ''">
+                                        class="switch" :class="logAutoScroll ? 'switch--on' : ''">
                                     <span class="switch__knob"></span>
                                 </button>
                                 <span class="text-body text-neutral-600">{{ t('logs.auto_scroll') }}</span>

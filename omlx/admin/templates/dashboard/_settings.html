@@ -1731,7 +1731,7 @@
                                                     @focus="showTip($event.currentTarget, model.pinned ? window.t('settings.models.table.pin_on_tooltip') : window.t('settings.models.table.pin_off_tooltip'))"
                                                     @blur="hideTip()"
                                                     :class="model.pinned ? 'switch--on' : ''"
-                                                    class="switch switch--sm"
+                                                    class="switch"
                                                 >
                                                     <span
                                                         :class="model.pinned ? 'translate-x-4' : 'translate-x-0'"
@@ -1754,7 +1754,7 @@
                                                     @focus="showTip($event.currentTarget, !model.is_hidden ? window.t('settings.models.table.visible_on_tooltip') : window.t('settings.models.table.visible_off_tooltip'))"
                                                     @blur="hideTip()"
                                                     :class="!model.is_hidden ? 'switch--on' : ''"
-                                                    class="switch switch--sm"
+                                                    class="switch"
                                                 >
                                                     <span
                                                         :class="!model.is_hidden ? 'translate-x-4' : 'translate-x-0'"

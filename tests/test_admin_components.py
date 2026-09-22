@@ -203,29 +203,40 @@ def test_empty_state_carries_icon_title_and_action():
     assert "<button>Browse</button>" in html
 
 
-def test_the_switch_is_a_rounded_rectangle_that_the_knob_travels_across():
+def test_the_switch_is_one_size_and_the_knob_travels_across_it():
     """The switch is a control with a length and a height, not a capsule: the
     track and the knob take the control corner (the knob one hairline tighter,
-    concentric), and the small size uses the same travel as the default one —
-    it used to stop 6px short of the far edge."""
+    concentric), the knob lands one hairline from the far edge, and there is
+    exactly one size — the second one (`--sm`, 36x16) made the same control a
+    different control depending on where it stood, and shorter than the badge on
+    its own row (19px)."""
     def block(selector):
         assert f"{selector} {{" in COMPONENTS_CSS, f"{selector} has no spec"
         body = COMPONENTS_CSS[COMPONENTS_CSS.index(f"{selector} {{"):]
         return body[: body.index("}")]
 
     track = block(".switch")
+    # 36x20, out of the spacing scale so both sizes it replaced are gone.
+    assert "width: calc(var(--space-8) - var(--space-3))" in track
+    assert "height: calc(var(--space-5) - var(--space-1))" in track
     assert "border-radius: var(--radius-sm)" in track
     assert "--radius-pill" not in track, "a capsule is what the switch was"
 
     knob = block(".switch__knob")
+    assert "width: var(--space-4)" in knob and "height: var(--space-4)" in knob
     assert "border-radius: calc(var(--radius-sm) - 1px)" in knob
     assert "--radius-pill" not in knob
 
+    # 36 - 2 borders - 16 knob - 2 one-hairline insets = 16.
     travel = block(".switch--on .switch__knob")
-    assert "translateX(calc(var(--space-5) - var(--space-1)))" in travel
-    assert ".switch--sm.switch--on .switch__knob" not in COMPONENTS_CSS, (
-        "the small switch needs no travel of its own"
+    assert "translateX(var(--space-4))" in travel
+
+    assert ".switch--sm" not in COMPONENTS_CSS, "one size, not two"
+    markup = "\n".join(
+        path.read_text(encoding="utf-8")
+        for path in sorted((ROOT / "omlx" / "admin" / "templates").rglob("*.html"))
     )
+    assert "switch--sm" not in markup, "one size, not two"
 
 
 # Classes the console builds at render time: the base is written once and the
