@@ -496,9 +496,9 @@ def convert_responses_input_to_messages(
         if item_type in _UNSUPPORTED_INPUT_ITEM_TYPES:
             raise InvalidRequestError(
                 f"input item type {item_type!r} is not supported by "
-                "/v1/responses. It carries a hosted tool result oMLX cannot "
-                "produce; remove it or replay the turn as function_call / "
-                "function_call_output items.",
+                "/v1/responses. It names a server-side tool round trip or an "
+                "earlier item this server cannot resolve; remove it or replay "
+                "the turn as function_call / function_call_output items.",
                 field="input",
             )
         if item_type not in (
