@@ -28,14 +28,18 @@ from .tool_bindings import ToolBindingRegistry, ensure_call_id
 
 logger = logging.getLogger(__name__)
 
+
 class ResponseStateError(RuntimeError):
     """Base error for persisted Responses API conversation state."""
+
 
 class ResponseStateNotFoundError(ResponseStateError):
     """Raised when the requested response state does not exist."""
 
+
 class ResponseStateCorruptError(ResponseStateError):
     """Raised when a stored response chain is incomplete or invalid."""
+
 
 def _try_parse_json(s: str):
     """Try to parse a string as JSON dict/list, return original string on failure."""
@@ -49,7 +53,9 @@ def _try_parse_json(s: str):
     except (json.JSONDecodeError, ValueError):
         return s
 
+
 _TOOL_OUTPUT_TEXT_TYPES = ("input_text", "text", "output_text")
+
 
 def _extract_tool_output_text(
     output: List[Any],
@@ -96,6 +102,7 @@ def _extract_tool_output_text(
             text_parts.append(str(part))
     return "\n".join(p for p in text_parts if p)
 
+
 def _flush_pending_tool_images(
     messages: List[Dict[str, Any]],
     pending_images: List[Dict[str, Any]],
@@ -108,6 +115,7 @@ def _flush_pending_tool_images(
     if pending_images:
         messages.append({"role": "user", "content": list(pending_images)})
         pending_images.clear()
+
 
 def _flush_pending_tool_calls(
     messages: List[Dict[str, Any]],
@@ -146,6 +154,7 @@ def _flush_pending_tool_calls(
     pending.clear()
     return ""
 
+
 def _consolidate_system_messages(
     messages: List[Dict[str, Any]],
 ) -> List[Dict[str, Any]]:
@@ -164,6 +173,7 @@ def _consolidate_system_messages(
         return messages
 
     return [{"role": "system", "content": "\n\n".join(system_parts)}] + non_system
+
 
 # =============================================================================
 # Capability Validation
@@ -361,6 +371,7 @@ def validate_responses_request(request: ResponsesRequest) -> None:
                 field="text.format",
             )
 
+
 # =============================================================================
 # Input Conversion
 # =============================================================================
@@ -400,6 +411,7 @@ def _reasoning_item_text(item: Any) -> str:
             if text:
                 parts.append(text)
     return "\n".join(parts)
+
 
 def convert_responses_input_to_messages(
     input_data: Optional[Union[str, List[InputItem]]],
@@ -673,6 +685,7 @@ def convert_responses_input_to_messages(
         else messages
     )
 
+
 # =============================================================================
 # Tool Conversion
 # =============================================================================
@@ -784,6 +797,7 @@ def _register_namespace_tool(
         converted.append(binding.to_chat_tool())
     return converted
 
+
 def convert_responses_tools(
     tools: Optional[List[ResponsesTool]],
     registry: Optional[ToolBindingRegistry] = None,
@@ -824,6 +838,7 @@ def convert_responses_tools(
         result.extend(_register_flat_tool(tool, registry, sink))
     return result if result else None
 
+
 def split_namespace_tool_name(
     name: str,
     registry: Optional[ToolBindingRegistry] = None,
@@ -836,9 +851,11 @@ def split_namespace_tool_name(
         return registry.resolve(name)
     return None, name
 
+
 # =============================================================================
 # Response Building
 # =============================================================================
+
 
 def build_message_output_item(
     text: str,
@@ -853,6 +870,7 @@ def build_message_output_item(
         role="assistant",
         content=[OutputContent(type="output_text", text=text)],
     )
+
 
 def build_function_call_output_item(
     name: str,
@@ -872,6 +890,7 @@ def build_function_call_output_item(
         arguments=arguments,
         namespace=namespace,
     )
+
 
 def build_reasoning_output_item(
     reasoning_text: str,
@@ -905,6 +924,7 @@ def build_reasoning_output_item(
         content=content,
     )
 
+
 def build_response_usage(
     input_tokens: int,
     output_tokens: int,
@@ -919,6 +939,7 @@ def build_response_usage(
         input_tokens_details=InputTokensDetails(cached_tokens=cached_tokens),
         output_tokens_details=OutputTokensDetails(reasoning_tokens=reasoning_tokens),
     )
+
 
 def build_response_object(
     request: ResponsesRequest,
@@ -967,9 +988,11 @@ def build_response_object(
         truncation=request.truncation or "disabled",
     )
 
+
 # =============================================================================
 # SSE Event Formatting
 # =============================================================================
+
 
 def format_sse_event(event_type: str, data: Any) -> str:
     """Format a Responses API SSE event.
@@ -986,11 +1009,13 @@ def format_sse_event(event_type: str, data: Any) -> str:
         json_str = json.dumps(data)
     return f"event: {event_type}\ndata: {json_str}\n\n"
 
+
 # =============================================================================
 # Response Store (previous_response_id support)
 # =============================================================================
 
 MAX_STORED_RESPONSES = 1000
+
 
 class ResponseStore:
     """Bounded persisted store for response state and public responses."""
@@ -1162,9 +1187,11 @@ class ResponseStore:
     def __len__(self) -> int:
         return len(self._store)
 
+
 # =============================================================================
 # Previous Response Conversion
 # =============================================================================
+
 
 def normalize_response_output_to_messages(
     output_items: List[Dict[str, Any]],
@@ -1227,6 +1254,7 @@ def normalize_response_output_to_messages(
         pending_reasoning=pending_reasoning,
     )
     return _consolidate_system_messages(messages)
+
 
 def build_response_store_record(
     public_response: Dict[str, Any],
