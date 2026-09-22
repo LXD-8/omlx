@@ -36,7 +36,6 @@ class ToolBinding:
     wire_name: str
     name: str
     namespace: Optional[str] = None
-    source: str = "function"
     description: Optional[str] = None
     parameters: Optional[Dict[str, Any]] = None
     strict: Optional[bool] = None
@@ -98,7 +97,6 @@ class ToolBindingRegistry:
             wire_name=wire_name,
             name=name,
             namespace=namespace,
-            source="namespace" if namespace else "function",
             description=description,
             parameters=parameters,
             strict=strict,
