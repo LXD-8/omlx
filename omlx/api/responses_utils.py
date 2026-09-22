@@ -211,8 +211,9 @@ _HOSTED_TOOL_TYPES = frozenset(
 
 _SUPPORTED_MESSAGE_ROLES = frozenset({"user", "assistant", "system", "developer"})
 
-# Input item types for a hosted capability. Their presence means the client is
-# replaying a tool round trip oMLX never performed.
+# Input item types the endpoint cannot honour. A hosted-capability item is a
+# tool round trip oMLX never performed; `item_reference` addresses an earlier
+# item by id, which cannot be resolved from the stored responses.
 _UNSUPPORTED_INPUT_ITEM_TYPES = frozenset(
     {
         "computer_call",
