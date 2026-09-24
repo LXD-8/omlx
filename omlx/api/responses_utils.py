@@ -241,10 +241,12 @@ _DEGRADED_INCLUDE_VALUES = frozenset({"reasoning.encrypted_content"})
 _WARNING_LABEL_UNSAFE = re.compile(r"[^A-Za-z0-9_.:/+-]")
 _WARNING_LABEL_LIMIT = 80
 
+
 def _warning_label_token(value: str) -> str:
     """Make a client-supplied identifier safe inside a quoted Warning header."""
     cleaned = _WARNING_LABEL_UNSAFE.sub("_", value)[:_WARNING_LABEL_LIMIT]
     return cleaned or "?"
+
 
 def _unexposed_tool_label(tool_type: str, *, namespace: Optional[str] = None) -> str:
     """Name one accepted-but-unexposed tool declaration for the Warning header.
@@ -263,6 +265,7 @@ def _unexposed_tool_label(tool_type: str, *, namespace: Optional[str] = None) ->
     if namespace:
         label += f" in namespace {_warning_label_token(namespace)}"
     return label
+
 
 def validate_responses_request(request: ResponsesRequest) -> None:
     """Reject request capabilities the endpoint cannot honour at all.
@@ -376,6 +379,7 @@ def validate_responses_request(request: ResponsesRequest) -> None:
 # =============================================================================
 # Input Conversion
 # =============================================================================
+
 
 def _reasoning_item_text(item: Any) -> str:
     """Read reasoning text from either published shape.
@@ -620,7 +624,7 @@ def convert_responses_input_to_messages(
 
         elif item_type == "function_call":
             # Assistant's tool call — accumulate for grouping
-            call_id = ensure_call_id(item.call_id or item.id)
+            call_id = ensure_call_id(item.call_id)
             namespace = getattr(item, "namespace", None)
             pending_tool_calls.append(
                 {
@@ -656,7 +660,7 @@ def convert_responses_input_to_messages(
             # The same helper the function_call side uses, so an id can never
             # reach the template empty. An item that omits `call_id` outright is
             # refused above rather than paired on a guess.
-            call_id = ensure_call_id(item.call_id or item.id)
+            call_id = ensure_call_id(item.call_id)
             messages.append(
                 {
                     "role": "tool",
@@ -691,6 +695,7 @@ def convert_responses_input_to_messages(
 # Tool Conversion
 # =============================================================================
 
+
 def _as_responses_tool(tool: Any) -> Optional[ResponsesTool]:
     """Coerce one namespace member to a ResponsesTool, if it is shaped like one.
 
@@ -711,6 +716,7 @@ def _as_responses_tool(tool: Any) -> Optional[ResponsesTool]:
                 field="tools",
             ) from error
     return None
+
 
 def _register_flat_tool(
     tool: ResponsesTool,
@@ -744,6 +750,7 @@ def _register_flat_tool(
     # declares web_search) must still complete (#3757).
     unexposed.append(_unexposed_tool_label(tool.type))
     return []
+
 
 def _register_namespace_tool(
     tool: ResponsesTool,
@@ -1113,7 +1120,12 @@ class ResponseStore:
                 if not response_id:
                     raise ValueError("missing response_id")
                 loaded.append(self._normalize_record(response_id, raw))
-            except (OSError, ValueError, json.JSONDecodeError) as exc:
+            except (
+                OSError,
+                ValueError,
+                json.JSONDecodeError,
+                ResponseStateError,
+            ) as exc:
                 logger.warning("Skipping corrupt response state file %s: %s", path, exc)
 
         loaded.sort(

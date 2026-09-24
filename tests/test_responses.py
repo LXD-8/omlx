@@ -1686,6 +1686,39 @@ class TestResponseStore:
         assert store.get("resp_1")["v"] == 2
         assert len(store) == 1
 
+    def test_a_state_file_with_an_unsupported_output_item_is_skipped(self, tmp_path):
+        """One stored record whose output carries an item type this build
+        cannot replay must not take the store — and therefore server
+        startup — down: the loader's contract is to skip the bad file."""
+        state_dir = tmp_path / "response-state"
+        state_dir.mkdir(parents=True, exist_ok=True)
+        (state_dir / "resp_legacy.json").write_text(
+            json.dumps(
+                {
+                    "response_id": "resp_legacy",
+                    "created_at": 1,
+                    "input_messages": [{"role": "user", "content": "hi"}],
+                    "output_messages": [{"role": "assistant", "content": "hello"}],
+                    "public_response": {
+                        "id": "resp_legacy",
+                        "created_at": 1,
+                        "output": [
+                            {
+                                "type": "web_search_call",
+                                "id": "ws_1",
+                                "status": "completed",
+                            }
+                        ],
+                    },
+                }
+            ),
+            encoding="utf-8",
+        )
+
+        store = ResponseStore(state_dir=state_dir)  # must not raise
+
+        assert store.get("resp_legacy") is None
+
     def test_disk_persistence_round_trip(self, tmp_path):
         state_dir = tmp_path / "response-state"
         store = ResponseStore(max_size=10, state_dir=state_dir)
