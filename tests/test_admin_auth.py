@@ -253,10 +253,10 @@ class TestAutoLoginToken:
 class TestAutoLoginOverHTTP:
     """End-to-end checks across the real HTTP boundary.
 
-    The route-level tests above pass the parameters by keyword name, so
-    they cannot catch a client and server disagreeing about that name —
-    which is exactly how the menubar app once shipped a `token=` query
-    against a server reading `auth_token`. These go through ASGI instead.
+    The route-level tests above pass the parameters by keyword name, so they
+    cannot catch a client and server disagreeing about that name. These go
+    through ASGI, so the query parameter the menubar app builds is the one the
+    route reads.
     """
 
     @pytest.fixture
