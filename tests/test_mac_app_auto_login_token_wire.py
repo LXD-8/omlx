@@ -3,8 +3,9 @@
 
 The menubar app POSTs the permanent main API key to trade it for a
 short-lived auto-login token. Both halves of that call are hand-written
-and independently free to drift: Swift builds the URL path and the JSON
-body field (``MenubarController.fetchAutoLoginToken``), while the server
+and independently free to drift: Swift builds the URL path in
+``MenubarController.fetchAutoLoginToken`` and the JSON body field in the
+request builder it posts, while the server
 declares the route path (``@router.post("/api/auto-login-token")`` on a
 router mounted at ``/admin``) and the body model (``AutoLoginTokenRequest.key``).
 
@@ -28,6 +29,7 @@ MENUBAR_CONTROLLER = (
 )
 
 EXCHANGE_HELPER = "func fetchAutoLoginToken("
+EXCHANGE_BUILDER = "static func autoLoginTokenRequest("
 SERVER_ROUTE_PATH = "/admin/api/auto-login-token"
 
 # The next method on the same type; the app indents its members four spaces.
@@ -41,13 +43,19 @@ BODY_FIELD = re.compile(
 )
 
 
+def _method_body(marker: str) -> str:
+    """The Swift source of the member ``marker`` starts, up to the next one."""
+    source = MENUBAR_CONTROLLER.read_text()
+    assert marker in source, f"MenubarController no longer declares {marker}"
+    start = source.index(marker)
+    rest = source[start:]
+    end = NEXT_METHOD.search(rest, len(marker))
+    return rest if end is None else rest[: end.start()]
+
+
 def _exchange_helper_body() -> str:
     """The Swift source of ``fetchAutoLoginToken`` only."""
-    source = MENUBAR_CONTROLLER.read_text()
-    start = source.index(EXCHANGE_HELPER)
-    rest = source[start:]
-    end = NEXT_METHOD.search(rest, len(EXCHANGE_HELPER))
-    return rest if end is None else rest[: end.start()]
+    return _method_body(EXCHANGE_HELPER)
 
 
 def _swift_exchange_path() -> str:
@@ -57,9 +65,28 @@ def _swift_exchange_path() -> str:
 
 
 def _swift_body_field() -> str:
-    match = BODY_FIELD.search(_exchange_helper_body())
-    assert match, f"{EXCHANGE_HELPER}) no longer posts a JSON body field"
-    return match.group(1)
+    """The JSON body field, wherever the exchange assembles it.
+
+    The body is built by the request the helper posts, which is its own member
+    now that the exchange carries a timeout of its own.
+    """
+    for marker in (EXCHANGE_BUILDER, EXCHANGE_HELPER):
+        match = BODY_FIELD.search(_method_body(marker))
+        if match:
+            return match.group(1)
+    raise AssertionError("the app no longer posts a JSON body field")
+
+
+def test_the_exchange_times_out_before_its_token_does():
+    """The token lives 30 s; a server that accepts the connection and then
+    never answers must not hold the menubar click for URLSession's 60 s
+    default before the browser opens at all."""
+    match = re.search(
+        r"request\.timeoutInterval\s*=\s*([0-9.]+)",
+        _method_body(EXCHANGE_BUILDER),
+    )
+    assert match, "the exchange sets no timeout of its own"
+    assert float(match.group(1)) <= 30, "a reply slower than the token is worthless"
 
 
 def _server_exchange_route():
