@@ -598,7 +598,7 @@ class TestResponsesEndpoint:
         assert not [
             event
             for event in events
-            if "reasoning_summary_text" in str(event.get("type", ""))
+            if "reasoning_summary" in str(event.get("type", ""))
         ]
         assert "".join(reasoning_deltas) == "Need to reason."
 

@@ -4133,11 +4133,12 @@ class TestStreamingHelperFunctions:
             if event.get("type") == "response.reasoning_text.delta"
         )
         # The summary channel is not used at all, so a client that listens to
-        # both event names cannot render the reasoning twice.
+        # both event names cannot render the reasoning twice. Every summary
+        # event counts, the part-level ones included.
         assert not [
             event
             for event in parsed_events
-            if "reasoning_summary_text" in str(event.get("type", ""))
+            if "reasoning_summary" in str(event.get("type", ""))
         ]
         content_text = "".join(
             event.get("delta", "")

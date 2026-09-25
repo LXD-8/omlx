@@ -372,7 +372,7 @@ def convert_responses_input_to_messages(
             # call_id never reaches the template as an empty tool_call_id.
             # Guaranteeing a *matching* id is not this layer's job: the Open
             # Responses schema requires `call_id` on both items, and a request
-            # that omits it is rejected (see `validate_responses_request`).
+            # that omits it is rejected once request validation lands (#3774).
             call_id = item.call_id or item.id or f"call_{uuid.uuid4().hex[:8]}"
             messages.append(
                 {

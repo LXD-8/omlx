@@ -139,7 +139,6 @@ from .api.rerank_models import (
 )
 from .api.responses_models import (
     OutputItem,
-    ResponseObject,
     ResponsesRequest,
 )
 from .api.responses_utils import (
