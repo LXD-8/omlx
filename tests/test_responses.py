@@ -1247,6 +1247,15 @@ class TestValidateResponsesRequest:
                 )
             )
         )
+        # An empty schema is a schema — it accepts any JSON — so it is not the
+        # same thing as a missing one.
+        validate_responses_request(
+            self._request(
+                text=TextConfig(
+                    format=TextFormatConfig(type="json_schema", name="out", schema={})
+                )
+            )
+        )
 
 
 # =============================================================================
@@ -1479,34 +1488,6 @@ class TestBuildOutputItems:
         assert body["truncation"] == "disabled"
         assert terminal["truncation"] == "disabled"
 
-    def test_build_response_object_echoes_the_truncation_mode(self):
-        """A request's truncation mode round-trips instead of staying null."""
-        default = build_response_object(
-            ResponsesRequest(model="m", input="hi"),
-            response_id="resp_test",
-            created_at=1,
-            output_items=[],
-            usage=None,
-            truncated=False,
-            temperature=None,
-            top_p=None,
-        )
-        # OpenAI's default for the field when the client sends nothing.
-        assert default.truncation == "disabled"
-        assert (
-            build_response_object(
-                ResponsesRequest(model="m", input="hi", truncation="disabled"),
-                response_id="resp_test",
-                created_at=1,
-                output_items=[],
-                usage=None,
-                truncated=False,
-                temperature=None,
-                top_p=None,
-            ).truncation
-            == "disabled"
-        )
-
     def test_build_response_object_marks_truncation(self):
         env = build_response_object(
             ResponsesRequest(model="m", input="hi", max_output_tokens=8),
@@ -1686,12 +1667,24 @@ class TestResponseStore:
         assert store.get("resp_1")["v"] == 2
         assert len(store) == 1
 
-    def test_a_state_file_with_an_unsupported_output_item_is_skipped(self, tmp_path):
-        """One stored record whose output carries an item type this build
-        cannot replay must not take the store — and therefore server
-        startup — down: the loader's contract is to skip the bad file."""
+    def test_a_state_file_is_skipped_only_when_its_history_is_unreadable(
+        self, tmp_path
+    ):
+        """A record that carries its own `output_messages` is readable even
+        when its public output holds an item type this build cannot replay:
+        dropping it would lose `previous_response_id` chaining across an
+        upgrade. A record that has to derive those messages from such an
+        output is skipped, because one bad file must not take the store — and
+        therefore server startup — down."""
         state_dir = tmp_path / "response-state"
         state_dir.mkdir(parents=True, exist_ok=True)
+        unsupported_output = {
+            "id": "resp_legacy",
+            "created_at": 1,
+            "output": [
+                {"type": "web_search_call", "id": "ws_1", "status": "completed"}
+            ],
+        }
         (state_dir / "resp_legacy.json").write_text(
             json.dumps(
                 {
@@ -1699,17 +1692,18 @@ class TestResponseStore:
                     "created_at": 1,
                     "input_messages": [{"role": "user", "content": "hi"}],
                     "output_messages": [{"role": "assistant", "content": "hello"}],
-                    "public_response": {
-                        "id": "resp_legacy",
-                        "created_at": 1,
-                        "output": [
-                            {
-                                "type": "web_search_call",
-                                "id": "ws_1",
-                                "status": "completed",
-                            }
-                        ],
-                    },
+                    "public_response": unsupported_output,
+                }
+            ),
+            encoding="utf-8",
+        )
+        (state_dir / "resp_derived.json").write_text(
+            json.dumps(
+                {
+                    "response_id": "resp_derived",
+                    "created_at": 2,
+                    "input_messages": [{"role": "user", "content": "hi"}],
+                    "public_response": {**unsupported_output, "id": "resp_derived"},
                 }
             ),
             encoding="utf-8",
@@ -1717,7 +1711,10 @@ class TestResponseStore:
 
         store = ResponseStore(state_dir=state_dir)  # must not raise
 
-        assert store.get("resp_legacy") is None
+        assert store.get_record("resp_legacy")["output_messages"] == [
+            {"role": "assistant", "content": "hello"}
+        ]
+        assert store.get("resp_derived") is None
 
     def test_disk_persistence_round_trip(self, tmp_path):
         state_dir = tmp_path / "response-state"

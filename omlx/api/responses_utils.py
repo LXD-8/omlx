@@ -369,7 +369,7 @@ def validate_responses_request(request: ResponsesRequest) -> None:
                 "'text', 'json_object' or 'json_schema'.",
                 field="text.format",
             )
-        if text_format.type == "json_schema" and not text_format.schema_:
+        if text_format.type == "json_schema" and text_format.schema_ is None:
             raise InvalidRequestError(
                 "text.format.type='json_schema' requires a 'schema' object.",
                 field="text.format",
@@ -1066,12 +1066,14 @@ class ResponseStore:
                 record.get("public_response", {}).get("previous_response_id"),
             )
             record.setdefault("input_messages", [])
-            record.setdefault(
-                "output_messages",
-                normalize_response_output_to_messages(
+            # Only derive the messages when the record does not carry them:
+            # setdefault evaluates its default eagerly, so a record with stored
+            # messages would be re-read from the public output and dropped when
+            # that output holds an item this build cannot replay.
+            if "output_messages" not in record:
+                record["output_messages"] = normalize_response_output_to_messages(
                     record.get("public_response", {}).get("output", [])
-                ),
-            )
+                )
             return record
 
         public_response = copy.deepcopy(response_data)
@@ -1124,6 +1126,8 @@ class ResponseStore:
                 OSError,
                 ValueError,
                 json.JSONDecodeError,
+                TypeError,
+                AttributeError,
                 ResponseStateError,
             ) as exc:
                 logger.warning("Skipping corrupt response state file %s: %s", path, exc)
