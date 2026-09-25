@@ -874,6 +874,21 @@ def _is_api_route(request: FastAPIRequest) -> bool:
     return request.url.path.startswith("/v1/")
 
 
+# Admin POST endpoints whose body carries a live credential: the login form's
+# password and the permanent main API key the menubar app exchanges for a
+# short-lived auto-login token. Two things depend on this set: the trace body
+# logger must never dump these bodies, and the HTTP error handler must keep
+# their 401s visible as possible brute-force attempts (unlike ordinary
+# dashboard session expiry). Keep the two behaviours keyed off one list so a
+# renamed route cannot silently lose either.
+_ADMIN_CREDENTIAL_PATHS = frozenset(
+    {
+        "/admin/api/login",
+        "/admin/api/auto-login-token",
+    }
+)
+
+
 def _openai_error_body(message, status_code: int, param=None, code=None) -> dict:
     """Build an OpenAI-compatible error response body."""
     return {
@@ -895,8 +910,7 @@ async def http_exception_handler(request: FastAPIRequest, exc: HTTPException):
     # app calls.
     _is_admin_session_expiry = (
         request.url.path.startswith("/admin/")
-        and request.url.path
-        not in {"/admin/api/login", "/admin/api/auto-login-token"}
+        and request.url.path not in _ADMIN_CREDENTIAL_PATHS
         and exc.status_code == 401
     )
     if not _is_admin_session_expiry:
@@ -1172,6 +1186,21 @@ class DebugRequestLoggingMiddleware:
             for k, v in scope.get("headers", [])
         }
         content_type = headers.get("content-type", "")
+        if scope["path"] in _ADMIN_CREDENTIAL_PATHS:
+            # The body is a live credential (the login password, or the
+            # permanent main API key the menubar app trades for a short-lived
+            # token). Log that the request happened, never the body: at trace
+            # level the key would otherwise outlive the token it mints and sit
+            # in the server log indefinitely. Nothing is read from `receive`,
+            # so the route still gets the bytes in their original order.
+            logger.log(
+                5,
+                "Incoming %s %s — body: <credential body omitted>",
+                scope["method"],
+                scope["path"],
+            )
+            await self.app(scope, receive, send)
+            return
         if not _is_textual_body(content_type):
             # Multipart / binary uploads (audio files can be 100 MB):
             # dumping the raw bytes garbles the terminal and buffering
