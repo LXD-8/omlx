@@ -5082,7 +5082,9 @@ async def test_responses_opening_snapshot_echoes_the_whole_envelope():
     for field, expected in (
         ("model", "test-model"),
         ("instructions", "be terse"),
-        ("store", True),
+        # The envelope echoes the effective flag (store_response=False below),
+        # not request.store.
+        ("store", False),
         ("parallel_tool_calls", False),
         ("reasoning", {"effort": "low"}),
         ("truncation", "disabled"),
