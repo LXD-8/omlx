@@ -9,6 +9,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 from fastapi import FastAPI, HTTPException
+from fastapi.exceptions import RequestValidationError
 from fastapi.testclient import TestClient
 
 import omlx.server  # noqa: F401 — ensure server module is imported first
@@ -259,6 +260,64 @@ class TestBruteForceLogging:
                 HTTPException(status_code=401, detail="Not authenticated"),
             )
         assert not [record for record in caplog.records if "active-models" in record.getMessage()]
+
+
+class TestCredentialBodyRedaction:
+    """A credential route's body must not reach the log or the 422 response.
+
+    FastAPI parses the body as JSON only when the content type says so; any
+    other content type hands the raw bytes straight to pydantic, which rejects
+    them and quotes them back. `curl -d` posts
+    `application/x-www-form-urlencoded` by default, so a hand-rolled client
+    sending the main key that way would otherwise write the permanent key into
+    the server log at WARNING — the leak this endpoint exists to close.
+    """
+
+    @staticmethod
+    def _client():
+        """The admin router on a bare app, with the server's real 422 handler."""
+        app = FastAPI()
+        app.include_router(admin_router)
+        app.add_exception_handler(
+            RequestValidationError, omlx.server.validation_exception_handler
+        )
+        return TestClient(app)
+
+    def test_a_non_json_body_never_reaches_the_log_or_the_response(self, caplog):
+        with self._client() as client, caplog.at_level(logging.WARNING):
+            response = client.post(
+                "/admin/api/auto-login-token",
+                content='{"key": "test-key"}',
+                headers={"content-type": "text/plain"},
+            )
+        assert response.status_code == 422
+        assert "test-key" not in response.text, response.text
+        assert "test-key" not in caplog.text, caplog.text
+
+    def test_a_form_encoded_login_body_stays_out_of_the_log_too(self, caplog):
+        with self._client() as client, caplog.at_level(logging.WARNING):
+            response = client.post(
+                "/admin/api/login",
+                content='{"api_key": "test-key"}',
+                headers={"content-type": "application/x-www-form-urlencoded"},
+            )
+        assert response.status_code == 422
+        assert "test-key" not in response.text, response.text
+        assert "test-key" not in caplog.text, caplog.text
+
+    def test_redaction_keeps_the_field_that_is_wrong(self, caplog):
+        """Dropping the body must not drop the diagnosis: loc and msg stay."""
+        with self._client() as client, caplog.at_level(logging.WARNING):
+            response = client.post(
+                "/admin/api/auto-login-token",
+                content="not json at all",
+                headers={"content-type": "text/plain"},
+            )
+        assert response.status_code == 422
+        detail = response.json()["detail"]
+        assert detail, detail
+        assert detail[0]["loc"], detail
+        assert detail[0]["msg"], detail
 
 
 class TestAutoLoginToken:

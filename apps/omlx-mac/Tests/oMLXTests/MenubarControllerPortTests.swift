@@ -643,6 +643,28 @@ final class MenubarControllerPortTests: XCTestCase {
         }
     }
 
+    // MARK: - autoLoginTokenRequest
+
+    func testTheKeyExchangeKeepsTheKeyInTheBodyAndTimesOutQuickly() throws {
+        let url = try XCTUnwrap(
+            URL(string: "http://127.0.0.1:8000/admin/api/auto-login-token")
+        )
+        let request = MenubarController.autoLoginTokenRequest(url: url, apiKey: "sk-main-key")
+
+        XCTAssertEqual(request.httpMethod, "POST")
+        XCTAssertEqual(request.value(forHTTPHeaderField: "Content-Type"), "application/json")
+        XCTAssertNil(request.url?.query, "the permanent API key must never appear in the URL")
+
+        let body = try XCTUnwrap(request.httpBody)
+        let json = try JSONSerialization.jsonObject(with: body) as? [String: Any]
+        XCTAssertEqual(json?["key"] as? String, "sk-main-key")
+
+        // URLSession's default resource timeout is 60 s: a server that accepts
+        // the connection and never answers held the menubar click for a minute
+        // before the browser opened at all.
+        XCTAssertEqual(request.timeoutInterval, 10)
+    }
+
     // MARK: - menuAvailability
 
     func testMenuAvailabilityKeepsSettingsEnabledWhenServerIsOffline() {

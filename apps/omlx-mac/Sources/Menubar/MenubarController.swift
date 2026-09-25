@@ -1025,6 +1025,21 @@ final class MenubarController: NSObject {
         }
     }
 
+    /// The exchange request. The key travels in the body only — never in a
+    /// URL — and the exchange gets ten seconds: a server that accepts the
+    /// connection and then never answers must not hold the menubar click for
+    /// URLSession's sixty before the browser opens at all, and a reply slower
+    /// than that is worthless anyway (the token it mints lives 30 s).
+    static func autoLoginTokenRequest(url: URL, apiKey: String) -> URLRequest {
+        var request = URLRequest(url: url)
+        request.timeoutInterval = 10
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
+        request.httpBody = try? JSONSerialization.data(withJSONObject: ["key": apiKey])
+        return request
+    }
+
     /// POSTs the main API key to `/admin/api/auto-login-token` and returns
     /// the short-lived token, or nil if the exchange fails. The key travels
     /// in the request body only — never in a URL.
@@ -1037,11 +1052,7 @@ final class MenubarController: NSObject {
         comps.path = "/admin/api/auto-login-token"
         guard let url = comps.url else { return nil }
 
-        var request = URLRequest(url: url)
-        request.httpMethod = "POST"
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.setValue("application/json", forHTTPHeaderField: "Accept")
-        request.httpBody = try? JSONSerialization.data(withJSONObject: ["key": apiKey])
+        let request = Self.autoLoginTokenRequest(url: url, apiKey: apiKey)
 
         guard let (data, response) = try? await URLSession.shared.data(for: request),
               let http = response as? HTTPURLResponse, 200..<300 ~= http.statusCode,

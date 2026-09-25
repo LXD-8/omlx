@@ -874,13 +874,15 @@ def _is_api_route(request: FastAPIRequest) -> bool:
     return request.url.path.startswith("/v1/")
 
 
-# Admin POST endpoints whose body carries a live credential: the login form's
-# password and the permanent main API key the menubar app exchanges for a
-# short-lived auto-login token. Two things depend on this set: the trace body
-# logger must never dump these bodies, and the HTTP error handler must keep
-# their 401s visible as possible brute-force attempts (unlike ordinary
-# dashboard session expiry). Keep the two behaviours keyed off one list so a
-# renamed route cannot silently lose either.
+# Admin POST endpoints whose body carries a live credential: the API key the
+# login form posts and the permanent main API key the menubar app exchanges
+# for a short-lived auto-login token. Three things depend on this set: the
+# trace body logger must never dump these bodies, the 422 handler must keep
+# the rejected body out of both the log and the response (FastAPI hands raw
+# bytes to pydantic whenever the content type is not JSON), and the HTTP error
+# handler must keep their 401s visible as possible brute-force attempts
+# (unlike ordinary dashboard session expiry). Keep all three keyed off one
+# list so a renamed route cannot silently lose any of them.
 _ADMIN_CREDENTIAL_PATHS = frozenset(
     {
         "/admin/api/login",
@@ -935,14 +937,24 @@ async def validation_exception_handler(
     request: FastAPIRequest, exc: RequestValidationError
 ):
     """Log request validation errors (422) before returning the response."""
+    errors = exc.errors()
+    if request.url.path in _ADMIN_CREDENTIAL_PATHS:
+        # The body of these routes *is* the credential. When the content type
+        # is not JSON FastAPI hands the raw bytes to pydantic instead of
+        # parsing them, so `input` would put the main API key — or the login
+        # form's — into the log and back into the response. Keep the fields
+        # that name what is wrong; drop everything the body carried.
+        errors = [
+            {key: err[key] for key in ("type", "loc", "msg") if key in err}
+            for err in errors
+        ]
     logger.warning(
         "%s %s → 422: %s",
         request.method,
         request.url.path,
-        exc.errors(),
+        errors,
     )
     if _is_api_route(request):
-        errors = exc.errors()
         parts = []
         for err in errors:
             loc = " -> ".join(str(x) for x in err.get("loc", []))
@@ -952,7 +964,7 @@ async def validation_exception_handler(
         param = errors[0].get("loc", [None])[-1] if errors else None
         content = _openai_error_body(detail_str, 422, param=param)
     else:
-        content = {"detail": jsonable_encoder(exc.errors())}
+        content = {"detail": jsonable_encoder(errors)}
     return JSONResponse(status_code=422, content=content)
 
 
