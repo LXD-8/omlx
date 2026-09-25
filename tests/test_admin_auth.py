@@ -2,6 +2,7 @@
 """Tests for admin authentication and chat page API key injection."""
 
 import asyncio
+import logging
 import time
 from pathlib import Path
 from unittest.mock import MagicMock, patch
@@ -225,6 +226,39 @@ class TestAutoLoginTokenEndpoint:
             assert self._exchange("main-key")["token"]
         finally:
             _restore_getter(original)
+
+
+class TestBruteForceLogging:
+    """A 401 from an endpoint that verifies a credential stays visible; only
+    dashboard session expiry is noise. The handler is the one the real app
+    registers, driven with a stub request because these tests run on a bare
+    app with just the admin router."""
+
+    @staticmethod
+    def _request(path):
+        from types import SimpleNamespace
+
+        return SimpleNamespace(url=SimpleNamespace(path=path), method="POST")
+
+    @pytest.mark.asyncio
+    async def test_the_key_exchange_logs_its_401(self, caplog):
+        with caplog.at_level(logging.WARNING):
+            await omlx.server.http_exception_handler(
+                self._request("/admin/api/auto-login-token"),
+                HTTPException(status_code=401, detail="Invalid API key"),
+            )
+        assert any("auto-login-token" in record.getMessage() for record in caplog.records), (
+            caplog.text
+        )
+
+    @pytest.mark.asyncio
+    async def test_a_dashboard_session_expiry_stays_quiet(self, caplog):
+        with caplog.at_level(logging.WARNING):
+            await omlx.server.http_exception_handler(
+                self._request("/admin/api/active-models"),
+                HTTPException(status_code=401, detail="Not authenticated"),
+            )
+        assert not [record for record in caplog.records if "active-models" in record.getMessage()]
 
 
 class TestAutoLoginToken:
