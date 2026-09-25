@@ -21,9 +21,11 @@ from typing import Any, Dict, Iterable, List, Optional, Set, Tuple
 def ensure_call_id(value: Optional[str]) -> str:
     """Return a non-empty tool-call correlation id.
 
-    Every point that can synthesize one goes through here so a ``function_call``
-    and its ``function_call_output`` can never disagree about which fallback
-    they generated.
+    Every point that *reads or restores* an id goes through here, so a
+    ``function_call`` and its ``function_call_output`` can never disagree about
+    the fallback they settled on. The emitters in ``parser_tool_calls`` and
+    ``tool_calling`` mint their own ``call_*`` first; their output reaches this
+    function too, which is why the pairing still holds.
     """
     call_id = value.strip() if isinstance(value, str) else ""
     return call_id or f"call_{uuid.uuid4().hex[:8]}"
