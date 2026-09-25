@@ -472,6 +472,78 @@ class TestResponsesEndpoint:
         assert data["output"][1]["content"][0]["text"] == "Hello!"
         assert data["usage"]["output_tokens_details"]["reasoning_tokens"] == 3
 
+    def test_response_endpoint_echoes_the_effective_store_flag(
+        self, client, mock_llm_engine
+    ):
+        """A client that sends nothing sees `store: true`, what actually happened.
+
+        OpenAI's Responses default is to store, so the envelope must report the
+        resolved decision rather than echo a `null` request field.
+        """
+        mock_llm_engine.chat = AsyncMock(
+            return_value=MockGenerationOutput(
+                text="Hello!",
+                prompt_tokens=1,
+                completion_tokens=1,
+                finish_reason="stop",
+                finished=True,
+            )
+        )
+
+        response = client.post(
+            "/v1/responses",
+            json={"model": "test-model", "input": "Hello"},
+        )
+
+        assert response.status_code == 200, response.text
+        assert response.json()["store"] is True
+
+        opted_out = client.post(
+            "/v1/responses",
+            json={"model": "test-model", "input": "Hello", "store": False},
+        )
+        assert opted_out.status_code == 200, opted_out.text
+        assert opted_out.json()["store"] is False
+
+    def test_response_endpoint_publishes_the_reasoning_summary_when_asked(
+        self, client, mock_llm_engine
+    ):
+        """`reasoning.summary` fills `summary[]` with the same text.
+
+        `@ai-sdk/openai@3.0.109` reads only the summary channel, so a request
+        that asks for a summary has to find the reasoning there as well as on
+        the raw channel.
+        """
+        mock_llm_engine.chat = AsyncMock(
+            return_value=MockGenerationOutput(
+                text="<think>Need to reason.</think>Hello!",
+                prompt_tokens=3,
+                completion_tokens=6,
+                finish_reason="stop",
+                finished=True,
+            )
+        )
+
+        response = client.post(
+            "/v1/responses",
+            json={
+                "model": "test-model",
+                "input": "Hello",
+                "reasoning": {"summary": "auto"},
+            },
+        )
+
+        assert response.status_code == 200, response.text
+        data = response.json()
+        assert [item["type"] for item in data["output"]] == ["reasoning", "message"]
+        reasoning = data["output"][0]
+        assert reasoning["summary"] == [
+            {"type": "summary_text", "text": "Need to reason."}
+        ]
+        # The raw channel is not replaced.
+        assert reasoning["content"][0]["type"] == "reasoning_text"
+        assert reasoning["content"][0]["text"] == "Need to reason."
+
     def test_response_endpoint_echoes_text_format_on_the_wire(self, client, mock_llm_engine):
         """`schema_` is a Python-side name; the client must see `schema`.
 
@@ -608,6 +680,10 @@ class TestResponsesEndpoint:
             if event.get("type") == "response.output_item.added"
         ]
         assert added_items[0]["item"]["type"] == "reasoning"
+        # The item opens with both arrays present, so a client can read its
+        # shape before any text arrives.
+        assert added_items[0]["item"]["content"] == []
+        assert added_items[0]["item"]["summary"] == []
         assert added_items[0]["output_index"] == 0
         assert added_items[1]["item"]["type"] == "message"
         assert added_items[1]["output_index"] == 1
@@ -622,6 +698,87 @@ class TestResponsesEndpoint:
         assert output[1]["content"][0]["text"] == "Hello!"
         usage = completed["response"]["usage"]
         assert usage["output_tokens_details"]["reasoning_tokens"] == 3
+
+    def test_response_stream_publishes_the_reasoning_summary_when_asked(
+        self, client, mock_llm_engine
+    ):
+        """A summary-requesting client gets the summary events and the same text.
+
+        The raw channel keeps streaming alongside it, so a client that reads
+        only `response.reasoning_text.delta` is unaffected.
+        """
+
+        async def stream_chat(messages, **kwargs):
+            yield MockGenerationOutput(
+                text="<think>Need to reason.</think>Hello!",
+                new_text="<think>Need to reason.</think>Hello!",
+                prompt_tokens=3,
+                completion_tokens=6,
+                finish_reason="stop",
+                finished=True,
+            )
+
+        mock_llm_engine.stream_chat = stream_chat
+
+        response = client.post(
+            "/v1/responses",
+            json={
+                "model": "test-model",
+                "input": "Hello",
+                "stream": True,
+                "reasoning": {"summary": "auto"},
+            },
+        )
+
+        assert response.status_code == 200, response.text
+        events = [
+            json.loads(line.removeprefix("data: "))
+            for line in response.text.splitlines()
+            if line.startswith("data: ")
+        ]
+
+        def of_type(name):
+            return [event for event in events if event.get("type") == name]
+
+        # The raw channel is unchanged.
+        raw_deltas = "".join(
+            event["delta"] for event in of_type("response.reasoning_text.delta")
+        )
+        assert raw_deltas == "Need to reason."
+
+        # The summary channel carries the same text, in the dialect's order:
+        # part added -> text deltas -> text done -> part done.
+        assert of_type("response.reasoning_summary_part.added")[0]["part"] == {
+            "type": "summary_text",
+            "text": "",
+        }
+        summary_deltas = "".join(
+            event["delta"] for event in of_type("response.reasoning_summary_text.delta")
+        )
+        assert summary_deltas == "Need to reason."
+        assert of_type("response.reasoning_summary_text.done")[0]["text"] == (
+            "Need to reason."
+        )
+        assert of_type("response.reasoning_summary_part.done")[0]["part"] == {
+            "type": "summary_text",
+            "text": "Need to reason.",
+        }
+        assert all(
+            event["summary_index"] == 0
+            for event in events
+            if "reasoning_summary" in event.get("type", "")
+        )
+
+        added_reasoning = of_type("response.output_item.added")[0]["item"]
+        assert added_reasoning["content"] == []
+        assert added_reasoning["summary"] == []
+
+        completed = of_type("response.completed")[0]
+        output = completed["response"]["output"]
+        assert output[0]["summary"] == [
+            {"type": "summary_text", "text": "Need to reason."}
+        ]
+        assert output[0]["content"][0]["text"] == "Need to reason."
 
     def test_response_stream_emits_incomplete_event_on_length(
         self, client, mock_llm_engine

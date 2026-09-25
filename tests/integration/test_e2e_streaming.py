@@ -4170,6 +4170,135 @@ class TestStreamingHelperFunctions:
         assert completed["output"][1]["type"] == "message"
         assert completed["usage"]["output_tokens_details"]["reasoning_tokens"] > 0
 
+    @pytest.mark.asyncio
+    async def test_stream_responses_api_publishes_the_summary_when_asked(
+        self,
+    ):
+        """`reasoning.summary` opens the summary channel next to the raw one.
+
+        A summary-only client (`@ai-sdk/openai@3.0.109`) reads no
+        `response.reasoning_text.*` event, so the request has to be answered on
+        `response.reasoning_summary_text.*` too, with the same text. The raw
+        channel keeps streaming for the clients that read it.
+        """
+        from omlx.api.responses_models import ResponsesRequest
+        from omlx.server import stream_responses_api
+
+        class PromptOpenedThinkingTokenizer(MockTokenizer):
+            think_start = "<think>"
+            think_end = "</think>"
+            think_start_id = 999
+            think_end_id = 998
+            unk_token_id = -1
+
+            def convert_tokens_to_ids(self, token: str):
+                if token == self.think_start:
+                    return self.think_start_id
+                if token == self.think_end:
+                    return self.think_end_id
+                return self.unk_token_id
+
+            def encode(self, text: str, add_special_tokens: bool = False) -> list[int]:
+                ids = [101]
+                if text.rstrip().endswith(self.think_start):
+                    ids.append(self.think_start_id)
+                return ids
+
+            def apply_chat_template(
+                self, messages: list[dict], tokenize: bool = False, **kwargs
+            ) -> str:
+                return "user: Hi\nassistant:<think>"
+
+        engine = MockBaseEngine()
+        engine._tokenizer = PromptOpenedThinkingTokenizer()
+        engine.set_stream_outputs(
+            [
+                MockGenerationOutput(
+                    text="Need to inspect first.",
+                    new_text="Need to inspect first.",
+                    completion_tokens=1,
+                    finished=False,
+                ),
+                MockGenerationOutput(
+                    text="Need to inspect first.</think>Done.",
+                    new_text="</think>Done.",
+                    completion_tokens=2,
+                    finished=True,
+                    finish_reason="stop",
+                ),
+            ]
+        )
+
+        request = ResponsesRequest(
+            model="test-model",
+            input="Hi",
+            stream=True,
+            reasoning={"summary": "auto"},
+        )
+
+        events = [
+            event
+            async for event in stream_responses_api(
+                engine,
+                [{"role": "user", "content": "Hi"}],
+                request,
+                store_response=False,
+                max_tokens=256,
+            )
+        ]
+
+        parsed_events = []
+        for event in events:
+            for line in event.splitlines():
+                if line.startswith("data: "):
+                    parsed_events.append(json.loads(line[6:]))
+
+        def of_type(name):
+            return [
+                event for event in parsed_events if event.get("type") == name
+            ]
+
+        # The raw channel is untouched by the request for a summary.
+        raw_text = "".join(
+            event.get("delta", "") for event in of_type("response.reasoning_text.delta")
+        )
+        assert raw_text == "Need to inspect first."
+
+        # The summary channel carries the same text, in the dialect's order.
+        added_part = of_type("response.reasoning_summary_part.added")
+        assert added_part[0]["part"] == {"type": "summary_text", "text": ""}
+        assert added_part[0]["summary_index"] == 0
+        summary_text = "".join(
+            event.get("delta", "")
+            for event in of_type("response.reasoning_summary_text.delta")
+        )
+        assert summary_text == "Need to inspect first."
+        assert of_type("response.reasoning_summary_text.done")[0]["text"] == (
+            "Need to inspect first."
+        )
+        assert of_type("response.reasoning_summary_part.done")[0]["part"] == {
+            "type": "summary_text",
+            "text": "Need to inspect first.",
+        }
+
+        # The added reasoning item already carries both arrays, the summary one
+        # included, so the item's shape is readable when it opens.
+        opened = of_type("response.output_item.added")[0]["item"]
+        assert opened["type"] == "reasoning"
+        assert opened["content"] == []
+        assert opened["summary"] == []
+
+        completed = of_type("response.completed")[0]["response"]
+        assert completed["output"][0]["summary"] == [
+            {"type": "summary_text", "text": "Need to inspect first."}
+        ]
+        # The terminal item is re-validated through the response model, so its
+        # raw part carries the model's `annotations` default; the fields that
+        # matter are the type and the text.
+        assert completed["output"][0]["content"][0]["type"] == "reasoning_text"
+        assert completed["output"][0]["content"][0]["text"] == "Need to inspect first."
+        assert completed["output"][1]["type"] == "message"
+
 
 class TestStreamingEdgeCases:
     """Tests for edge cases in streaming responses."""

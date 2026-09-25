@@ -28,6 +28,7 @@ from omlx.api.responses_utils import (
     convert_responses_tools,
     format_sse_event,
     normalize_response_output_to_messages,
+    reasoning_summary_requested,
     split_namespace_tool_name,
 )
 from omlx.api.shared_models import IDPrefix, generate_id
@@ -914,24 +915,75 @@ class TestBuildOutputItems:
         assert item.content[0].type == "reasoning_text"
         assert item.summary == []
 
-    def test_build_reasoning_output_item_does_not_publish_a_summary(self):
-        """One channel only, because two break the clients that read both.
+    def test_build_reasoning_output_item_leaves_the_summary_off_by_default(self):
+        """The raw channel is the default, so a client that reads both is safe.
 
-        Measured against the SDKs that matter: ``@ai-sdk/open-responses@1.0.34``
-        (the version Cherry Studio pins) reads ``response.reasoning_text.delta``
-        and no other reasoning event, so a summary-only server shows it nothing;
-        ``@ai-sdk/open-responses@2.0.49`` and ``@ai-sdk/openai@3.0.109`` read both
-        channels, so the same text on both arrives twice.
+        ``@ai-sdk/open-responses@1.0.34`` (the version Cherry Studio pins) reads
+        ``response.reasoning_text.delta`` and no other reasoning event, and
+        ``@ai-sdk/open-responses@2.0.49`` reads both channels; a default request
+        must not send the same text twice.
         """
         item = build_reasoning_output_item("Step 1: foo.")
         assert item.summary == []
         assert [part.type for part in item.content] == ["reasoning_text"]
+
+    def test_build_reasoning_output_item_publishes_the_summary_when_asked(self):
+        """`reasoning.summary` selects the summary channel, so it gets the text.
+
+        ``@ai-sdk/openai@3.0.109`` reads ``reasoning_summary_text.*`` and never
+        ``reasoning_text.*``: without this mirror such a client sees no
+        reasoning at all. The raw channel stays, so
+        ``@ai-sdk/open-responses@1.0.34`` keeps working.
+        """
+        item = build_reasoning_output_item("Step 1: foo.", summary_requested=True)
+        assert [part.type for part in item.summary] == ["summary_text"]
+        assert [part.text for part in item.summary] == ["Step 1: foo."]
+        assert [part.type for part in item.content] == ["reasoning_text"]
+        assert [part.text for part in item.content] == ["Step 1: foo."]
 
     def test_build_reasoning_output_item_empty_text(self):
         item = build_reasoning_output_item("")
         assert item.type == "reasoning"
         assert item.summary == []
         assert item.content == []
+
+    def test_build_reasoning_output_item_opened_shape_carries_both_arrays(self):
+        """`response.output_item.added` opens before the text exists.
+
+        The added item is built by this same builder, so it must already carry
+        the `content` and `summary` arrays a client reads to learn the item's
+        shape; both stay empty until the text arrives.
+        """
+        opened = build_reasoning_output_item(
+            "",
+            item_id="rs_test",
+            status="in_progress",
+            summary_requested=True,
+        )
+        assert opened.status == "in_progress"
+        assert opened.content == []
+        assert opened.summary == []
+        dumped = opened.model_dump(exclude_none=True, by_alias=True)
+        assert dumped["content"] == []
+        assert dumped["summary"] == []
+
+    @pytest.mark.parametrize(
+        ("reasoning", "expected"),
+        [
+            (None, False),
+            ({}, False),
+            ({"effort": "low"}, False),
+            ({"summary": None}, False),
+            ({"summary": "auto"}, True),
+            ({"summary": "concise"}, True),
+            ({"summary": "detailed"}, True),
+        ],
+    )
+    def test_reasoning_summary_requested_resolves_the_request_field(
+        self, reasoning, expected
+    ):
+        """One resolver the streaming and non-streaming paths both call."""
+        assert reasoning_summary_requested(reasoning) is expected
 
     def test_build_response_object_is_a_complete_envelope(self):
         """Both response paths serialize this, so it must carry every field.
@@ -959,6 +1011,7 @@ class TestBuildOutputItems:
             truncated=False,
             temperature=0.25,
             top_p=0.5,
+            store=True,
         ).model_dump()
         for key in (
             "id",
@@ -1022,6 +1075,7 @@ class TestBuildOutputItems:
             truncated=False,
             temperature=0.25,
             top_p=0.5,
+            store=True,
         )
         body = json.loads(build_response_object(request, **common).model_dump_json())
         terminal = build_response_object(request, **common).model_dump(
@@ -1057,6 +1111,7 @@ class TestBuildOutputItems:
             truncated=False,
             temperature=None,
             top_p=None,
+            store=True,
         )
         # OpenAI's default for the field when the client sends nothing.
         assert default.truncation == "disabled"
@@ -1070,9 +1125,43 @@ class TestBuildOutputItems:
                 truncated=False,
                 temperature=None,
                 top_p=None,
+                store=True,
             ).truncation
             == "disabled"
         )
+
+    def test_build_response_object_echoes_the_effective_store_flag(self):
+        """`store` reports what the server did, not the raw request field.
+
+        OpenAI's Responses default is to store, so a client that sends nothing
+        gets `store: true` back; echoing ``request.store`` would answer ``null``
+        for a response that *was* stored, and a client cannot tell that apart
+        from "not stored".
+        """
+        common = dict(
+            response_id="resp_test",
+            created_at=1,
+            output_items=[],
+            usage=None,
+            truncated=False,
+            temperature=None,
+            top_p=None,
+        )
+        # Sent nothing, server stored it (its default).
+        omitted = build_response_object(
+            ResponsesRequest(model="m", input="hi"), store=True, **common
+        )
+        assert omitted.store is True
+        # Explicitly opted out.
+        opted_out = build_response_object(
+            ResponsesRequest(model="m", input="hi", store=False), store=False, **common
+        )
+        assert opted_out.store is False
+        # Explicitly stored.
+        explicit = build_response_object(
+            ResponsesRequest(model="m", input="hi", store=True), store=True, **common
+        )
+        assert explicit.store is True
 
     def test_build_response_object_marks_truncation(self):
         env = build_response_object(
@@ -1084,6 +1173,7 @@ class TestBuildOutputItems:
             truncated=True,
             temperature=None,
             top_p=None,
+            store=True,
         )
         assert env.status == "incomplete"
         assert env.incomplete_details == {"reason": "max_output_tokens"}

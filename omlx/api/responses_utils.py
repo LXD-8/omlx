@@ -15,6 +15,7 @@ from .responses_models import (
     OutputContent,
     OutputItem,
     OutputTokensDetails,
+    ReasoningSummaryPart,
     ResponseObject,
     ResponsesRequest,
     ResponsesTool,
@@ -557,36 +558,88 @@ def build_function_call_output_item(
     )
 
 
+def reasoning_summary_requested(reasoning: Optional[Dict[str, Any]]) -> bool:
+    """Whether the request asked for the reasoning *summary* channel.
+
+    OpenAI spells the request field ``reasoning.summary`` and its value selects
+    a summary style (``"auto"``/``"concise"``/``"detailed"``), not a channel, so
+    any value the client sends means it listens on
+    ``response.reasoning_summary_text.*`` and the text has to be published
+    there as well. An omitted (or null) field leaves the summary channel off, so
+    the raw channel stays the only one and clients that read both do not get a
+    second copy forced on them.
+
+    This is the one place the flag is resolved; the streaming and the
+    non-streaming builder both call it with ``request.reasoning``, so the two
+    paths cannot disagree about what the request asked for.
+    """
+    if not isinstance(reasoning, dict):
+        return False
+    return bool(reasoning.get("summary"))
+
+
 def build_reasoning_output_item(
     reasoning_text: str,
     item_id: Optional[str] = None,
     status: str = "completed",
+    *,
+    summary_requested: bool = False,
 ) -> OutputItem:
     """Build a reasoning-type OutputItem carrying the full CoT.
 
-    The CoT is published on the raw-reasoning channel only (``content[]`` with a
-    ``reasoning_text`` part). ``summary[]`` is a *condensation* in the Responses
-    dialect, and oMLX has no summarizer, so putting a copy of the raw text there
-    would be both semantically wrong and — measured against the clients that
-    matter — destructive:
+    The CoT is always published on the raw-reasoning channel (``content[]``
+    with a ``reasoning_text`` part). ``summary[]`` is a *condensation* in the
+    Responses dialect and oMLX has no summarizer, but a client that asked for a
+    summary has to be answered on that channel too — measured against the SDKs
+    that matter:
 
+    - ``@ai-sdk/openai@3.0.109`` reads ``response.reasoning_summary_text.delta``
+      and never ``response.reasoning_text.*``, so a raw-only server shows it no
+      reasoning at all;
     - ``@ai-sdk/open-responses@1.0.34`` (the version Cherry Studio pins) reads
-      ``response.reasoning_text.delta`` and nothing else, so a summary-only
-      server shows no reasoning at all;
-    - ``@ai-sdk/open-responses@2.0.49`` and ``@ai-sdk/openai@3.0.109`` read both
-      channels, so the same text on both arrives twice.
+      ``response.reasoning_text.delta`` and nothing else, so the raw channel has
+      to stay for everyone;
+    - ``@ai-sdk/open-responses@2.0.49`` reads both channels, so the summary copy
+      is only published when the request asked for it (``reasoning.summary``);
+      otherwise the same text would arrive twice.
+
+    ``summary_requested`` comes from :func:`reasoning_summary_requested` so the
+    item shape and the streamed summary events are gated on one value. An empty
+    ``reasoning_text`` still yields an empty ``summary[]``: the streaming path
+    opens the item before the text exists.
     """
     content = (
         [OutputContent(type="reasoning_text", text=reasoning_text)]
         if reasoning_text
         else []
     )
+    summary = (
+        [ReasoningSummaryPart(type="summary_text", text=reasoning_text)]
+        if summary_requested and reasoning_text
+        else []
+    )
     return OutputItem(
         type="reasoning",
         id=item_id or generate_id(IDPrefix.REASONING),
         status=status,
-        summary=[],
+        summary=summary,
         content=content,
+    )
+
+
+def reasoning_item_wire(item: OutputItem) -> Dict[str, Any]:
+    """Serialize a reasoning ``OutputItem`` for an SSE event payload.
+
+    The decision of what the item holds lives in
+    :func:`build_reasoning_output_item`; this only fixes the wire shape. The
+    streamed raw part stays ``{"type": "reasoning_text", "text": ...}`` —
+    ``annotations`` is an ``output_text`` field and has never been in this
+    channel's payload, so it is not grown onto it here.
+    """
+    return item.model_dump(
+        exclude_none=True,
+        by_alias=True,
+        exclude={"content": {"__all__": {"annotations"}}},
     )
 
 
@@ -616,6 +669,7 @@ def build_response_object(
     truncated: bool,
     temperature: Optional[float],
     top_p: Optional[float],
+    store: bool,
     status: Optional[str] = None,
 ) -> ResponseObject:
     """Build the one response envelope both response paths serialize.
@@ -625,6 +679,11 @@ def build_response_object(
     fields they echo. The streaming caller still serializes with
     ``exclude_none``, so its null-valued fields stay omitted: that predates this
     builder and the streaming integration tests pin it.
+
+    ``store`` is the *effective* value the server acted on
+    (``_should_store_response``), not the raw request field: a client that sends
+    nothing still gets ``store: true`` back, because that is what happened.
+    Making it required keeps a caller from echoing the request by accident.
 
     ``status`` overrides the truncation-derived status so ``response.created``
     and ``response.in_progress`` come from the same builder as the terminal
@@ -645,7 +704,7 @@ def build_response_object(
         previous_response_id=request.previous_response_id,
         incomplete_details={"reason": "max_output_tokens"} if truncated else None,
         instructions=request.instructions,
-        store=request.store,
+        store=store,
         parallel_tool_calls=request.parallel_tool_calls,
         reasoning=request.reasoning,
         text=request.text,
