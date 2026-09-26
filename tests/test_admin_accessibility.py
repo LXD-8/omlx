@@ -53,8 +53,12 @@ def test_focus_ring_contrasts_with_login_backgrounds():
     light_ring = _css_color(TOKENS, r":root", "--focus-ring-color")
     dark_ring = _css_color(TOKENS, r'\[data-theme="dark"\]', "--focus-ring-color")
     dark_page = _css_color(LOGIN, r'\[data-theme="dark"\] body', "background-color")
+    # The login card's control fill used to be spelled as a literal in
+    # login.html's dark fork; the resolver wiring moved that exact value
+    # (#252529) onto `--bg-secondary`, which `.bg-neutral-50` now resolves to —
+    # so the check follows the value into the token file, like the rings above.
     dark_control = _css_color(
-        LOGIN, r'\[data-theme="dark"\] \.bg-neutral-50', "background-color"
+        TOKENS, r'\[data-theme="dark"\]', "--bg-secondary"
     )
 
     assert _contrast_ratio(light_ring, "#ffffff") >= 3
