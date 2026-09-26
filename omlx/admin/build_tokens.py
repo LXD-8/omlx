@@ -59,6 +59,7 @@ def _theme_vars(tokens: dict, appearance: str) -> list[tuple[str, str]]:
         ("--bg-primary", surface["bgPrimary"]),
         ("--bg-secondary", surface["bgSecondary"]),
         ("--bg-tertiary", surface["bgTertiary"]),
+        ("--fill-raised", surface["fillRaised"]),
         ("--border-faint", surface["borderFaint"]),
         ("--border-normal", surface["borderNormal"]),
         ("--text-primary", text["primary"]),
