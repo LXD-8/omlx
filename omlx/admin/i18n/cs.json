@@ -197,6 +197,7 @@
   "status.active_models.last_token_ago": "poslední Token před {age}",
   "status.integrations.claude_code": "Claude Code",
   "status.integrations.copilot_cli": "Copilot CLI",
+  "status.integrations.dsh": "DeepSeek Harness",
   "status.integrations.hermes_agent": "Hermes Agent",
   "status.active_models.idle": "nečinný",
   "status.active_models.loading": "Loading",

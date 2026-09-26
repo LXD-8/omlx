@@ -113,6 +113,9 @@ LANGUAGE_NEUTRAL = [
     "status.integrations.claude_code",
     "status.integrations.codex",
     "status.integrations.copilot_cli",
+    # Product name, like the rows above it: dsh is DeepSeek Harness, not a
+    # phrase to translate.
+    "status.integrations.dsh",
     "status.integrations.hermes_agent",
     "status.integrations.openclaw",
     "status.integrations.opencode",

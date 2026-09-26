@@ -257,6 +257,7 @@
                     openclaw_model: null,
                     hermes_model: null,
                     pi_model: null,
+                    dsh_model: null,
                     openclaw_tools_profile: 'full',
                     markitdown_enabled: true,
                     markitdown_expose_model: false,
@@ -4273,6 +4274,10 @@
                 return this._launchCmd('pi');
             },
 
+            get dshCommand() {
+                return this._launchCmd('dsh');
+            },
+
             get markitdownOcrModelMissing() {
                 const id = this.globalSettings.integrations.markitdown_pdf_processing_engine;
                 return id !== 'markitdown' && !(this.models || []).some(model => model.id === id);
@@ -4297,6 +4302,7 @@
                             integrations_openclaw_model: this.globalSettings.integrations.openclaw_model,
                             integrations_hermes_model: this.globalSettings.integrations.hermes_model,
                             integrations_pi_model: this.globalSettings.integrations.pi_model,
+                            integrations_dsh_model: this.globalSettings.integrations.dsh_model,
                             integrations_openclaw_tools_profile: this.globalSettings.integrations.openclaw_tools_profile,
                             markitdown_enabled: this.globalSettings.integrations.markitdown_enabled,
                             markitdown_expose_model: this.globalSettings.integrations.markitdown_expose_model,
