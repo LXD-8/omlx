@@ -1,29 +1,5 @@
-    /* CSS Variables for theming (shared with chat.html) */
-    :root {
-        --bg-primary: #ffffff;
-        --bg-secondary: #f8fafc;
-        --bg-tertiary: #f1f5f9;
-        --text-primary: #0f172a;
-        --text-secondary: #475569;
-        --text-tertiary: #64748b;
-        --border-faint: #e2e8f0;
-        --border-normal: #cbd5e1;
-        --code-bg: #f3f4f6;
-        --link-color: #2563eb;
-    }
-
-    [data-theme="dark"] {
-        --bg-primary: #1d1d20;
-        --bg-secondary: #252529;
-        --bg-tertiary: #2d2d32;
-        --text-primary: #efefef;
-        --text-secondary: #a1a1aa;
-        --text-tertiary: #71717a;
-        --border-faint: #3f3f46;
-        --border-normal: #52525b;
-        --code-bg: #27272a;
-        --link-color: #60a5fa;
-    }
+    /* Theming tokens live in the generated static/css/tokens.css, which is
+       loaded before this file. Do not redeclare colours or font sizes here. */
 
     body {
         background-color: var(--bg-primary) !important;

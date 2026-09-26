@@ -845,6 +845,27 @@
     transform: translateX(0);
 }
 
+/* === Notices ===
+   The banners the bench and settings screens raise: one amber tone for a
+   warning, one red for a failure. Defined here — a banner is a component, not
+   a pile of utilities repeated per page — and fed by the notice tokens, so a
+   custom theme recolours them with everything else. */
+
+.notice {
+    border: 1px solid transparent;
+    border-radius: var(--radius-lg);
+}
+
+.notice--orange {
+    background-color: var(--notice-amber-bg);
+    border-color: var(--notice-amber-border);
+}
+
+.notice--red {
+    background-color: var(--notice-red-bg);
+    border-color: var(--notice-red-border);
+}
+
 /* === Keyboard shortcut list (the help sheet) ===
    One spec for both surfaces that show it: the dashboard's shared
    `ui.shortcut_overview` macro and the chat page's own sheet use these

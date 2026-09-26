@@ -97,6 +97,14 @@ def _theme_vars(tokens: dict, appearance: str) -> list[tuple[str, str]]:
         ("--scrim", material["scrim"]),
     ]
     pairs += [(f"--badge-{tone}-fg", value) for tone, value in badge.items()]
+    # Banner surfaces: the two tones `.notice--*` paints with.
+    notice = tokens["notice"][appearance]
+    pairs += [
+        ("--notice-amber-bg", notice["amberBg"]),
+        ("--notice-amber-border", notice["amberBorder"]),
+        ("--notice-red-bg", notice["redBg"]),
+        ("--notice-red-border", notice["redBorder"]),
+    ]
     # Label colours: `<family>` is the fill, `<family>Fg` the step that reads on
     # it, so one entry per family becomes two variables.
     label = tokens["label"][appearance]
