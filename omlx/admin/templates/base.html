@@ -200,17 +200,11 @@
            excluded (its font-size stays untouched, preserving 1.21em scaling).
            Tailwind arbitrary-value classes MUST use the escaped form
            (.text-\[10px\]) to match the compiled selector. */
-        [data-enhanced-readability] .text-\[9px\],
-        [data-enhanced-readability] .text-\[10px\],
-        [data-enhanced-readability] .text-\[11px\],
-        [data-enhanced-readability] .svg-allow-warning,
+        /* The size floor itself lives in the token layer (tokens.css), where
+           it applies to everyone; what is left here is the two icon buttons
+           whose size is relative (0.7em) and only the toggle lifts. */
         [data-enhanced-readability] .code-copy-btn,
-        [data-enhanced-readability] .svg-render-btn,
-        [data-enhanced-readability] .model-card-content pre code,
-        [data-enhanced-readability] *[style*="font-size: 10px"],
-        [data-enhanced-readability] *[style*="font-size: 11px"],
-        [data-enhanced-readability] *[style*="font-size:10px"],
-        [data-enhanced-readability] *[style*="font-size:11px"] {
+        [data-enhanced-readability] .svg-render-btn {
             font-size: 12px !important;
         }
         /* Inline gray vars (e.g. style="color: var(--text-tertiary)") -> primary */

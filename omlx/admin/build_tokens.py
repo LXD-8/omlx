@@ -196,7 +196,6 @@ def _render_block(pairs: list[tuple[str, str]], indent: str = "    ") -> str:
 
 def render_css(tokens: dict) -> str:
     scale = tokens["typography"]["scale"]
-    floor = tokens["typography"]["floor"]
     layout = tokens["layout"]
 
     scale_classes = "\n".join(
@@ -240,17 +239,19 @@ body {{
 
 /*
  * Minimum-size floor, applied globally rather than only under the
- * enhanced-readability toggle: 9px is below the auxiliary step and 11px is not
- * on the scale at all, so both snap to the nearest legal step. The
- * enhanced-readability block in base.html then lifts the auxiliary step to
- * {floor['enhancedReadability']}px.
+ * enhanced-readability toggle: the auxiliary step is the smallest size
+ * anything may render at, so every sub-floor arbitrary class and the inline
+ * sizes the templates still carry are lifted to it. Nothing new may be added
+ * below it — use a step of the scale.
  */
-.text-\\[9px\\] {{
-    font-size: var(--fs-aux);
-}}
-
-.text-\\[11px\\] {{
-    font-size: var(--fs-body);
+.text-\\[9px\\],
+.text-\\[10px\\],
+.text-\\[11px\\],
+*[style*="font-size: 10px"],
+*[style*="font-size: 11px"],
+*[style*="font-size:10px"],
+*[style*="font-size:11px"] {{
+    font-size: var(--fs-aux) !important;
 }}
 
 /*
