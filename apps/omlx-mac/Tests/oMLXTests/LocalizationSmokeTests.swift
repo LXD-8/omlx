@@ -281,8 +281,6 @@ final class LocalizationSmokeTests: XCTestCase {
                             "the lower-case detector misses \(sample)")
         }
     }
-        }
-    }
 
     func testCatalogIsValidJSON() {
         // Direct file-level parse so a catalog corruption (extra trailing
