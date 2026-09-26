@@ -68,10 +68,15 @@ module.exports = {
         // these through dashboard.css's overrides, which now drop away where
         // this mapping declares the same value. Shades with no honest token
         // (300/500/700/950) stay on Tailwind's default — see the PR report.
+        // 200 takes `surface.bgStrong`, not bgTertiary: in the light
+        // appearance the two would collapse onto the same #ececee and the
+        // hover step on a neutral-100 base (13 bench rows) would disappear;
+        // bgStrong keeps today's #e5e5e5 there, and its dark value is
+        // bgTertiary's, so the night pixels do not move either.
         neutral: {
           50: 'var(--bg-secondary)',
           100: 'var(--bg-tertiary)',
-          200: 'var(--bg-tertiary)',
+          200: 'var(--bg-strong)',
           800: 'var(--accent-fill-hover)',
           900: 'var(--btn-primary)',
         },
