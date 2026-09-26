@@ -5,7 +5,7 @@
 ``omlx/admin/tokens.json`` is the single source of truth; this script writes:
 
 * ``omlx/admin/static/css/tokens.css``            - CSS custom properties + type scale
-* ``apps/omlx-mac/Sources/Theme/DesignTokens.swift`` - the app's type scale
+* ``apps/omlx-mac/Sources/Theme/DesignTokens.swift`` - numeric constants for the app
 
 Both files are committed, so the build never needs to run them; ``--check``
 regenerates in memory and fails when the committed copies have drifted, which
@@ -80,6 +80,7 @@ def _theme_vars(tokens: dict, appearance: str) -> list[tuple[str, str]]:
         ("--focus-ring-color", control["focusRing"]),
         ("--focus-ring-width", f"{control['focusRingWidth']}px"),
         ("--code-bg", control["codeBg"]),
+        ("--on-fill", control["onFill"]),
     ]
     # One variable per semantic colour, straight from the source: naming them
     # one by one is how `teal` and `purple` reached `tokens.json`, the badge
@@ -131,6 +132,36 @@ def _scale_vars(tokens: dict) -> list[tuple[str, str]]:
     pairs.append(("--fs-floor", f"{floor['aux']}px"))
     pairs.append(("--fs-floor-body", f"{floor['body']}px"))
     pairs.append(("--fs-floor-enhanced", f"{floor['enhancedReadability']}px"))
+    # The four `leading-*` utilities, beside the scale rather than in it: the
+    # scale's ratios belong to the six type levels, these to single-line and
+    # loose paragraphs, and a line-height may not move.
+    leading = tokens["typography"].get("leading", {})
+    for name, ratio in leading.items():
+        if not name.startswith("_"):
+            pairs.append((f"--lh-{name}", f"{ratio}"))
+    return pairs
+
+
+def _utility_vars(tokens: dict) -> list[tuple[str, str]]:
+    """The vocabularies Tailwind's utilities resolve through: font weight,
+    letter spacing and opacity. Values are copied verbatim from what the
+    utilities render today — the off-scale weights included, never normalised."""
+    pairs: list[tuple[str, str]] = []
+    pairs += [
+        (f"--fw-{name}", f"{value}")
+        for name, value in tokens["fontWeight"].items()
+        if not name.startswith("_")
+    ]
+    pairs += [
+        (f"--tracking-{name}", f"{value}")
+        for name, value in tokens["letterSpacing"].items()
+        if not name.startswith("_")
+    ]
+    pairs += [
+        (f"--opacity-{name}", f"{value}")
+        for name, value in tokens["opacity"].items()
+        if not name.startswith("_")
+    ]
     return pairs
 
 
@@ -141,7 +172,9 @@ def _geometry_vars(tokens: dict) -> list[tuple[str, str]]:
         if not name.startswith("_")
     ]
     pairs += [
-        (f"--radius-{name}", f"{value}px") for name, value in tokens["radius"].items()
+        (f"--radius-{name}", f"{value}px")
+        for name, value in tokens["radius"].items()
+        if not name.startswith("_")
     ]
     layout = tokens["layout"]
     widths = layout["widths"]
@@ -188,9 +221,9 @@ def _geometry_vars(tokens: dict) -> list[tuple[str, str]]:
     ]
     elevation = tokens["elevation"]
     pairs += [
-        ("--shadow-card", elevation["card"]),
-        ("--shadow-popover", elevation["popover"]),
-        ("--shadow-glow", elevation["glow"]),
+        (f"--shadow-{name}", value)
+        for name, value in elevation.items()
+        if not name.startswith("_")
     ]
     families = tokens["typography"]["families"]
     pairs += [("--font-sans", families["sans"]), ("--font-mono", families["mono"])]
@@ -224,6 +257,8 @@ def render_css(tokens: dict) -> str:
         + _render_block(_theme_vars(tokens, "light"))
         + "\n"
         + _render_block(_scale_vars(tokens))
+        + "\n"
+        + _render_block(_utility_vars(tokens))
         + "\n"
         + _render_block(_geometry_vars(tokens))
         + "\n}\n",
