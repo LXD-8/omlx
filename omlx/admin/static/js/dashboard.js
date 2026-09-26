@@ -7339,7 +7339,7 @@
                 this.stopHFRefresh();
                 this._hfRefreshTimer = setInterval(() => {
                     this.loadHFTasks();
-                }, 2000);
+                }, 500);
             },
 
             stopHFRefresh() {
@@ -7353,7 +7353,26 @@
                 const pct = Math.round(task.progress || 0);
                 const dlGB = (task.downloaded_size / (1024 ** 3)).toFixed(1);
                 const totalGB = (task.total_size / (1024 ** 3)).toFixed(1);
-                return `${pct}% \u00b7 ${dlGB} GB / ${totalGB} GB`;
+                const base = `${pct}% \u00b7 ${dlGB} GB / ${totalGB} GB`;
+                return `${base} \u00b7 ${this.formatSpeed(task)}`;
+            },
+
+            // Live transfer rate for a download task, e.g. "43.2 MB/s".
+            // `speed_bps` reads 0 whenever no bytes land, so this prints an
+            // explicit "0 B/s" instead of hiding the readout. The console
+            // draws it on queued and downloading rows; a terminal row keeps
+            // its progress and status and drops the rate.
+            formatSpeed(task) {
+                const bps = task.speed_bps || 0;
+                const units = ['B/s', 'KB/s', 'MB/s', 'GB/s', 'TB/s'];
+                let value = bps;
+                let unit = 0;
+                while (value >= 1024 && unit < units.length - 1) {
+                    value /= 1024;
+                    unit += 1;
+                }
+                const digits = unit === 0 || value >= 100 ? 0 : 1;
+                return `${value.toFixed(digits)} ${units[unit]}`;
             },
 
             // =================================================================
@@ -8205,7 +8224,7 @@
                 this.stopMSRefresh();
                 this._msRefreshTimer = setInterval(() => {
                     this.loadMSTasks();
-                }, 2000);
+                }, 500);
             },
 
             stopMSRefresh() {
