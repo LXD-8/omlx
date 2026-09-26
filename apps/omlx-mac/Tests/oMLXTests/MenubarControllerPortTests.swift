@@ -365,13 +365,19 @@ final class MenubarControllerPortTests: XCTestCase {
         XCTAssertEqual(poller.currentPollingInterval, 2.0)
 
         poller.setEnabledMetrics(EnabledMetrics(live: true, average: false, alltime: false))
-        XCTAssertEqual(poller.currentPollingInterval, 1.0, "absent pref defaults to 1 s")
+        XCTAssertEqual(
+            poller.currentPollingInterval, 0.5,
+            "an enabled item with no stored pref polls at the default cadence"
+        )
 
         defaults.set(0.5, forKey: MenubarMetricPrefs.refreshIntervalKey)
         XCTAssertEqual(poller.currentPollingInterval, 0.5)
 
         defaults.set(42.0, forKey: MenubarMetricPrefs.refreshIntervalKey)
-        XCTAssertEqual(poller.currentPollingInterval, 1.0, "out-of-set values clamp to 1 s")
+        XCTAssertEqual(
+            poller.currentPollingInterval, 0.5,
+            "out-of-set values fall back to the default cadence"
+        )
 
         poller.setEnabledMetrics(EnabledMetrics(live: false, average: true, alltime: false))
         defaults.set(3.0, forKey: MenubarMetricPrefs.refreshIntervalKey)
