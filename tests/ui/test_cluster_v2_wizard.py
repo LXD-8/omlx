@@ -94,6 +94,23 @@ def _fixtures():
     return {path.name: json.loads(path.read_text()) for path in FIXTURES.glob("*.json")}
 
 
+def test_each_request_phase_has_its_own_tone():
+    """The phase chip reads the phase: a dead branch that returns the fallback
+    tone paints prefill as queued and hides that a request is running."""
+    text = (ROOT / JAVASCRIPT).read_text(encoding="utf-8")
+    block = re.search(
+        r"requestPhaseTone\(request\) \{(.*?)\n        \},", text, re.S
+    )
+    assert block, "the phase tone mapping moved"
+    tones = dict(re.findall(r"phase === '(\w+)'\) return '([\w-]+)'", block.group(1)))
+    assert tones == {
+        "prefill": "chip--sky",
+        "decode": "chip--green",
+        "failed": "chip--red",
+    }, tones
+    assert len(set(tones.values())) == len(tones), "two phases share a tone"
+
+
 def test_dashboard_renders_every_wizard_state():
     rendered = admin_routes.templates.get_template("dashboard.html").render()
 
@@ -541,9 +558,8 @@ process.stdout.write(JSON.stringify(samples));
     assert loading["runtimeState"] == "loading"
     assert loading["active"] is None
     assert loading["label"] == "Loading"
-    # The console accent is neutral; an in-progress tone is still its own
-    # tone, it just is not painted blue any more.
-    assert loading["tone"]
+    # The console accent is neutral; an in-progress runtime is not painted.
+    assert loading["tone"] == "chip--neutral"
 
     ready = result["runtime_ready.json"]
     assert ready["runtimeState"] == "ready"

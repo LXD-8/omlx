@@ -799,8 +799,10 @@ function clusterV2Wizard() {
         },
 
         requestPhaseTone(request) {
+            // One tone per phase: queued is neutral, an active prefill reads as
+            // in-progress, decode as good, a failure as bad.
             const phase = this.requestPhaseLabel(request);
-            if (phase === 'prefill') return 'chip--neutral';
+            if (phase === 'prefill') return 'chip--sky';
             if (phase === 'decode') return 'chip--green';
             if (phase === 'failed') return 'chip--red';
             return 'chip--neutral';

@@ -239,6 +239,174 @@ def test_dispatch_reaches_the_real_starter():
 # === C. Chat page ===
 
 
+def test_missing_metrics_read_as_an_em_dash():
+    assert "function formatMetric(" in FORMAT_JS
+    assert "global.formatMetric = formatMetric;" in FORMAT_JS
+    assert "formatMetric: formatMetric," in FORMAT_JS, "node tests import it"
+
+    for metric in ("avg_prefill_tps", "avg_generation_tps", "thinking_time", "total_time"):
+        assert f"window.formatMetric(recentStats?.{metric})" in CHAT, (
+            f"{metric} does not go through the shared metric helper"
+        )
+    assert CHAT.count("window.formatMetric(") == 4, "a new metric cell bypassed the helper"
+    assert "toFixed(1) : '0.0'" not in CHAT, "a zero stand-in came back"
+    assert "toFixed(1) : '-'" not in CHAT, "a second no-data marker came back"
+
+
+def test_the_drawer_carries_the_profile_picker_and_model_settings():
+    assert '{% import "components/ui.html" as ui %}' in CHAT, (
+        "the chat page extends base.html and needs its own import"
+    )
+    assert "{{ ui.button(" in CHAT, "the drawer reuses the shared button spec"
+
+    drawer = _section(CHAT, 'id="chat-settings-drawer"', "<!-- Image Modal -->")
+    assert 'class="drawer chat-drawer"' in drawer
+    assert ":class=\"{ 'drawer--open': rightSidebarOpen }\"" in drawer
+    # A modal only while it floats over the page: at the column width it is a
+    # panel beside the content, so the role, the aria-modal flag and the focus
+    # trap all follow `drawerOverlay`.
+    assert ":role=\"drawerOverlay ? 'dialog' : null\"" in drawer
+    assert ":aria-modal=\"drawerOverlay ? 'true' : null\"" in drawer
+    assert '@keydown.tab="drawerOverlay && trapDialogFocus($event)"' in drawer
+    assert "rightSidebarTab === 'profile'" in drawer, "the profile picker moved in"
+    assert "rightSidebarTab === 'settings'" in drawer, "so did the model settings"
+
+    # Scrim and shared specs.
+    assert 'class="drawer-scrim chat-drawer-scrim"' in CHAT
+    for rule in (".drawer {", ".drawer--open {", ".drawer-scrim {", ".drawer-scrim--closed {"):
+        assert rule in COMPONENTS_CSS, f"{rule} has no spec"
+    assert ".chat-drawer {" in CHAT
+
+    # Esc closes it, after the sheets that own the key — and only while the
+    # drawer covers the page: as a column it does not own the key, which still
+    # stops the stream.
+    handler = _section(CHAT, "handleGlobalKeydown(e) {", "focusChatSearch() {")
+    assert (
+        "if (this.rightSidebarOpen && this.drawerOverlay) { this.closeRightDrawer(); return; }"
+        in handler
+    )
+    assert handler.index("this.showShortcutsHelp = false") < handler.index(
+        "this.closeRightDrawer()"
+    ), "the help sheet closes before the drawer"
+
+    # Focus moves in and comes back.
+    assert "this.$refs.rightDrawer" in CHAT and 'x-ref="rightDrawer"' in CHAT
+    assert "drawerReturnFocus" in CHAT
+    assert "if (previous && typeof previous.focus === 'function')" in CHAT
+    assert "trapDialogFocus(event) {" in CHAT
+
+    # The background goes inert while the drawer covers it. Everything else
+    # that can take focus — the image modal, the settings sheet, the shortcut
+    # sheet, and base.html's palette and toast stack — is a sibling of these
+    # two, so the scrim is the only thing left behind it. At the column width
+    # the drawer sits beside the content instead of over it, and the content
+    # must stay interactive: `drawerOverlay` is the one place that decides.
+    assert CHAT.count(':inert="rightSidebarOpen && drawerOverlay"') == 2, (
+        "the sidebar and the chat column go inert only under the overlay"
+    )
+    assert "drawerOverlay: window.innerWidth < 1100" in CHAT
+    assert "this.drawerOverlay = window.innerWidth < 1100;" in CHAT, (
+        "the flag has to follow the viewport"
+    )
+    assert "showRightToggle: window.innerWidth < 1100" in CHAT, (
+        "the toggle appears at the same breakpoint as the column layout"
+    )
+    assert "@media (min-width: 1100px) {" in CHAT, (
+        "the flag and the column media query are one breakpoint"
+    )
+    # The page's own bindings win over the shared palette's: both listen for
+    # keydown, and the page's runs in the capture phase so the palette's
+    # `defaultPrevented` check skips the keys this page documents.
+    assert '@keydown.window.capture="handleGlobalKeydown($event)"' in CHAT
+    assert 'aria-hidden="true"' in CHAT, "the scrim is a click surface, not content"
+
+
+def test_the_settings_sheet_covers_the_right_drawer():
+    """The sheet dims the whole window, and the right drawer is part of it: at
+    z-50 the sheet sat *under* the drawer (z-60), which stayed lit behind the
+    scrim — a second layer the sheet appeared not to cover."""
+    sheet = _section(CHAT, "<!-- Chat Settings Modal", "<!-- Keyboard Shortcuts Help")
+    assert "z-[70]" in sheet
+    assert "bg-black/50" in sheet, "the scrim is the sheet's own"
+    drawer_z = int(re.search(r"\.chat-drawer \{[^}]*?z-index: (\d+)", CHAT).group(1))
+    assert drawer_z < 70, "the sheet has to sit above the drawer"
+
+
+def test_the_header_keeps_the_summary():
+    header = _section(CHAT, "<!-- Header summary (top-centre)", "<!-- Messages Container -->")
+    assert "availableModels.find(m => m.id === currentModel)?.name" in header, (
+        "the model stays in the header"
+    )
+    assert "activePromptProfile || window.t('chat.profile_default')" not in header, (
+        "the profile pill moved into the drawer, leaving the model name centred"
+    )
+    assert "openRightDrawer('profile')" not in header
+    assert "chat.profile_default" in EN
+
+
+def test_the_drawer_keeps_the_existing_state_and_keys():
+    for state in ("rightSidebarOpen:", "rightSidebarTab:"):
+        assert state in CHAT
+    for key in ("chat.model_tab", "chat.profile_tab", "chat.close_settings_tooltip"):
+        assert key in CHAT, f"{key} was dropped while moving the panels"
+    assert "chat.drawer_title" in CHAT and "chat.drawer_title" in EN
+
+
+def test_shortcut_sheet_lists_only_real_bindings():
+    sheet = _section(CHAT, "<!-- Keyboard Shortcuts Help", "</dialog>")
+    assert "<dialog" in sheet
+    assert 'x-effect="showShortcutsHelp ? $el.showModal() : $el.close()"' in sheet
+    assert '@keydown.tab="trapDialogFocus($event)"' in sheet
+    assert "shortcut-list__row" in sheet and "kbd" in sheet
+    assert ".kbd {" in COMPONENTS_CSS and ".shortcut-list__row {" in COMPONENTS_CSS
+
+    # Esc closes the drawer only while the drawer overlays the page, so the
+    # row that promises it is conditional on the same condition.
+    close_drawer = [
+        row for row in sheet.split('<li class="shortcut-list__row"')
+        if "chat.shortcut_close_drawer" in row
+    ]
+    assert len(close_drawer) == 1, close_drawer
+    assert 'x-show="drawerOverlay"' in close_drawer[0], close_drawer[0]
+
+    listed = set(re.findall(r'class="kbd">([^<]+)</kbd>', sheet))
+    assert listed == {
+        "{{ t('chat.shortcut_key_enter') }}",
+        "{{ t('chat.shortcut_shift_enter') }}",
+        "{{ t('chat.shortcut_key_esc') }}",
+        "⌘K",
+        "⇧⌘K",
+        "⌘/",
+        "?",
+    }, listed
+
+    handler = _section(CHAT, "handleGlobalKeydown(e) {", "focusChatSearch() {")
+    assert "e.key === 'Escape'" in handler
+    assert "e.key === '?'" in handler
+    assert "e.key === '/'" in handler, "⌘/ is listed, so it must be handled"
+    assert "e.key === 'k'" in handler and "e.shiftKey" in handler
+    assert "onComposerEnter(e) {" in CHAT and "e.shiftKey" in _section(
+        CHAT, "onComposerEnter(e) {", "sortChatHistory() {"
+    )
+    # ⌘K needs a target even when there is no chat history to search.
+    focus = _section(CHAT, "focusChatSearch() {", "openRightDrawer() {")
+    assert "this.$refs.chatSearchInput" in focus
+    assert "this.$refs.messageInput" in focus, "the composer is the fallback"
+    assert 'x-ref="messageInput"' in CHAT
+    # A key the page does not implement must not be advertised.
+    for invented in ("⌘J", "⇧⌘P", "⌘S", "⇧Esc"):
+        assert invented not in sheet
+
+
+def test_the_shortcut_sheet_opens_from_the_button_and_the_key():
+    assert 'showShortcutsHelp = true' in CHAT
+    assert "chat.view_shortcuts" in CHAT
+    assert "this.showShortcutsHelp = !this.showShortcutsHelp;" in CHAT
+
+
+# === Shared contracts ===
+
+
 def test_every_new_key_exists():
     missing = [key for key in NEW_KEYS if key not in EN]
     assert not missing, f"new keys not in the English catalogue: {missing}"
@@ -246,7 +414,7 @@ def test_every_new_key_exists():
 
 @pytest.mark.parametrize(
     "name",
-    ["dashboard/_bench.html", "dashboard/_bench_accuracy.html",
+    ["chat.html", "dashboard/_bench.html", "dashboard/_bench_accuracy.html",
      "dashboard/_bench_context.html"],
 )
 def test_touched_templates_render(name):
@@ -262,7 +430,7 @@ def test_touched_templates_render(name):
     if name.endswith("_bench.html"):
         assert "alert-dialog__icon" in html
     if name.endswith("chat.html"):
-        assert "shortcut-row" in html
+        assert "shortcut-list__row" in html
         assert "chat-drawer" in html
 
 
@@ -298,3 +466,10 @@ def test_segmented_each_keeps_the_segmented_spec():
     assert "card acc-group" in card and "BODY" in card
 
 
+def test_the_old_flat_checklist_is_gone():
+    # The grouping used to be a header line over a bare grid; the sample-size
+    # select is the only piece that stayed.
+    assert "border-t border-neutral-200\"></div>" not in ACCURACY
+    assert "'(' + group.benchmarks.length + ')'" not in ACCURACY
+    assert "right-sidebar-width" not in CHAT
+    assert "right-sidebar-hidden" not in CHAT

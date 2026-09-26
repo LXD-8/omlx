@@ -136,8 +136,6 @@ def test_templates_only_use_scale_sizes():
     allowed = {step["px"] for step in SCALE.values()}
     offenders = {}
     for path in TEMPLATES:
-        if path.name == "chat.html":
-            continue  # the chat page is rebuilt on the ramp in the next slice
         for size in re.findall(r"text-\[(\d+)px\]", path.read_text(encoding="utf-8")):
             if int(size) not in allowed:
                 offenders.setdefault(str(path.relative_to(ROOT)), set()).add(size)
@@ -148,8 +146,6 @@ def test_no_text_below_the_auxiliary_floor():
     offenders = {}
     pattern = re.compile(r"font-size:\s*(\d+(?:\.\d+)?)px")
     for path in TEMPLATES + OWN_STYLESHEETS + OWN_SCRIPTS:
-        if path.name == "chat.html":
-            continue  # the chat page is rebuilt on the ramp in the next slice
         text = path.read_text(encoding="utf-8")
         if path.name == "base.html":
             # The enhanced-readability block names the sizes it lifts; those are
