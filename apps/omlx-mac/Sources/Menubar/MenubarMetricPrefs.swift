@@ -18,7 +18,7 @@ enum MenubarMetricPrefs {
     /// window is open). True keeps the Dock icon visible permanently.
     static let showDockIconKey = "showDockIcon"
 
-    static let refreshIntervalChoices: [Double] = [0.5, 1.0, 2.0, 3.0]
+    static let refreshIntervalChoices: [Double] = [defaultRefreshInterval, 1.0, 2.0, 3.0]
     /// The fastest choice, and what the poller and the Appearance picker fall
     /// back to: the items are opt-in, so whoever turns one on is asking for
     /// live numbers.

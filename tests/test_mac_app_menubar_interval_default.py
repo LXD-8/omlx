@@ -1,20 +1,8 @@
 # SPDX-License-Identifier: Apache-2.0
-"""The menubar refresh cadence defaults to half a second in every reader.
-
-The default survives in three places that only CI can see as text: the
-constant in ``MenubarMetricPrefs``, the fallback the poller and the CPU/GPU
-samplers read through ``MenubarMetricPrefs.refreshInterval``, and the
-``@AppStorage`` default that decides what the Appearance picker shows when
-nothing is stored yet. The Swift tests pin the same numbers, but CI never
-runs xcodebuild, so a drift back to a literal ``1.0`` would land green in the
-only pipeline that gates a merge.
-
-``MenubarMetricsStore.historyCapacity`` rides along: the caption and the
-sparkline both read ``capacity × interval``, so the ring is sized against the
-default cadence to keep the one-minute window the graphs promise.
-
-This mirrors the Swift guards in
-``apps/omlx-mac/Tests/oMLXTests/MenubarMetricTests.swift``.
+"""Pin the menubar refresh cadence: ``defaultRefreshInterval`` = 0.5 s in the
+constant, the poller fallback, and the picker's ``@AppStorage`` default, with the
+derived ``historyCapacity`` holding the graphs' one-minute window. CI runs pytest
+and never xcodebuild, so this file is what gates a drift back to a literal ``1.0``.
 """
 
 import re
@@ -30,7 +18,11 @@ SCREEN = (
 DEFAULT = re.search(
     r"defaultRefreshInterval\s*:\s*TimeInterval\s*=\s*([0-9.]+)", PREFS
 )
-CAPACITY = re.search(r"historyCapacity\s*=\s*(\d+)", STORE)
+CAPACITY = re.search(
+    r"historyCapacity\s*=\s*Int\(\s*([\d.]+)\s*/\s*"
+    r"MenubarMetricPrefs\.defaultRefreshInterval\s*\)",
+    STORE,
+)
 
 
 def test_the_fallback_constant_is_a_half_second():
@@ -65,9 +57,13 @@ def test_the_appearance_picker_shows_that_same_default():
 
 
 def test_the_graph_window_is_still_a_minute_at_the_default():
-    assert DEFAULT and CAPACITY, "both constants must be declared"
-    window = int(CAPACITY.group(1)) * float(DEFAULT.group(1))
+    assert DEFAULT and CAPACITY, (
+        "the capacity must be derived from the shared default interval, not hand-written"
+    )
+    # Re-evaluate the derivation the way the store does, then measure the window.
+    capacity = int(float(CAPACITY.group(1)) / float(DEFAULT.group(1)))
+    window = capacity * float(DEFAULT.group(1))
     assert window == 60, (
         f"the activity graphs promise a minute, not {window:g}s: "
-        f"{CAPACITY.group(1)} samples × {DEFAULT.group(1)}s"
+        f"{capacity} samples × {DEFAULT.group(1)}s"
     )

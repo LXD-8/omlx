@@ -85,25 +85,13 @@ final class MenubarMetricTests: XCTestCase {
             MenubarMetricsStore.append(&series, Double(value))
         }
 
+        XCTAssertEqual(
+            MenubarMetricsStore.historyCapacity, 120,
+            "derived from the default cadence: 120 × 0.5 s = the promised minute"
+        )
         XCTAssertEqual(series.count, MenubarMetricsStore.historyCapacity)
         XCTAssertEqual(series.first, 5)
         XCTAssertEqual(series.last, Double(MenubarMetricsStore.historyCapacity + 4))
-    }
-
-    /// The caption and the sparkline both read `count * interval`, so the two
-    /// constants only make sense together: at the default cadence the graph
-    /// covers one minute. Each constant is pinned on its own first — the
-    /// product alone would also accept the old 60 × 1.0 pair.
-    func testHistoryCapacityKeepsTheDefaultWindowAtOneMinute() {
-        XCTAssertEqual(MenubarMetricsStore.historyCapacity, 120)
-        XCTAssertEqual(MenubarMetricPrefs.defaultRefreshInterval, 0.5)
-        XCTAssertEqual(
-            StatsFormat.window(
-                sampleCount: MenubarMetricsStore.historyCapacity,
-                interval: MenubarMetricPrefs.defaultRefreshInterval
-            ),
-            "60s"
-        )
     }
 
     func testApplyTickRecordsRatesAndRollsHistory() {
