@@ -364,6 +364,10 @@ final class MenubarControllerPortTests: XCTestCase {
             poller.currentPollingInterval, 0.5,
             "an enabled item with no stored pref polls at the default cadence"
         )
+        XCTAssertNil(
+            defaults.object(forKey: MenubarMetricPrefs.refreshIntervalKey),
+            "reading the default must not persist it: an absent key stays absent"
+        )
 
         defaults.set(0.5, forKey: MenubarMetricPrefs.refreshIntervalKey)
         XCTAssertEqual(poller.currentPollingInterval, 0.5)
@@ -372,6 +376,10 @@ final class MenubarControllerPortTests: XCTestCase {
         XCTAssertEqual(
             poller.currentPollingInterval, 0.5,
             "out-of-set values fall back to the default cadence"
+        )
+        XCTAssertEqual(
+            defaults.object(forKey: MenubarMetricPrefs.refreshIntervalKey) as? Double, 42.0,
+            "falling back must not rewrite what the user has stored"
         )
 
         poller.setEnabledMetrics(EnabledMetrics(live: false, average: true, alltime: false))
