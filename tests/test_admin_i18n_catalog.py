@@ -239,6 +239,39 @@ LOWERCASE_TOKEN_ALLOWED = {
         "bench.config.ane_aligned_prompt",
         "bench.metrics.tpot.full_name",
     },
+    # The accuracy-bench "token limit" copy that #3945 added: prose about
+    # the model's token limit, not a unit and not a credential label — the
+    # same reasoning that keeps Czech's loanword sentence here.
+    "en": {
+        "acc_bench.results.hit_token_limit",
+        "acc_bench.results.local_truncation_warning",
+        "acc_bench.results.text_export.local_truncation_line",
+    },
+    "es": {
+        "acc_bench.results.hit_token_limit",
+        "acc_bench.results.local_truncation_warning",
+        "acc_bench.results.text_export.local_truncation_line",
+    },
+    "fr": {
+        "acc_bench.results.hit_token_limit",
+        "acc_bench.results.local_truncation_warning",
+        "acc_bench.results.text_export.local_truncation_line",
+    },
+    "pt-BR": {
+        "acc_bench.results.hit_token_limit",
+        "acc_bench.results.local_truncation_warning",
+        "acc_bench.results.text_export.local_truncation_line",
+    },
+    "zh": {
+        "acc_bench.results.hit_token_limit",
+        "acc_bench.results.local_truncation_warning",
+        "acc_bench.results.text_export.local_truncation_line",
+    },
+    "zh-TW": {
+        "acc_bench.results.hit_token_limit",
+        "acc_bench.results.local_truncation_warning",
+        "acc_bench.results.text_export.local_truncation_line",
+    },
 }
 
 CREDENTIAL_KEYS = {
