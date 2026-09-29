@@ -2031,5 +2031,8 @@
   "cluster.v2.join.cleanup_forgotten": "Ancien nettoyage oublié sur ce Mac. Le nettoyage distant n’a pas été confirmé.",
   "cluster.v2.join.forget_cleanup_error": "Impossible d’oublier ce nettoyage.",
   "cluster.v2.membership.waiting_request": "En attente du code et de la demande de couplage de ce Mac.",
-  "cluster.v2.membership.add_device": "Ajouter ce Mac"
+  "cluster.v2.membership.add_device": "Ajouter ce Mac",
+  "palette.group_pages": "Go to",
+  "shortcuts.title": "Keyboard shortcuts",
+  "toast.dismiss": "Dismiss"
 }
