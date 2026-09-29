@@ -63,42 +63,39 @@ final class LogRecordsTests: XCTestCase {
         XCTAssertLessThan(elapsed, 1.5, "40,000 continuation lines took \(elapsed)s")
     }
 
-    /// The screen draws a bounded number of continuation lines and says how many
-    /// are behind the bound; the record itself, and Copy, keep them all.
-    func testALongRecordIsDrawnCappedAndCounted() {
-        var text = "2026-09-21 00:00:00,000 - omlx.server - WARNING - [-] - dumped parameters\n"
-        for index in 0..<5_000 { text += "line \(index)\n" }
-        let record = LogParser.parse(text)[0]
+    /// Every cap the screen applies: the bounded list draws `limit` items and
+    /// counts the rest, while the record itself, and Copy, keep them all (a row
+    /// per occurrence cost 2.7 s of layout and a 360,000 pt column, measured).
+    func testEveryCapDrawsItsLimitAndCountsTheRest() {
+        var longText = "2026-09-21 00:00:00,000 - omlx.server - WARNING - [-] - dumped parameters\n"
+        for index in 0..<5_000 { longText += "line \(index)\n" }
+        let long = LogParser.parse(longText)[0]
+        let short = LogParser.parse(sample)[1]
+        let inline = record(continuations: 6)
+        let repeated = repeatedRow(occurrences: 500)
 
-        XCTAssertEqual(record.continuation.count, 5_000, "the parsed record is whole")
-        XCTAssertEqual(record.renderedContinuation.count, LogRenderLimits.continuationLines)
-        XCTAssertEqual(record.hiddenContinuationLines, 5_000 - LogRenderLimits.continuationLines)
-        XCTAssertTrue(record.renderedFullMessage.contains("line \(LogRenderLimits.continuationLines - 1)"))
-        XCTAssertFalse(record.renderedFullMessage.contains("line 4999"), "past the cap is not laid out")
-        XCTAssertTrue(record.fullMessage.contains("line 4999"), "but it is still there for Copy")
-    }
-
-    func testAShortRecordIsNotTruncated() {
-        let record = LogParser.parse(sample)[1]
-        XCTAssertEqual(record.hiddenContinuationLines, 0)
-        XCTAssertEqual(record.renderedContinuation, record.continuation)
-        XCTAssertEqual(record.renderedFullMessage, record.fullMessage)
-    }
-
-    /// One row per occurrence froze the screen: 20,000 of them cost 2.7 s of
-    /// layout and a 360,000 pt column (measured). The list is windowed, the
-    /// count is not.
-    func testTheOccurrenceListIsWindowedAndCounted() {
-        let text = (0..<500).map { index in
-            String(format: "2026-09-21 00:%02d:00,000 - omlx.engine_pool - WARNING - [-] - pinned model not found",
-                   index % 60)
-        }.joined(separator: "\n")
-        let row = LogRows.aggregate(LogParser.parse(text), minLevel: .warning)[0]
-
-        XCTAssertEqual(row.count, 500, "the badge counts every occurrence")
-        XCTAssertEqual(row.renderedOccurrences.count, LogRenderLimits.occurrences)
-        XCTAssertEqual(row.hiddenOccurrences, 500 - LogRenderLimits.occurrences)
-        XCTAssertEqual(row.renderedOccurrences.first?.time, "2026-09-21 00:00:00,000")
+        // (name, total, limit, drawn, hidden)
+        let cases: [(String, Int, Int, Int, Int)] = [
+            ("a long record's continuation", long.continuation.count, LogRenderLimits.continuationLines, long.renderedContinuation.count, long.hiddenContinuationLines),
+            ("a record short enough to fit", short.continuation.count, LogRenderLimits.continuationLines, short.renderedContinuation.count, short.hiddenContinuationLines),
+            ("a row's inline continuation", inline.continuation.count, LogRenderLimits.inlineContinuationLines, inline.renderedInlineContinuation.count, inline.hiddenInlineContinuationLines),
+            ("the occurrence list", repeated.count, LogRenderLimits.occurrences, repeated.renderedOccurrences.count, repeated.hiddenOccurrences),
+        ]
+        for (name, total, limit, drawn, hidden) in cases {
+            XCTAssertEqual(drawn, min(total, limit), "\(name): drew past the cap")
+            XCTAssertEqual(hidden, max(0, total - limit), "\(name): miscounted the hidden items")
+        }
+        // The caps window what is drawn; the record, and Copy, keep everything.
+        XCTAssertEqual(long.continuation.count, 5_000, "the parsed record is whole")
+        XCTAssertEqual(repeated.count, 500, "the badge counts every occurrence")
+        XCTAssertTrue(long.renderedFullMessage.contains("line \(LogRenderLimits.continuationLines - 1)"))
+        XCTAssertFalse(long.renderedFullMessage.contains("line 4999"), "past the cap is not laid out")
+        XCTAssertTrue(long.fullMessage.contains("line 4999"), "but it is still there for Copy")
+        XCTAssertEqual(short.renderedContinuation, short.continuation)
+        XCTAssertEqual(short.renderedFullMessage, short.fullMessage)
+        XCTAssertEqual(inline.renderedFullMessage.split(separator: "\n").count, 7,
+                       "the card keeps the record whole")
+        XCTAssertEqual(repeated.renderedOccurrences.first?.time, "2026-09-21 00:00:00,000")
     }
 
     func testUnknownLevelIsKeptButMarked() {
@@ -115,19 +112,43 @@ final class LogRecordsTests: XCTestCase {
 
     // MARK: - Aggregation (the row list the screen renders)
 
-    func testIdenticalConsecutiveWarningsBecomeOneRow() {
-        let text = """
-        2026-09-21 00:00:00,000 - omlx.server - WARNING - [a] - pinned model not found
-        2026-09-21 00:05:00,000 - omlx.server - WARNING - [b] - pinned model not found
-        2026-09-21 00:10:00,000 - omlx.server - WARNING - [c] - pinned model not found
-        """
-        let rows = LogRows.aggregate(LogParser.parse(text), minLevel: .trace)
-        XCTAssertEqual(rows.count, 1)
-        XCTAssertEqual(rows[0].count, 3)
-        XCTAssertTrue(rows[0].isRepeated)
-        XCTAssertEqual(rows[0].occurrences.map(\.time),
-                       ["2026-09-21 00:00:00,000", "2026-09-21 00:05:00,000", "2026-09-21 00:10:00,000"])
-        XCTAssertEqual(rows[0].occurrences.map(\.requestID), ["a", "b", "c"])
+    /// Which runs collapse and which do not, one case per rule: the level gate,
+    /// a change of module/message/level, a hidden record, and the occurrence
+    /// details of a collapsed run.
+    func testAggregationCountsEachRun() {
+        // (name, text, minLevel, counts, occurrence times or nil)
+        let cases: [(String, String, LogLevel, [Int], [String]?)] = [
+            ("three identical warnings collapse", """
+            2026-09-21 00:00:00,000 - omlx.server - WARNING - [a] - pinned model not found
+            2026-09-21 00:05:00,000 - omlx.server - WARNING - [b] - pinned model not found
+            2026-09-21 00:10:00,000 - omlx.server - WARNING - [c] - pinned model not found
+            """, .trace, [3],
+             ["2026-09-21 00:00:00,000", "2026-09-21 00:05:00,000", "2026-09-21 00:10:00,000"]),
+            ("INFO stays one row each: it is the traffic of a busy server", """
+            2026-09-21 00:00:00,000 - omlx.server - INFO - [-] - request queued
+            2026-09-21 00:01:00,000 - omlx.server - INFO - [-] - request queued
+            """, .trace, [1, 1], nil),
+            ("a different module, message or level ends the run", """
+            2026-09-21 00:00:00,000 - omlx.server - WARNING - [-] - pinned model not found
+            2026-09-21 00:01:00,000 - omlx.engine - WARNING - [-] - pinned model not found
+            2026-09-21 00:02:00,000 - omlx.server - WARNING - [-] - a different warning
+            2026-09-21 00:03:00,000 - omlx.server - ERROR - [-] - pinned model not found
+            """, .trace, [1, 1, 1, 1], nil),
+            ("what the filter hides is not consecutive any more", """
+            2026-09-21 00:00:00,000 - omlx.server - WARNING - [-] - pinned model not found
+            2026-09-21 00:01:00,000 - omlx.scheduler - INFO - [-] - unrelated
+            2026-09-21 00:02:00,000 - omlx.server - WARNING - [-] - pinned model not found
+            """, .warning, [1, 1], nil),
+        ]
+        for (name, text, minLevel, counts, times) in cases {
+            let rows = LogRows.aggregate(LogParser.parse(text), minLevel: minLevel)
+            XCTAssertEqual(rows.map(\.count), counts, name)
+            if let times {
+                XCTAssertTrue(rows[0].isRepeated, name)
+                XCTAssertEqual(rows[0].occurrences.map(\.time), times, name)
+                XCTAssertEqual(rows[0].occurrences.map(\.requestID), ["a", "b", "c"], name)
+            }
+        }
     }
 
     func testOccurrencesInOneRunHaveDistinctIdentifiers() {
@@ -145,39 +166,6 @@ final class LogRecordsTests: XCTestCase {
         XCTAssertEqual(Set(ids).count, 2, "the two occurrences share an id: \(ids)")
     }
 
-    func testOnlyWarningAndAboveAggregate() {
-        let text = """
-        2026-09-21 00:00:00,000 - omlx.server - INFO - [-] - request queued
-        2026-09-21 00:01:00,000 - omlx.server - INFO - [-] - request queued
-        """
-        let rows = LogRows.aggregate(LogParser.parse(text), minLevel: .trace)
-        XCTAssertEqual(rows.count, 2, "INFO stays one row each: it is the traffic of a busy server")
-        XCTAssertEqual(rows[0].count, 1)
-    }
-
-    func testADifferentModuleOrMessageEndsTheRun() {
-        let text = """
-        2026-09-21 00:00:00,000 - omlx.server - WARNING - [-] - pinned model not found
-        2026-09-21 00:01:00,000 - omlx.engine - WARNING - [-] - pinned model not found
-        2026-09-21 00:02:00,000 - omlx.server - WARNING - [-] - a different warning
-        2026-09-21 00:03:00,000 - omlx.server - ERROR - [-] - pinned model not found
-        """
-        let rows = LogRows.aggregate(LogParser.parse(text), minLevel: .trace)
-        XCTAssertEqual(rows.count, 4)
-        XCTAssertEqual(rows.map(\.count), [1, 1, 1, 1])
-    }
-
-    func testAHiddenRecordEndsTheRun() {
-        let text = """
-        2026-09-21 00:00:00,000 - omlx.server - WARNING - [-] - pinned model not found
-        2026-09-21 00:01:00,000 - omlx.scheduler - INFO - [-] - unrelated
-        2026-09-21 00:02:00,000 - omlx.server - WARNING - [-] - pinned model not found
-        """
-        let rows = LogRows.aggregate(LogParser.parse(text), minLevel: .warning)
-        XCTAssertEqual(rows.count, 2, "what the filter hides is not consecutive any more")
-        XCTAssertEqual(rows.map(\.count), [1, 1])
-    }
-
     func testTheLevelFilterAlsoDrivesTheRows() {
         let text = """
         2026-09-21 00:00:00,000 - omlx.scheduler - INFO - [-] - queued
@@ -187,26 +175,6 @@ final class LogRecordsTests: XCTestCase {
         XCTAssertEqual(LogRows.aggregate(records, minLevel: .info).count, 2)
         XCTAssertEqual(LogRows.aggregate(records, minLevel: .error).count, 1)
         XCTAssertEqual(LogRows.aggregate(records, minLevel: .error)[0].record.level, .error)
-    }
-    func testARowDrawsOnlyTheFirstContinuationLines() {
-        // A traceback with many frames used to be drawn in full inside its row,
-        // which made one row as tall as the pane. The row keeps the first few
-        // lines and counts the rest; the detail card is where the whole record
-        // belongs, and `renderedFullMessage` still holds every line.
-        let text = """
-        2026-09-22 00:00:00,000 - omlx.engine - ERROR - [r] - boom
-        line one
-        line two
-        line three
-        line four
-        line five
-        line six
-        """
-        let record = LogParser.parse(text)[0]
-        XCTAssertEqual(record.continuation.count, 6)
-        XCTAssertEqual(record.renderedInlineContinuation.count, LogRenderLimits.inlineContinuationLines)
-        XCTAssertEqual(record.hiddenInlineContinuationLines, 6 - LogRenderLimits.inlineContinuationLines)
-        XCTAssertEqual(record.renderedFullMessage.split(separator: "\n").count, 7, "the card keeps the record whole")
     }
 
     func testAHyphenatedModuleNameStillParses() {
@@ -271,15 +239,39 @@ final class LogRecordsTests: XCTestCase {
         let open = errorRecord(["frame one"])
         let grown = errorRecord(["frame one", "frame two"])
 
-        XCTAssertEqual(open.identity, grown.identity, "the header did not change")
+        XCTAssertTrue(sameHeader(open, grown), "the header did not change")
         XCTAssertTrue(grown.continues(open), "the grown record is the open one")
         XCTAssertFalse(open.continues(grown), "the shorter one does not extend the longer")
 
         // The header alone is not the whole story: an unrelated entry can
         // repeat it, and the selection must not move onto that one.
         let unrelated = errorRecord(["a different body"])
-        XCTAssertEqual(unrelated.identity, open.identity)
+        XCTAssertTrue(sameHeader(unrelated, open))
         XCTAssertFalse(unrelated.continues(open))
+    }
+
+    // MARK: - Fixtures
+
+    /// A record with `continuations` lines under it, built directly: the cap
+    /// tests do not need the parser to hand them the shape.
+    private func record(continuations: Int, id: Int = 1) -> LogRecord {
+        LogRecord(id: id,
+                  time: "2026-09-21 00:56:04,543",
+                  level: .error,
+                  module: "omlx.engine",
+                  message: "boom",
+                  continuation: (0..<continuations).map { "line \($0)" },
+                  requestID: "r")
+    }
+
+    /// `occurrences` copies of one record as the single row they aggregate to.
+    private func repeatedRow(occurrences: Int) -> LogRow {
+        LogRow(record: record(continuations: 0),
+               occurrences: (0..<occurrences).map {
+                   LogOccurrence(index: $0,
+                                 time: "2026-09-21 00:00:00,000",
+                                 requestID: "r")
+               })
     }
 }
 
@@ -293,6 +285,12 @@ private func errorWindow(_ continuation: [String]) -> String {
 /// The one record `errorWindow` holds.
 private func errorRecord(_ continuation: [String]) -> LogRecord {
     LogParser.parse(errorWindow(continuation))[0]
+}
+
+/// The five header fields `continues` matches on.
+private func sameHeader(_ a: LogRecord, _ b: LogRecord) -> Bool {
+    a.time == b.time && a.level == b.level && a.module == b.module
+        && a.message == b.message && a.requestID == b.requestID
 }
 
 private extension LogRecord {
