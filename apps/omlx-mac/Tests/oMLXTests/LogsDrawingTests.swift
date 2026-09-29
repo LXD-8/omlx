@@ -23,25 +23,43 @@ final class LogsDrawingTests: XCTestCase {
     /// thing on a laptop.
     private let width: CGFloat = 720
 
-    // MARK: - Detail card
+    // MARK: - Bounded shapes
 
-    /// The card is a fixed shape: whatever the record carries, it draws a
-    /// bounded box of it and counts the rest. 20,000 lines repeated 20,000
-    /// times is the shape that froze the pane before.
-    func testTheCardDrawsARecordAndItsOccurrencesBounded() throws {
-        let huge = try height(of: card(row(continuations: 20_000, occurrences: 20_000)))
-        let smaller = try height(of: card(row(continuations: 400, occurrences: 400)))
-
-        // Both records are past both caps, so the card draws the same shape
-        // for them: a bigger record cannot buy a taller card.
-        XCTAssertEqual(huge, smaller, accuracy: 1,
-                       "the card grew with the record: \(huge)pt vs \(smaller)pt")
-        // 454pt measured: header, the record box (its fixed height plus
-        // padding), the note, and the occurrence box (its fixed height, its
-        // heading and its note) — the type scale's own numbers, nothing that
-        // scales with the record.
-        XCTAssertLessThan(huge, 520,
-                          "the card asked for \(huge)pt at \(width)pt wide")
+    /// Every shape the pane draws is bounded: a bigger record cannot buy a
+    /// taller card, box or row. Both records of a pair are past the relevant
+    /// cap, so the two measurements have to agree.
+    func testEveryShapeStaysBounded() throws {
+        // (name, huge record, record just past the cap, bound in points)
+        let cases: [(String, AnyView, AnyView, CGFloat)] = [
+            // 454pt measured: header, the record box (its fixed height plus
+            // padding), the note, and the occurrence box (its fixed height, its
+            // heading and its note) — the type scale's own numbers, nothing
+            // that scales with the record.
+            ("detail card",
+             AnyView(card(row(continuations: 20_000, occurrences: 20_000))),
+             AnyView(card(row(continuations: 400, occurrences: 400))),
+             520),
+            // The box is the type scale's height plus its own padding and
+            // nothing else: 8pt a side.
+            ("record box",
+             AnyView(LogRecordBody(text: record(continuations: 20_000).renderedFullMessage)),
+             AnyView(LogRecordBody(text: record(continuations: LogRenderLimits
+                 .continuationLines).renderedFullMessage)),
+             LogTypeScale.recordBodyHeight + 32),
+            // 43pt measured: one message line and the note under it.
+            ("row",
+             AnyView(rowView(row(continuations: 20_000, occurrences: 1))),
+             AnyView(rowView(row(continuations: 4, occurrences: 1))),
+             120),
+        ]
+        for (name, huge, near, bound) in cases {
+            let tall = try height(of: huge)
+            let shorter = try height(of: near)
+            XCTAssertEqual(tall, shorter, accuracy: 1,
+                           "the \(name) grew with the record: \(tall)pt vs \(shorter)pt")
+            XCTAssertLessThan(tall, bound,
+                              "the \(name) asked for \(tall)pt at \(width)pt wide")
+        }
     }
 
     /// The time the same shape takes offscreen, on the pattern of
@@ -59,39 +77,6 @@ final class LogsDrawingTests: XCTestCase {
         XCTAssertNotNil(fastest)
         XCTAssertLessThan(fastest ?? .infinity, 1.5,
                           "the card took \(passes.map { String(format: "%.3f", $0) })s offscreen")
-    }
-
-    /// The record box itself: the fixed-height, scrolling box the card and the
-    /// empty pane draw a record into.
-    func testTheRecordBoxStaysAtItsFixedHeight() throws {
-        let huge = try height(of: LogRecordBody(text: record(continuations: 20_000)
-            .renderedFullMessage))
-        let capped = try height(of: LogRecordBody(text: record(continuations: LogRenderLimits
-            .continuationLines).renderedFullMessage))
-
-        XCTAssertEqual(huge, capped, accuracy: 1,
-                       "the box grew with the record: \(huge)pt vs \(capped)pt")
-        // The box is the type scale's height plus its own padding and nothing
-        // else: 8pt a side.
-        XCTAssertLessThan(huge, LogTypeScale.recordBodyHeight + 32,
-                          "the record box asked for \(huge)pt")
-    }
-
-    // MARK: - Row
-
-    /// A row draws its continuation note, not its continuation: the first few
-    /// lines are what the row shows when it is opened, and the record behind
-    /// them is what the card is for. Both rows here are collapsed — the state
-    /// the list is in until someone clicks.
-    func testARowDrawsABoundedNumberOfContinuationLines() throws {
-        let huge = try height(of: rowView(row(continuations: 20_000, occurrences: 1)))
-        let tiny = try height(of: rowView(row(continuations: 4, occurrences: 1)))
-
-        XCTAssertEqual(huge, tiny, accuracy: 1,
-                       "the row grew with the record: \(huge)pt vs \(tiny)pt")
-        // 43pt measured: one message line and the note under it.
-        XCTAssertLessThan(huge, 120,
-                          "the row asked for \(huge)pt at \(width)pt wide")
     }
 
     // MARK: - Scaffolding

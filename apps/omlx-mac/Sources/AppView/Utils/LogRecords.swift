@@ -54,22 +54,6 @@ enum LogLevel: String, CaseIterable, Sendable {
     }
 }
 
-/// What identifies a record's header across refreshes. The list is the tail of
-/// a file that keeps growing, so a record's index in the window moves as lines
-/// arrive; its header does not, and two records with the same header are
-/// interchangeable.
-///
-/// The continuation is deliberately not part of it: the newest record is still
-/// being written while the screen polls, so the record a reader opened grows
-/// lines without becoming a different record (see `LogRecord.continues`).
-struct LogRecordIdentity: Hashable, Sendable {
-    let time: String
-    let level: LogLevel
-    let module: String
-    let message: String
-    let requestID: String
-}
-
 /// One log entry: the header line plus any continuation lines.
 struct LogRecord: Identifiable, Sendable {
     let id: Int
@@ -93,58 +77,42 @@ struct LogRecord: Identifiable, Sendable {
     /// empty pane draws its lines rather than dropping them.
     var isFragment: Bool { time.isEmpty }
 
-    /// The record's stable header identity across window moves (see
-    /// `LogRecordIdentity`). The continuation is not part of it: it grows while
-    /// the record is still being written.
-    var identity: LogRecordIdentity {
-        LogRecordIdentity(
-            time: time,
-            level: level,
-            module: module,
-            message: message,
-            requestID: requestID
-        )
+    /// Whether `earlier` is this same entry, seen again in a later window: the
+    /// header is identical and the continuation only grew. The header alone is
+    /// not enough to match on — an unrelated entry can repeat it — so what was
+    /// open has to still be the start of what is here now.
+    func continues(_ earlier: LogRecord) -> Bool {
+        time == earlier.time
+            && level == earlier.level
+            && module == earlier.module
+            && message == earlier.message
+            && requestID == earlier.requestID
+            && continuation.starts(with: earlier.continuation)
     }
 
-    /// Whether `earlier` is this same entry, seen again in a later window: the
-    /// header is identical and the continuation only grew. The newest record is
-    /// still being written while the screen polls, so the entry a reader opened
-    /// gains traceback lines between refreshes. The header alone is not enough
-    /// to match on — an unrelated entry can repeat it — so what was open has to
-    /// still be the start of what is here now.
-    func continues(_ earlier: LogRecord) -> Bool {
-        identity == earlier.identity && continuation.starts(with: earlier.continuation)
+    /// The header line plus `lines`: the whole record for Copy, or only the
+    /// capped continuation the card draws.
+    private func joined(_ lines: [String]) -> String {
+        lines.isEmpty ? message : ([message] + lines).joined(separator: "\n")
     }
 
     /// The message a row shows, continuation included, for the detail pane.
-    var fullMessage: String {
-        continuation.isEmpty ? message : ([message] + continuation).joined(separator: "\n")
-    }
-
-    /// The continuation lines the screen draws, capped (see `LogRenderLimits`).
-    var renderedContinuation: [String] {
-        Array(continuation.prefix(LogRenderLimits.continuationLines))
-    }
-
-    /// Continuation lines the cap leaves out; 0 when the record is short enough.
-    var hiddenContinuationLines: Int {
-        max(0, continuation.count - LogRenderLimits.continuationLines)
-    }
+    var fullMessage: String { joined(continuation) }
 
     /// What the detail card draws: the header line plus the capped continuation.
-    var renderedFullMessage: String {
-        continuation.isEmpty ? message : ([message] + renderedContinuation).joined(separator: "\n")
-    }
+    var renderedFullMessage: String { joined(renderedContinuation) }
+
+    /// The continuation lines the detail card draws, capped.
+    var renderedContinuation: [String] { LogRenderLimits.capped(continuation, LogRenderLimits.continuationLines) }
+
+    /// Continuation lines the cap leaves out; 0 when the record is short enough.
+    var hiddenContinuationLines: Int { LogRenderLimits.hidden(continuation.count, LogRenderLimits.continuationLines) }
 
     /// The continuation lines a row draws when expanded in place.
-    var renderedInlineContinuation: [String] {
-        Array(continuation.prefix(LogRenderLimits.inlineContinuationLines))
-    }
+    var renderedInlineContinuation: [String] { LogRenderLimits.capped(continuation, LogRenderLimits.inlineContinuationLines) }
 
     /// Continuation lines hidden behind `renderedInlineContinuation`.
-    var hiddenInlineContinuationLines: Int {
-        max(0, continuation.count - LogRenderLimits.inlineContinuationLines)
-    }
+    var hiddenInlineContinuationLines: Int { LogRenderLimits.hidden(continuation.count, LogRenderLimits.inlineContinuationLines) }
 }
 
 /// How much of a record the screen lays out at once. A record can carry tens of
@@ -164,6 +132,12 @@ enum LogRenderLimits {
     /// single 600pt row with nothing else in view, so the row shows the first
     /// few lines and counts the rest behind the same "≡ N more lines" note.
     static let inlineContinuationLines = 4
+
+    /// The first `limit` items a bounded list draws.
+    static func capped<T>(_ items: [T], _ limit: Int) -> [T] { Array(items.prefix(limit)) }
+
+    /// How many items a `limit`-capped list leaves out; 0 when it fits.
+    static func hidden(_ count: Int, _ limit: Int) -> Int { max(0, count - limit) }
 }
 
 /// One occurrence of a repeated record: when it happened and which request it
@@ -190,14 +164,10 @@ struct LogRow: Identifiable, Sendable {
     var isRepeated: Bool { count > 1 }
 
     /// The occurrences the detail card lists, capped (see `LogRenderLimits`).
-    var renderedOccurrences: [LogOccurrence] {
-        Array(occurrences.prefix(LogRenderLimits.occurrences))
-    }
+    var renderedOccurrences: [LogOccurrence] { LogRenderLimits.capped(occurrences, LogRenderLimits.occurrences) }
 
     /// Occurrences the cap leaves out; 0 when the group is short enough.
-    var hiddenOccurrences: Int {
-        max(0, occurrences.count - LogRenderLimits.occurrences)
-    }
+    var hiddenOccurrences: Int { LogRenderLimits.hidden(occurrences.count, LogRenderLimits.occurrences) }
 }
 
 enum LogRows {
@@ -250,11 +220,6 @@ enum LogRows {
 }
 
 enum LogParser {
-    /// `2026-09-21 00:56:04,543 - omlx.server - WARNING - [-] - …`
-    private static let headerPattern = try! NSRegularExpression(
-        pattern: #"^(\d{4}-\d{2}-\d{2} [\d:,]+) - (.+?) - ([A-Z]+) - \[([^\]]*)\] - (.*)$"#
-    )
-
     /// One pass over the text, with the open record's continuation lines
     /// collected in an array and handed over when the record closes. Appending
     /// to `records.last.continuation` instead would copy every line collected so
@@ -317,21 +282,34 @@ enum LogParser {
         return records
     }
 
+    /// `2026-09-21 00:56:04,543 - omlx.server - WARNING - [-] - …`
+    ///
+    /// The fields are separated by ` - `; the stamp, an uppercase level word
+    /// and a bracketed request id are what tell a header from a continuation
+    /// line that happens to contain the separator.
     private static func header(_ line: String) -> (time: String, level: LogLevel, module: String,
                                                    message: String, requestID: String)? {
-        let range = NSRange(line.startIndex..., in: line)
-        guard let match = headerPattern.firstMatch(in: line, range: range),
-              let timeRange = Range(match.range(at: 1), in: line),
-              let moduleRange = Range(match.range(at: 2), in: line),
-              let levelRange = Range(match.range(at: 3), in: line),
-              let requestRange = Range(match.range(at: 4), in: line),
-              let messageRange = Range(match.range(at: 5), in: line)
+        let fields = line.split(separator: " - ", maxSplits: 4, omittingEmptySubsequences: false)
+        guard fields.count == 5, isStamp(fields[0]), !fields[1].isEmpty,
+              !fields[2].isEmpty, fields[2].allSatisfy({ $0.isASCII && $0.isUppercase }),
+              fields[3].hasPrefix("["), fields[3].hasSuffix("]"),
+              !fields[3].dropFirst().dropLast().contains("]")
         else { return nil }
-        let levelText = String(line[levelRange]).uppercased()
-        return (String(line[timeRange]),
-                LogLevel(rawValue: levelText) ?? .other,
-                String(line[moduleRange]).trimmingCharacters(in: .whitespaces),
-                String(line[messageRange]),
-                String(line[requestRange]))
+        return (String(fields[0]),
+                LogLevel(rawValue: String(fields[2])) ?? .other,
+                String(fields[1]).trimmingCharacters(in: .whitespaces),
+                String(fields[4]),
+                String(fields[3].dropFirst().dropLast()))
+    }
+
+    /// `yyyy-MM-dd HH:mm:ss,SSS`: two date halves, then the clock. Fixed shape,
+    /// so a continuation line that merely holds the separator is not a header.
+    private static func isStamp(_ text: Substring) -> Bool {
+        let halves = text.split(separator: " ", omittingEmptySubsequences: false)
+        return halves.count == 2
+            && halves[0].split(separator: "-").map(\.count) == [4, 2, 2]
+            && halves[0].allSatisfy { $0.isNumber || $0 == "-" }
+            && !halves[1].isEmpty
+            && halves[1].allSatisfy { $0.isNumber || $0 == ":" || $0 == "," }
     }
 }

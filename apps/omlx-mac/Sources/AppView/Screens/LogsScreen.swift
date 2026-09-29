@@ -531,22 +531,10 @@ struct LogRowView: View {
     }
 
     /// The server stamps `yyyy-MM-dd HH:mm:ss,SSS`; the column shows the clock
-    /// time alone and falls back to the raw stamp when it does not parse.
+    /// time alone (its fixed-width tail, with the stamp's comma as a dot) and
+    /// falls back to the raw stamp for anything else — a fragment has none.
     private static func clockTime(_ stamp: String) -> String {
-        guard let parsed = stampParser.date(from: stamp) else { return stamp }
-        return clockFormatter.string(from: parsed)
+        guard stamp.count == 23 else { return stamp }
+        return String(stamp.dropFirst(11)).replacingOccurrences(of: ",", with: ".")
     }
-
-    private static let stampParser: DateFormatter = {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "yyyy-MM-dd HH:mm:ss,SSS"
-        formatter.locale = Locale(identifier: "en_US_POSIX")
-        return formatter
-    }()
-
-    private static let clockFormatter: DateFormatter = {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "HH:mm:ss.SSS"
-        return formatter
-    }()
 }
