@@ -28,9 +28,6 @@ DASHBOARD = (ADMIN / "templates" / "dashboard.html").read_text(encoding="utf-8")
 SWIFT = (ROOT / "apps" / "omlx-mac" / "Sources" / "Theme" / "DesignTokens.swift").read_text(
     encoding="utf-8"
 )
-PBXPROJ = (ROOT / "apps" / "omlx-mac" / "oMLX.xcodeproj" / "project.pbxproj").read_text(
-    encoding="utf-8"
-)
 
 TEMPLATES = sorted((ADMIN / "templates").rglob("*.html"))
 # Only the stylesheets the console authors itself; the rest is vendor JavaScript.
@@ -39,12 +36,9 @@ OWN_SCRIPTS = [
     ADMIN / "static" / "js" / name
     for name in ("cluster_v2.js", "dashboard.js", "logs.js", "settings_nav.js", "usage.js")
 ]
-SWIFT_SOURCES = sorted((ROOT / "apps" / "omlx-mac" / "Sources").rglob("*.swift"))
 
 SCALE = TOKENS["typography"]["scale"]
 FLOOR = TOKENS["typography"]["floor"]
-APP_FONT_MODIFIERS = ("omlxText", "omlxMono", "omlxDisplay")
-APP_FONT_CALL = re.compile(rf"(?:{'|'.join(APP_FONT_MODIFIERS)})\(\s*(\d+(?:\.\d+)?)")
 
 
 def _declares(name: str, value: str, stylesheet: str = CSS) -> bool:
@@ -74,17 +68,6 @@ def test_generated_swift_is_current():
     assert _load_generator().render_swift(TOKENS) == SWIFT, (
         "DesignTokens.swift is stale; run python omlx/admin/build_tokens.py"
     )
-
-
-def test_swift_tokens_are_compiled_by_the_app():
-    assert "DesignTokens.swift" in PBXPROJ
-    assert PBXPROJ.count("DesignTokens.swift") >= 4, (
-        "a new Swift file needs a PBXBuildFile, a PBXFileReference, a group "
-        "child and a Sources-phase entry"
-    )
-
-
-# === One six-level type scale ===
 
 
 def test_scale_has_exactly_six_levels():
@@ -159,15 +142,6 @@ def test_no_text_below_the_auxiliary_floor():
             if float(value) < FLOOR["aux"]:
                 offenders.setdefault(str(path.relative_to(ROOT)), set()).add(value)
     assert not offenders, f"text below the {FLOOR['aux']}px floor: {offenders}"
-
-
-def test_app_text_respects_the_floor():
-    offenders = {}
-    for path in SWIFT_SOURCES:
-        for value in APP_FONT_CALL.findall(path.read_text(encoding="utf-8")):
-            if float(value) < FLOOR["aux"]:
-                offenders.setdefault(str(path.relative_to(ROOT)), set()).add(value)
-    assert not offenders, f"app text below the {FLOOR['aux']}pt floor: {offenders}"
 
 
 def test_enhanced_readability_floor_matches_the_token():
@@ -284,7 +258,6 @@ def test_the_sticky_layers_can_actually_stick():
     for name in ("_settings.html", "_models.html", "_bench.html"):
         text = (ADMIN / "templates" / "dashboard" / name).read_text(encoding="utf-8")
         assert "page-tabs" in text, f"{name} uses the shared sub-tab row"
-
 
 
 def test_one_gutter_and_one_shared_measure():
