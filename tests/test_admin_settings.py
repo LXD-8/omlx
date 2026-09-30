@@ -240,7 +240,7 @@ def test_sections_that_mix_both_carry_no_section_badge():
 def test_restart_only_rows_keep_their_own_badge():
     # One badge component and one wording everywhere: the review found "重启"
     # next to "需要重启" on neighbouring rows, and two rows wearing both.
-    badge = "ui.badge(t('settings.global.restart_badge'), tone='orange')"
+    badge = "ui.badge(t('settings.global.restart_badge')"
     assert badge in SETTINGS
     assert "restart_badge') }}</span>" not in SETTINGS, "no hand-written badge span left"
     for key in ("settings.resource.restart_badge", "settings.mcp.restart_badge",
@@ -248,7 +248,9 @@ def test_restart_only_rows_keep_their_own_badge():
         assert f"{{{{ t('{key}') }}}}" not in SETTINGS, f"{key} is the same wording as the shared key"
     # One badge per restart-only row (the five the backend marks, plus the two
     # server rows and the memory guard), the header sentence, and the band the
-    # section-badge macro renders. Two rows used to wear it twice.
+    # section-badge macro renders. Two rows used to wear it twice. The call
+    # form counts with or without arguments: the max-concurrent row wears the
+    # badge only while a distributed engine is live, so its call carries show=.
     assert SETTINGS.count(badge) == 10
     for line in SETTINGS.splitlines():
         assert line.count(badge) <= 1
@@ -257,7 +259,9 @@ def test_restart_only_rows_keep_their_own_badge():
 def test_the_restart_rows_are_the_ones_the_routes_call_restart_required():
     """The badge is derived from the backend, not from the section's name."""
     routes = (ROOT / "omlx" / "admin" / "routes.py").read_text(encoding="utf-8")
-    assert "# Apply scheduler settings (restart required)" in routes
+    assert "# Apply scheduler settings" in routes  # live since #3765, save for distributed engines
+    assert 'runtime_applied.append("max_concurrent_requests")' in routes, \
+        "the row's live-apply is the reason its badge is conditional now"
     assert "# MCP config path changes require restart; exposure changes are live." in routes
     assert "initial_cache_blocks: int | None = None  # Starting blocks (requires restart)" in routes
     assert (

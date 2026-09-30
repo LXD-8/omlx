@@ -659,7 +659,7 @@
                                         <div class="flex items-center gap-2">
                                             <div class="flex items-center gap-2"><label class="text-sm text-neutral-700">{{ t('settings.resource.max_concurrent_requests') }}</label>
                                                 <!-- Applied live, except to distributed (cluster) engines -->
-                                                {{ ui.badge(t('settings.resource.restart_badge'), tone='orange', show='globalSettings.server.distributed_inference_active') }}</div>
+                                                {{ ui.badge(t('settings.global.restart_badge'), tone='orange', show='globalSettings.server.distributed_inference_active') }}</div>
                                         </div>
                                         <p class="text-xs text-neutral-400 mt-0.5">{{ t('settings.resource.max_concurrent_requests_hint') }}</p>
                                     </div>
