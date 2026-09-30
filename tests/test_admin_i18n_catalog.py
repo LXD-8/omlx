@@ -113,6 +113,7 @@ LANGUAGE_NEUTRAL = [
     "status.integrations.claude_code",
     "status.integrations.codex",
     "status.integrations.copilot_cli",
+    "status.integrations.dsh",
     "status.integrations.hermes_agent",
     "status.integrations.openclaw",
     "status.integrations.opencode",
