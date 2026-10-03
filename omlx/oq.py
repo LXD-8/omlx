@@ -436,6 +436,152 @@ def _glm_indexer_q8_override(path: str, config: dict) -> dict | None:
     return dict(_GLM_INDEXER_Q8)
 
 
+# Small-but-critical role floor (model agnostic) ----------------------------
+#
+# Some roles decide something discrete instead of feeding a weighted sum, so
+# their quantization error is not averaged out - it flips a selection:
+#
+# * a sparse-attention scorer/indexer keeps only the top-k of the compressed KV
+#   blocks it scores, so a flipped ranking drops the needed block from attention
+#   entirely;
+# * gated residual / hyper-connection mixers write into the residual stream that
+#   every later layer reads, so their error is re-injected rather than
+#   attenuated by depth;
+# * attention projections decide which positions a token reads at all.
+#
+# On a fine-grained MoE these roles are a rounding error of the checkpoint, so
+# holding them at full precision or Q8 costs almost nothing while protecting the
+# long-context and multi-step failure modes. That is the same argument as
+# ``_glm_indexer_q8_override`` above and the Inkling ``qkvr_proj`` floor; this
+# generalizes it from one family to any checkpoint whose roles are small.
+#
+# Split in two halves:
+#   * ``_role_floor`` is unconditional, for roles that are tiny by construction
+#     (scorers, PLE key/value, MTP fusion projections and the MTP copies of the
+#     backbone roles);
+#   * ``_role_floor_gated_overrides`` applies the attention and gated-residual
+#     roles behind a size gate, because in a dense model attention is a large
+#     share of the checkpoint and pinning it would cost real bytes instead of
+#     rounding error.
+#
+# A family whose loader fuses one of these into a fixed format needs its own
+# invariant ahead of this floor - see ``_glm_indexer_q8_override`` and the
+# Inkling ``qkvr_proj`` Q8 floor.
+
+# Hard top-k selectors. Kept in full precision: they are a rounding error of
+# every checkpoint, and a wrong bit-width there is unrecoverable rather than a
+# small accuracy dip. Add a family's spelling here as it is verified.
+_HARD_SELECTOR_MARKERS = ("indexer",)
+
+# Attention projections. Deliberately excludes linear-attention / DeltaNet
+# (``linear_attn.in_proj_*``) and MLA low-rank pairs (``q_a_proj`` ...), which
+# the per-level policy already prices and which are not a small share.
+_ATTENTION_PARENT_PARTS = frozenset(("self_attn", "attention", "attn"))
+_ATTENTION_PROJECTION_LEAVES = frozenset(
+    ("q_proj", "k_proj", "v_proj", "o_proj", "qkv_proj", "wq", "wk", "wv", "wo", "qkv")
+)
+
+# Gated residual / hyper-connection mixers. Add a family's spelling here as it
+# is verified (e.g. GLM-5.2's ``hc_*`` helpers once their weight names are
+# confirmed) rather than guessing at short prefixes.
+_RESIDUAL_MIXER_MARKERS = ("hyper_connection",)
+
+# MTP fusion projections: the draft head's embedding/hidden fusion is small and
+# precision-sensitive (see ``_is_mtp_protected_tensor``).
+_MTP_FUSION_SUFFIXES = ("mtp.fc_embedding", "mtp.fc_hidden")
+
+# Group size 64 matches the GLM indexer floor and the 8-bit tensors shipped in
+# existing oQe checkpoints.
+_ROLE_Q8 = {"bits": 8, "group_size": 64, "mode": "affine"}
+
+# Above this share of the checkpoint a role stops being "small in size" and the
+# per-level allocator keeps deciding for it. A fine-grained MoE puts attention
+# around 1%; a dense model puts it around a third.
+_ROLE_FLOOR_MAX_SHARE = 0.02
+
+
+def _is_hard_selector(path: str) -> bool:
+    """Return whether *path* is a sparse-attention scorer/indexer."""
+    return any(marker in path for marker in _HARD_SELECTOR_MARKERS)
+
+
+def _is_attention_projection(path: str) -> bool:
+    """Return whether *path* is a full-attention q/k/v/o-style projection."""
+    parts = path.split(".")
+    if len(parts) < 2 or parts[-1] not in _ATTENTION_PROJECTION_LEAVES:
+        return False
+    return any(part in _ATTENTION_PARENT_PARTS for part in parts[:-1])
+
+
+def _is_residual_mixer(path: str) -> bool:
+    """Return whether *path* is a gated residual / hyper-connection mixer."""
+    return any(marker in path for marker in _RESIDUAL_MIXER_MARKERS)
+
+
+def _role_floor(path: str, config: dict) -> dict | bool | None:
+    """Unconditional part of the small-but-critical role floor.
+
+    ``False`` keeps the tensor in full precision, a spec dict pins it to a fixed
+    8-bit affine format, and ``None`` means the path is not one of these roles
+    and the regular per-level policy applies.
+    """
+    path = _normalize_quant_path(path)
+    if _is_hard_selector(path):
+        return False
+    if path.endswith(_MTP_FUSION_SUFFIXES):
+        return dict(_ROLE_Q8)
+    # The MTP head carries its own copies of the backbone roles. Keeping both on
+    # one format is what the GLM indexer rule already does, and draft acceptance
+    # depends on the same projections.
+    if "mtp" in path and (_is_attention_projection(path) or _is_residual_mixer(path)):
+        return dict(_ROLE_Q8)
+    if path.endswith((".ple.key_proj", ".ple.value_proj")):
+        return dict(_ROLE_Q8)
+    return None
+
+
+def _role_floor_gated_overrides(
+    named_shapes: dict[str, tuple],
+) -> dict[str, dict]:
+    """Size-gated part: attention and gated-residual roles pinned to Q8.
+
+    Applied only while the role stays a small share of the checkpoint, which is
+    what makes the bytes negligible. Above ``_ROLE_FLOOR_MAX_SHARE`` the role is
+    a real part of the model (dense attention, say) and the per-level allocator
+    keeps pricing it.
+    """
+    totals = {"attention": 0, "mixer": 0}
+    total = 0
+    for path, shape in named_shapes.items():
+        n = 1
+        for dim in shape:
+            n *= dim
+        total += n
+        if path.startswith("mtp.") or ".mtp." in path:
+            continue  # handled unconditionally by _role_floor
+        if _is_residual_mixer(path):
+            totals["mixer"] += n
+        elif _is_attention_projection(path):
+            totals["attention"] += n
+    if total <= 0:
+        return {}
+    overrides: dict[str, dict] = {}
+    for path in named_shapes:
+        if path.startswith("mtp.") or ".mtp." in path:
+            continue
+        role = (
+            "mixer"
+            if _is_residual_mixer(path)
+            else "attention" if _is_attention_projection(path) else None
+        )
+        if role is None:
+            continue
+        share = totals[role] / total
+        if totals[role] and share <= _ROLE_FLOOR_MAX_SHARE:
+            overrides[path] = dict(_ROLE_Q8)
+    return overrides
+
+
 def _is_qwen4_exp_ngram_embedding_tensor(path: str, config: dict) -> bool:
     """Return whether *path* is one Qwen4-Exp PLE embedding shard.
 
@@ -499,6 +645,14 @@ def universal_quant_predicate(
     glm_indexer_override = _glm_indexer_q8_override(path, config)
     if glm_indexer_override is not None:
         return glm_indexer_override
+
+    # The small-but-critical role floor keeps hard top-k selectors in full
+    # precision and pins the PLE key/value, MTP fusion and MTP role copies to a
+    # fixed 8-bit format at every oQ level. Evaluated before the boost map so a
+    # per-level budget plan cannot trade these away.
+    role_floor = _role_floor(path, config)
+    if role_floor is not None:
+        return role_floor
 
     tc = config.get("text_config", {})
     num_layers = config.get("num_hidden_layers") or tc.get("num_hidden_layers", 32)
@@ -1061,10 +1215,18 @@ def _build_quant_plan(
     # GLM DSA indexers are a format invariant, not an optional sensitivity
     # boost. Seed them before pricing the plan and never let the bpw cap drop
     # them. On GLM-5.2 all 22 indexers together are only about 209 MiB at Q8.
+    #
+    # The small-but-critical role floor is seeded the same way, so its tensors
+    # are priced up front and cannot be trimmed back to base bits when a low
+    # level (oQ2/oQ3) runs out of budget. Roles the floor keeps in full
+    # precision are skipped here - they are never quantized.
     for path in named_shapes:
         if path in fixed_overrides:
             continue
         override = _glm_indexer_q8_override(path, config)
+        if override is None:
+            role_override = _role_floor(path, config)
+            override = role_override if isinstance(role_override, dict) else None
         if override is not None:
             boost_map[path] = override
 
@@ -1080,6 +1242,16 @@ def _build_quant_plan(
         total_params += n
         if _is_routed_expert(path):
             expert_params += n
+
+    # Size-gated half of the role floor: attention projections and gated
+    # residual mixers are only pinned while they stay a small share of the
+    # checkpoint. Seeded before pricing for the same reason as above.
+    for path, override in _role_floor_gated_overrides(named_shapes).items():
+        if path in fixed_overrides or path in boost_map:
+            continue
+        if _is_routed_expert(path):
+            continue
+        boost_map[path] = override
 
     current_bpw = _estimate_effective_bpw(
         named_shapes,
