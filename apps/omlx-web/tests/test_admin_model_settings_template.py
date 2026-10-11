@@ -29,7 +29,9 @@ def _status_template() -> str:
 
 
 def _section(html: str, start_marker: str, end_marker: str) -> str:
-    return html.split(start_marker, 1)[1].split(end_marker, 1)[0]
+    after = html.split(start_marker, 1)[1]
+    assert end_marker in after, f"{end_marker!r} must follow {start_marker!r}"
+    return after.split(end_marker, 1)[0]
 
 
 def test_lightning_mtp_and_turboquant_are_not_ui_mutexed():
@@ -38,7 +40,7 @@ def test_lightning_mtp_and_turboquant_are_not_ui_mutexed():
     turboquant = _section(
         html,
         "<!-- TurboQuant KV Cache -->",
-        "<!-- MoE Expert Offload -->",
+        "<!-- Advanced Settings -->",
     )
     lightning_mtp = _section(
         html,
@@ -55,7 +57,7 @@ def test_vlm_mtp_still_conflicts_with_turboquant():
     vlm_mtp = _section(
         html,
         "<!-- VLM MTP",
-        "<!-- Experimental Features -->",
+        "<!-- DeepSeek V4.1 CED Prefill -->",
     )
 
     assert "modelSettings.turboquant_kv_enabled" in vlm_mtp
@@ -203,7 +205,7 @@ def test_qwen_ane_numeric_controls_accept_arbitrary_valid_values():
     section = _section(
         html,
         "<!-- Qwen 3.5/3.6/3.8 private ANE/GPU prompt processing -->",
-        "<!-- TurboQuant KV Cache -->",
+        "<!-- IndexCache (DSA models only) -->",
     )
 
     for field in (
@@ -359,14 +361,16 @@ class _GateFinder(HTMLParser):
 
 
 def test_embedding_audio_toggle_is_outside_the_llm_only_list():
-    """The advanced list is hidden for embedding models, so the toggle sits after it."""
+    """Embedding models hide the LLM list, so the audio toggle has its own gate."""
     html = _model_settings_template()
     finder = _GateFinder("Embedding audio input")
     finder.feed(html)
-    assert finder.gates == []
+    assert finder.gates == ["{{ ms_llm }} || selectedModel?.embedding_audio_supported"]
 
     section = _section(
-        html, "<!-- Embedding audio input (EmbeddingGemma 2) -->", "<!-- Actions -->"
+        html,
+        "<!-- Embedding audio input (EmbeddingGemma 2) -->",
+        "<!-- Experimental Features -->",
     )
     assert 'x-show="selectedModel?.embedding_audio_supported"' in section
     assert 'x-show="modelSettings.embedding_audio_enabled"' in section
@@ -378,7 +382,7 @@ def test_oq_a8_toggle_is_gated_to_qwen35_models():
     section = _section(
         html,
         "<!-- Qwen 3.5/3.6/3.8 oQ INT8-activation prefill kernels -->",
-        "<!-- Qwen 3.5/3.6/3.8 private ANE/GPU prompt processing -->",
+        "<!-- Memory Saving -->",
     )
     assert 'x-if="isQwenOqA8Model(selectedModel)"' in section
     assert "modelSettings.qwen35_oq_a8_enabled" in section
@@ -395,7 +399,7 @@ def test_oq_a8_offers_no_kernel_choice():
     section = _section(
         html,
         "<!-- Qwen 3.5/3.6/3.8 oQ INT8-activation prefill kernels -->",
-        "<!-- Qwen 3.5/3.6/3.8 private ANE/GPU prompt processing -->",
+        "<!-- Memory Saving -->",
     )
     assert "modelSettings.qwen35_oq_a8_variant" not in section
 
@@ -484,7 +488,9 @@ def test_profile_api_toggle_i18n_keys_exist_in_every_locale():
 def test_moe_expert_offload_toggle_blocks_speculative_decoding():
     """Offload is incompatible with speculative verification paths."""
     html = _model_settings_template()
-    section = _section(html, "<!-- MoE Expert Offload -->", "<!-- IndexCache")
+    section = _section(
+        html, "<!-- MoE Expert Offload -->", "<!-- TurboQuant KV Cache -->"
+    )
     assert "modelSettings.moe_expert_offload_enabled" in section
     assert "modelSettings.moe_expert_offload_resident_percent" in section
     assert ":disabled" in section
@@ -856,10 +862,14 @@ assert.equal(tile('generated_tokens').value, app.formatNumber(98765));
 
 
 def _hints_inside_label_columns(html):
-    """Every hint-shaped element that is a descendant of a `min-w-0` label
-    column. Walked as a balanced tree, so a column of any length and a hint
-    behind any number of nested siblings are both seen: a regular expression
-    bounded to a fixed window silently skipped the longest columns."""
+    """Every hint-shaped element that is a descendant of a label column: the
+    `min-w-0` column of a settings row, the `…justify-between…` flex that pairs
+    a label with its control. Walked as a balanced tree, so a column of any
+    length and a hint behind any number of nested siblings are both seen: a
+    regular expression bounded to a fixed window silently skipped the longest
+    columns. The modal body is itself a `min-w-0` grid column, but it belongs
+    to the modal's layout (#4415) rather than to a row, and holds no label of
+    its own, so it is not one of these."""
     from html.parser import HTMLParser
 
     void = {"br", "img", "input", "hr", "meta", "link", "source", "path",
@@ -880,9 +890,16 @@ def _hints_inside_label_columns(html):
             if tag in void:
                 return
             cls = dict(attrs).get("class") or ""
-            if any(mark for _, mark in self.open) and hint_shaped(tag, cls):
+            classes = cls.split()
+            if any(column for _, column, _ in self.open) and hint_shaped(tag, cls):
                 self.offenders.append((self.getpos()[0], tag, cls))
-            self.open.append((tag, tag == "div" and "min-w-0" in cls.split()))
+            is_row = any(c.split(":")[-1] == "justify-between" for c in classes)
+            in_row = any(row for _, _, row in self.open)
+            self.open.append((
+                tag,
+                tag == "div" and "min-w-0" in classes and (is_row or in_row),
+                is_row,
+            ))
 
         def handle_endtag(self, tag):
             for i in range(len(self.open) - 1, -1, -1):
@@ -897,8 +914,9 @@ def _hints_inside_label_columns(html):
 
 def test_every_hint_sits_under_its_row():
     """A hint inside the label column wrapped in half the card; it spans the
-    card now. Matched structurally: any min-w-0 column — with or without extra
-    classes — must not hold a hint-shaped element, existing or future."""
+    card now. Matched structurally: the min-w-0 column of a row — with or
+    without extra classes — must not hold a hint-shaped element, existing or
+    future."""
     import re as _re
     from pathlib import Path as _Path
 
