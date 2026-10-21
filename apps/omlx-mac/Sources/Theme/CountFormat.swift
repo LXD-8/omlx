@@ -76,12 +76,12 @@ enum CountFormat {
         let scales: [Double] = [1e4, 1e8, 1e12]
         let magnitude = Double(abs(value))
         var rung = scales.lastIndex { magnitude >= $0 } ?? 0
-        // The unit follows the printed mantissa: 10,000万 reads 1亿.
+        // The unit follows the printed mantissa: 10,000.0万 reads 1.0亿.
         if oneDecimal(magnitude / scales[rung]) >= 10_000, rung < scales.count - 1 {
             rung += 1
         }
         return (Double(value) / scales[rung]).formatted(.number
-            .precision(.fractionLength(0...1))
+            .precision(.fractionLength(1))
             .grouping(.automatic)
             .locale(locale)) + units[rung]
     }
