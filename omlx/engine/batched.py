@@ -421,6 +421,21 @@ class BatchedEngine(BaseEngine):
             self._model_settings,
         )
 
+        # Neuron steering: wrap chosen SwiGLU down_proj modules after weights
+        # are materialized (the scaled mode reads W_down to normalise its
+        # dose). No-op for unsupported architectures.
+        if getattr(self._model_settings, "neuron_steering_enabled", False):
+            from ..neuron_steering import apply_neuron_steering
+
+            await loop.run_in_executor(
+                get_mlx_executor(),
+                lambda: apply_neuron_steering(
+                    self._model,
+                    getattr(self._model_settings, "neuron_steering_spec", None),
+                    enabled=True,
+                ),
+            )
+
         # Supported MoE gate+up regroup: concatenate the routed experts'
         # gate and up projections so decode runs 2 gather_qmm launches per
         # MoE layer instead of 3 (issue #2238). Bit-exact; runs on the MLX
@@ -719,11 +734,12 @@ class BatchedEngine(BaseEngine):
             else SchedulerConfig()
         )
         scheduler_config.moe_offload_active = bool(moe_offload_wrapped)
-        signature = getattr(self._model, "_omlx_k2_ane_signature", None)
-        if signature:
-            scheduler_config.model_name = (
-                (scheduler_config.model_name or self._model_name) + ":" + signature
-            )
+        for attr in ("_omlx_k2_ane_signature", "_omlx_neuron_steering_signature"):
+            signature = getattr(self._model, attr, None)
+            if signature:
+                scheduler_config.model_name = (
+                    (scheduler_config.model_name or self._model_name) + ":" + signature
+                )
         engine_config = EngineConfig(
             model_name=self._model_name,
             scheduler_config=scheduler_config,

@@ -2019,6 +2019,15 @@ class VLMBatchedEngine(BaseEngine):
         if restored:
             logger.info("Restored oMLX Bonsai kernel paths for %d modules", restored)
 
+        if getattr(self._model_settings, "neuron_steering_enabled", False):
+            from ..neuron_steering import apply_neuron_steering
+
+            apply_neuron_steering(
+                self._vlm_model,
+                getattr(self._model_settings, "neuron_steering_spec", None),
+                enabled=True,
+            )
+
         if self.model_type in NATIVE_VIDEO_MODEL_TYPES:
             self._native_video = attach_native_video_processor(
                 self._processor, self._model_name
@@ -2378,6 +2387,11 @@ class VLMBatchedEngine(BaseEngine):
             else SchedulerConfig()
         )
         scheduler_config.moe_offload_active = bool(moe_offload_wrapped)
+        signature = getattr(self._vlm_model, "_omlx_neuron_steering_signature", None)
+        if signature:
+            scheduler_config.model_name = (
+                (scheduler_config.model_name or self._model_name) + ":" + signature
+            )
         if (
             self._adapter.model_type == "deepseek_v41"
             and self._adapter.config.ced_prefill

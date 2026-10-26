@@ -498,6 +498,15 @@ class ModelSettings:
     # Takes precedence over mtp_adaptive_max_depth; None = adaptive.
     mtp_fixed_depth: Optional[int] = None
 
+    # Neuron steering (playful, fully reversible activation nudging). When
+    # enabled, the engine wraps the MLP down_proj of chosen SwiGLU decoder
+    # layers to shift single intermediate ("neuron") activations. No weights
+    # change and nothing is persisted, so a reload with the toggle off fully
+    # restores the model. See omlx/neuron_steering.py for the spec format
+    # (``layer:neuron:value[:mode]`` entries; mode is "scaled" | "constant").
+    neuron_steering_enabled: bool = False
+    neuron_steering_spec: Optional[str] = None
+
     # VLM MTP speculative decoding via external MTP drafter (mlx-vlm f96138e+).
     # Supported drafter types: gemma4_assistant (for Gemma 4 VLMs), qwen3_5_mtp
     # (for Qwen 3.5/3.6). Both resolve to draft_kind="mtp" in mlx-vlm.

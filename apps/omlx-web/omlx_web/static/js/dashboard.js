@@ -66,6 +66,8 @@
         'mtp_enabled',
         'mtp_adaptive_max_depth',
         'mtp_fixed_depth',
+        'neuron_steering_enabled',
+        'neuron_steering_spec',
         'qwen35_ane_prefill_shared_fraction',
         'vlm_mtp_enabled',
         'vlm_mtp_draft_model',
@@ -2230,6 +2232,8 @@
                         ? String(s.mtp_adaptive_max_depth) : '3',
                     mtp_compatible: model?.mtp_compatible === true,
                     mtp_compatibility_reason: model?.mtp_compatibility_reason || '',
+                    neuron_steering_enabled: s.neuron_steering_enabled || false,
+                    neuron_steering_spec: s.neuron_steering_spec || '',
                     is_paroquant: model?.is_paroquant === true,
                     paroquant_reason: model?.paroquant_reason || '',
                     qwen35_ane_prefill_shared_fraction: s.qwen35_ane_prefill_shared_fraction ?? 1,
@@ -3334,6 +3338,10 @@
                         ? parseInt(ms.mtp_adaptive_max_depth || '3')
                         : null,
                     mtp_fixed_depth: null,
+                    neuron_steering_enabled: !!ms.neuron_steering_enabled,
+                    neuron_steering_spec: ms.neuron_steering_enabled
+                        ? (ms.neuron_steering_spec || null)
+                        : null,
                     qwen35_ane_prefill_shared_fraction: Number(ms.qwen35_ane_prefill_shared_fraction),
                     vlm_mtp_enabled: !!ms.vlm_mtp_enabled,
                     vlm_mtp_draft_model: ms.vlm_mtp_enabled
@@ -3396,6 +3404,8 @@
                         mtp_enabled: false,
                         mtp_adaptive_max_depth: null,
                         mtp_fixed_depth: null,
+                        neuron_steering_enabled: false,
+                        neuron_steering_spec: null,
                         vlm_mtp_enabled: false,
                         vlm_mtp_draft_model: null,
                         vlm_mtp_draft_block_size: null,
@@ -3707,6 +3717,8 @@
                         this.modelSettings.dflash_verify_mode = 'adaptive';
                         this.modelSettings.mtp_enabled = false;
                         this.modelSettings.mtp_adaptive_max_depth = '3';
+                        this.modelSettings.neuron_steering_enabled = false;
+                        this.modelSettings.neuron_steering_spec = '';
                         this.modelSettings.trust_remote_code = false;
                     } else if (response.status === 404) {
                         alert(window.t('js.error.no_config_defaults'));

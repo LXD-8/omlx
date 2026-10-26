@@ -389,6 +389,9 @@ class ModelSettingsRequest(BaseModel):
     mtp_adaptive_max_depth: int | None = None
     # Fixed Lightning MTP draft depth (None = adaptive).
     mtp_fixed_depth: int | None = None
+    # Neuron steering (reversible per-neuron activation nudging).
+    neuron_steering_enabled: bool | None = None
+    neuron_steering_spec: str | None = None
     # Recast the checkpoint's bfloat16 leaves to float16 after load
     activation_fp16_enabled: bool | None = None
     # KV cache compression
@@ -1054,6 +1057,8 @@ def _sanitize_diffusion_settings_dict(settings: dict) -> None:
     settings["external_engine"] = None
     settings["dflash_enabled"] = False
     settings["mtp_enabled"] = False
+    settings["neuron_steering_enabled"] = False
+    settings["neuron_steering_spec"] = None
     settings["vlm_mtp_enabled"] = False
 
     unsupported_ct_kwargs = {
@@ -1137,6 +1142,8 @@ def _sanitize_diffusion_model_settings(settings) -> None:
     settings.dflash_block_size = None
     settings.dflash_verify_mode = None
     settings.mtp_enabled = False
+    settings.neuron_steering_enabled = False
+    settings.neuron_steering_spec = None
     settings.vlm_mtp_enabled = False
     settings.vlm_mtp_draft_model = None
     settings.vlm_mtp_draft_block_size = None
@@ -3318,6 +3325,21 @@ async def update_model_settings(
                 )
         current_settings.mtp_enabled = new_mtp_enabled
 
+    # Neuron steering. Validate the spec eagerly so a malformed entry is a
+    # clear 400 rather than a silent drop or a load-time failure.
+    if "neuron_steering_spec" in sent:
+        spec = request.neuron_steering_spec or None
+        if spec:
+            from ..neuron_steering import parse_steering_spec
+
+            try:
+                parse_steering_spec(spec)
+            except ValueError as exc:
+                raise HTTPException(status_code=400, detail=str(exc)) from exc
+        current_settings.neuron_steering_spec = spec
+    if "neuron_steering_enabled" in sent:
+        current_settings.neuron_steering_enabled = bool(request.neuron_steering_enabled)
+
     # VLM MTP (mlx-vlm f96138e+, gemma4_assistant drafter)
     if "vlm_mtp_enabled" in sent:
         new_vlm_mtp = False if is_diffusion_model else bool(request.vlm_mtp_enabled)
@@ -3487,6 +3509,10 @@ async def update_model_settings(
         or "dflash_draft_window_size" in sent
         or "dflash_block_size" in sent
         or "dflash_verify_mode" in sent
+        # Neuron steering is installed at load; applying or restoring the wrap
+        # requires a reload. (Also covered by the load signature above.)
+        or "neuron_steering_enabled" in sent
+        or "neuron_steering_spec" in sent
         # trust_remote_code is plumbed at model load time; toggling it on
         # an already-loaded engine has no effect until reload.
         or "trust_remote_code" in sent

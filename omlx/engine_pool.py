@@ -1298,6 +1298,14 @@ class EnginePool:
         if mtp_active:
             add("mtp_adaptive_max_depth", data.get("mtp_adaptive_max_depth"))
             add("mtp_fixed_depth", data.get("mtp_fixed_depth"))
+
+        # Neuron steering is installed once at model load. Both the toggle and
+        # the spec belong in the signature so turning it on/off or editing the
+        # targeted neurons reloads the engine (applying or restoring the wrap).
+        steering_active = bool(data.get("neuron_steering_enabled", False))
+        add("neuron_steering_enabled", steering_active)
+        if steering_active:
+            add("neuron_steering_spec", data.get("neuron_steering_spec") or None)
         add(
             "activation_fp16_enabled",
             bool(data.get("activation_fp16_enabled", False)),
