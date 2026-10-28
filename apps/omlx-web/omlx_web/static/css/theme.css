@@ -23,8 +23,8 @@
        The dashboard's dark values live in dashboard.css, next to the page that
        loads it: the chat page has its own theme and must not inherit them. */
     --text-scale-300: var(--palette-neutral-300);
-    --text-scale-400: var(--palette-neutral-500);
-    --text-scale-500: var(--palette-neutral-500);
+    --text-scale-400: 107 107 107;
+    --text-scale-500: 107 107 107;
     --text-scale-600: var(--palette-neutral-600);
     --text-scale-700: var(--palette-neutral-700);
     --text-scale-800: var(--palette-neutral-800);

@@ -22,8 +22,9 @@ module.exports = {
       // Neutral utilities resolve through theme.css, so light and dark share
       // one definition; dashboard.css supplies the dark channels and the one
       // dark hover override (hover:text-neutral-700).
-      // Values match the palette steps the classes used before (text-400 took
-      // the 500 step for AA; see #4727).
+      // Values match the palette steps the classes used before, except the two
+      // light text steps that take the darker 107 channel for WCAG AA (see
+      // #4400).
       textColor: {
         neutral: {
           300: 'rgb(var(--text-scale-300) / <alpha-value>)',
