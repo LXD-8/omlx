@@ -359,6 +359,39 @@ class _Reader:
     def skip_string(self) -> None:
         self._stream.seek(self.length(_MAX_STRING), os.SEEK_CUR)
 
+    def skip_strings(self, count: int) -> None:
+        """Skip ``count`` length-prefixed strings at once.
+
+        The tokenizer vocabulary is a quarter million strings, and skipping
+        one at a time costs three interpreted calls each (``take`` ->
+        ``length`` -> ``scalar``). That loop, not IO, is where a GGUF header
+        scan spends its ~0.8 s. Here the offset of each string is computed
+        from a local block with ``unpack_from`` so the per-string cost is one
+        struct read; only a string that straddles a block boundary falls back
+        to the single-string path.
+        """
+        unpack = struct.Struct("<Q").unpack_from
+        block = b""
+        cursor = 0
+        for _ in range(count):
+            if cursor + 8 > len(block):
+                self._stream.seek(cursor - len(block), os.SEEK_CUR)
+                block = self._stream.read(1 << 20)
+                cursor = 0
+                if len(block) < 8:
+                    raise GgufError("truncated GGUF header")
+            size = unpack(block, cursor)[0]
+            if size > _MAX_STRING:
+                raise GgufError("GGUF header length out of range")
+            if cursor + 8 + size > len(block):
+                # Straddles the block: rewind and take the single-string path.
+                self._stream.seek(cursor - len(block), os.SEEK_CUR)
+                self.skip_string()
+                block, cursor = b"", 0
+                continue
+            cursor += 8 + size
+        self._stream.seek(cursor - len(block), os.SEEK_CUR)
+
     def value(self, kind: int, keep: bool):
         if kind in _SCALARS:
             return self.scalar(_SCALARS[kind])
@@ -371,8 +404,7 @@ class _Reader:
         if keep:
             return [self.value(item, keep=True) for _ in range(count)]
         if item == _STRING:
-            for _ in range(count):
-                self.skip_string()
+            self.skip_strings(count)
         elif item in _SCALARS:
             self._stream.seek(struct.calcsize(_SCALARS[item]) * count, os.SEEK_CUR)
         else:
