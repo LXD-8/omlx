@@ -8,7 +8,7 @@ final class CountFormatTests: XCTestCase {
 
     func testChineseLadder() {
         XCTAssertEqual(CountFormat.compact(9_999, locale: zh), "9,999")
-        XCTAssertEqual(CountFormat.compact(10_000, locale: zh), "1万")
+        XCTAssertEqual(CountFormat.compact(10_000, locale: zh), "1.0万")
         XCTAssertEqual(CountFormat.compact(12_345_678, locale: zh), "1,234.6万")
         XCTAssertEqual(CountFormat.compact(123_456_789, locale: zh), "1.2亿")
         XCTAssertEqual(CountFormat.compact(1_200_000_000_000, locale: zh), "1.2万亿")
@@ -17,9 +17,9 @@ final class CountFormatTests: XCTestCase {
     }
 
     func testChineseUnitFollowsRoundedMantissa() {
-        XCTAssertEqual(CountFormat.compact(99_999_999, locale: zh), "1亿")
-        XCTAssertEqual(CountFormat.compact(999_999_999_999, locale: zhTW), "1兆")
-        XCTAssertEqual(CountFormat.compact(99_990_000, locale: zh), "9,999万")
+        XCTAssertEqual(CountFormat.compact(99_999_999, locale: zh), "1.0亿")
+        XCTAssertEqual(CountFormat.compact(999_999_999_999, locale: zhTW), "1.0兆")
+        XCTAssertEqual(CountFormat.compact(99_990_000, locale: zh), "9,999.0万")
     }
 
     func testOtherLanguagesUseEnglishLadder() {
