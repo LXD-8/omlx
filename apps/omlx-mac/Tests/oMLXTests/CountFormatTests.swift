@@ -23,12 +23,17 @@ final class CountFormatTests: XCTestCase {
     }
 
     func testOtherLanguagesUseEnglishLadder() {
-        for id in ["en-US", "ko-KR", "ja-JP", "ru-RU"] {
+        for id in ["en-US", "ru-RU"] {
             let locale = Locale(identifier: id)
             XCTAssertEqual(CountFormat.compact(999, locale: locale), "999", id)
             XCTAssertEqual(CountFormat.compact(12_345, locale: locale), "12.3K", id)
             XCTAssertEqual(CountFormat.compact(12_345_000, locale: locale), "12.3M", id)
         }
         XCTAssertEqual(CountFormat.compact(nil), "—")
+    }
+
+    func testJapaneseAndKoreanUseTenThousandUnits() {
+        XCTAssertEqual(CountFormat.compact(12_345, locale: Locale(identifier: "ja-JP")), "1.2万")
+        XCTAssertEqual(CountFormat.compact(12_345, locale: Locale(identifier: "ko-KR")), "1.2만")
     }
 }
